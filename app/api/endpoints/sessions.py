@@ -1,0 +1,246 @@
+"""
+Sessions API Endpoints
+"""
+import uuid
+import logging
+from datetime import datetime
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from pydantic import BaseModel
+
+from app.core.database import get_db_session
+from app.models.runtime_models import Session, Message, SessionState
+from app.schemas.fsm import SalesStage
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/sessions", tags=["sessions"])
+
+
+class SessionCreate(BaseModel):
+    """创建会话请求"""
+    user_id: str
+    course_id: str
+    scenario_id: str
+    persona_id: str
+
+
+class SessionResponse(BaseModel):
+    """会话响应"""
+    id: str
+    user_id: str
+    course_id: str
+    scenario_id: str
+    status: str
+    total_turns: int
+    final_score: Optional[float]
+    final_stage: Optional[str]
+    started_at: datetime
+    completed_at: Optional[datetime]
+    
+    class Config:
+        from_attributes = True
+
+
+class SessionListResponse(BaseModel):
+    """会话列表响应"""
+    items: List[SessionResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+@router.post("", response_model=SessionResponse)
+async def create_session(
+    request: SessionCreate,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """创建新训练会话"""
+    session_id = str(uuid.uuid4())
+    now = datetime.utcnow()
+    
+    session = Session(
+        id=session_id,
+        user_id=request.user_id,
+        course_id=request.course_id,
+        scenario_id=request.scenario_id,
+        persona_id=request.persona_id,
+        status="active",
+        started_at=now,
+        last_activity_at=now,
+    )
+    
+    db.add(session)
+    await db.flush()
+    
+    logger.info(f"Session created: {session_id}")
+    return session
+
+
+@router.get("", response_model=SessionListResponse)
+async def list_sessions(
+    user_id: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """获取会话列表"""
+    query = select(Session)
+    
+    if user_id:
+        query = query.where(Session.user_id == user_id)
+    if status:
+        query = query.where(Session.status == status)
+    
+    # 分页
+    offset = (page - 1) * page_size
+    query = query.order_by(Session.created_at.desc()).offset(offset).limit(page_size)
+    
+    result = await db.execute(query)
+    sessions = result.scalars().all()
+    
+    # 获取总数
+    count_query = select(Session)
+    if user_id:
+        count_query = count_query.where(Session.user_id == user_id)
+    if status:
+        count_query = count_query.where(Session.status == status)
+    
+    count_result = await db.execute(count_query)
+    total = len(count_result.scalars().all())
+    
+    return SessionListResponse(
+        items=sessions,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get("/{session_id}", response_model=SessionResponse)
+async def get_session(
+    session_id: str,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """获取会话详情"""
+    result = await db.execute(
+        select(Session).where(Session.id == session_id)
+    )
+    session = result.scalar_one_or_none()
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return session
+
+
+@router.get("/{session_id}/review")
+async def get_session_review(
+    session_id: str,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Get session review data for frontend dashboard.
+    Aggregates Strategy Decisions, Adoptions, and Skill Diffs.
+    """
+    from app.models.adoption_models import StrategyDecision, AdoptionRecord
+    from app.models.runtime_models import EvaluationLog
+    
+    # 1. Verify Session
+    session_res = await db.execute(select(Session).where(Session.id == session_id))
+    session = session_res.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    # 2. Get Strategy Decisions
+    strategies_res = await db.execute(
+        select(StrategyDecision).where(StrategyDecision.session_id == session_id).order_by(StrategyDecision.turn_id)
+    )
+    strategies = strategies_res.scalars().all()
+    
+    # 3. Get Adoptions
+    adoptions_res = await db.execute(
+        select(AdoptionRecord).where(AdoptionRecord.session_id == session_id)
+    )
+    adoptions = adoptions_res.scalars().all()
+    
+    # 4. Get Evaluations
+    evals_res = await db.execute(
+        select(EvaluationLog).where(EvaluationLog.session_id == session_id).order_by(EvaluationLog.turn_number)
+    )
+    evals = evals_res.scalars().all()
+    
+    # Aggregate Data
+    
+    # Strategy Review
+    strategy_review = []
+    for s in strategies:
+        strategy_review.append({
+            "turn": s.turn_id,
+            "situation": s.situation_type,
+            "user_strategy": s.strategy_chosen,
+            "golden_strategy": s.golden_strategy,
+            "is_optimal": s.is_optimal,
+            "reason": s.optimality_reason
+        })
+        
+    # Effective Adoptions
+    effective_adoptions = []
+    ineffective_attempts = []
+    
+    for a in adoptions:
+        item = {
+            "turn": a.turn_id,
+            "technique": a.technique_name,
+            "style": a.adoption_style.value,
+            "skill_delta": a.skill_delta
+        }
+        if a.is_effective:
+            effective_adoptions.append(item)
+        elif a.adopted:
+            ineffective_attempts.append(item)
+            
+    # Skill Delta Summary
+    # Calculate total delta across session
+    total_delta = {}
+    for a in adoptions:
+        if a.is_effective and a.skill_delta:
+            for k, v in a.skill_delta.items():
+                total_delta[k] = round(total_delta.get(k, 0) + v, 2)
+                
+    return {
+        "session_id": session_id,
+        "summary": {
+            "total_turns": session.total_turns,
+            "final_score": session.final_score,
+            "skill_improvement": total_delta
+        },
+        "strategy_timeline": strategy_review,
+        "highlights": {
+            "effective_adoptions": effective_adoptions,
+            "ineffective_attempts": ineffective_attempts
+        }
+    }
+
+@router.patch("/{session_id}/complete")
+async def complete_session(
+    session_id: str,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """完成会话"""
+    result = await db.execute(
+        select(Session).where(Session.id == session_id)
+    )
+    session = result.scalar_one_or_none()
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    session.status = "completed"
+    session.completed_at = datetime.utcnow()
+    
+    await db.flush()
+    
+    return {"message": "Session completed", "session_id": session_id}

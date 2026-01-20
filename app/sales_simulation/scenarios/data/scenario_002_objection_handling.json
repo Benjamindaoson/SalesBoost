@@ -1,0 +1,52 @@
+{
+  "id": "scenario_002",
+  "name": "价格异议处理场景",
+  "description": "客户对价格有顾虑，需要展示价值并处理异议",
+  "difficulty": "hard",
+  "customer_profile": {
+    "name": "王芳",
+    "company": "某制造企业",
+    "role": "采购经理",
+    "customer_type": "warm_lead",
+    "personality_traits": ["务实", "价格敏感", "决策谨慎"],
+    "pain_points": ["预算有限", "需要ROI证明", "担心风险"],
+    "objections": ["价格太高", "预算不够", "需要更多时间考虑"],
+    "decision_style": "analytical",
+    "budget_sensitivity": 0.9,
+    "urgency_level": 0.5,
+    "initial_mood": 0.5,
+    "initial_interest": 0.6
+  },
+  "sales_goal": {
+    "goal_type": "trial",
+    "target_value": null,
+    "success_criteria": [
+      "客户理解产品价值",
+      "异议得到有效处理",
+      "客户同意试用"
+    ]
+  },
+  "config": {
+    "max_turns": 20,
+    "timeout_seconds": 600,
+    "enable_interruption": true,
+    "enable_emotion_drift": true,
+    "enable_random_events": false,
+    "goal_weight": 0.4,
+    "process_weight": 0.3,
+    "compliance_weight": 0.3
+  },
+  "background_context": "客户已经了解产品，但对价格有顾虑，需要更多价值证明",
+  "product_info": {
+    "name": "企业管理系统",
+    "category": "SaaS",
+    "price_range": "30000-100000/年"
+  },
+  "tags": ["objection_handling", "price", "value_selling"],
+  "author": "SalesBoost Team",
+  "version": "1.0.0"
+}
+
+
+
+
