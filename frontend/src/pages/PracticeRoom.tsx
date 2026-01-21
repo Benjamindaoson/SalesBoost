@@ -54,7 +54,10 @@ function parseWSMessage(raw: unknown): WSMessage | null {
 
 export function PracticeRoom(props: PracticeRoomProps) {
   const wsUrl = useMemo(
-    () => `ws://localhost:8000/api/v1/ws/${props.sessionId}`,
+    () => {
+      const baseUrl = import.meta.env.VITE_WS_URL ?? "ws://localhost:8000/api/v1/ws";
+      return `${baseUrl}/${props.sessionId}`;
+    },
     [props.sessionId]
   );
 

@@ -18,3 +18,5 @@ services:
         sync: false
       - key: ENV_STATE
         value: production
+      - key: ENV_RUN_SEED
+        value: "true"

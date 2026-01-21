@@ -45,7 +45,7 @@ logs/
 # Environment variables
 .env
 .env.local
-.env.production
+# .env.production
 
 # Test coverage
 .coverage
