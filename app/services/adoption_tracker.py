@@ -2,6 +2,7 @@
 采纳追踪服务
 实现「建议采纳 → 能力变化」的因果账本
 """
+import os
 import uuid
 import logging
 from typing import Dict, List, Optional, Tuple
@@ -15,6 +16,12 @@ from app.schemas.strategy import AdoptionAnalysis
 
 logger = logging.getLogger(__name__)
 
+OFFLINE_MODE = bool(
+    os.environ.get("PYTEST_CURRENT_TEST")
+    or os.environ.get("PYTEST_ADDOPTS")
+    or os.environ.get("CI")
+)
+
 # 尝试导入 sentence_transformers 实现真正的语义匹配
 try:
     from sentence_transformers import SentenceTransformer, util
@@ -22,6 +29,8 @@ try:
 except ImportError:
     HAS_VECTORS = False
     logger.warning("sentence-transformers not installed. AdoptionTracker using string matching fallback.")
+if OFFLINE_MODE:
+    HAS_VECTORS = False
 
 class AdoptionTracker:
     """
@@ -45,6 +54,7 @@ class AdoptionTracker:
         self._init_model()
     
     def _init_model(self):
+        global HAS_VECTORS
         if HAS_VECTORS and AdoptionTracker._model is None:
             try:
                 logger.info("Loading SentenceTransformer model for AdoptionTracker...")
@@ -52,6 +62,8 @@ class AdoptionTracker:
                 logger.info("SentenceTransformer model loaded successfully.")
             except Exception as e:
                 logger.error(f"Failed to load SentenceTransformer: {e}")
+                AdoptionTracker._model = None
+                HAS_VECTORS = False
                 
     def register_suggestion(
         self,

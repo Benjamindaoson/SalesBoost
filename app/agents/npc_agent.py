@@ -137,21 +137,27 @@ Generate the customer reply in JSON."""
         except Exception as e:
             logger.error(f"NPC process failed: {e}")
             return NPCOutput(
-    
-- 检测意图：{intent_result.detected_intent}
-- 是否对齐当前阶段：{intent_result.is_aligned}
-
-请根据你的人设和当前情绪，生成客户回复。"""
-        
-        try:
-            result = await self.invoke_with_parser(user_prompt)
-            role = "销售员" if msg["role"] == "user" else "客户"
-                mood_before=fsm_state.npc_mood,
-                mood_after=max(0.0, fsm_state.npc_mood - 0.05),
+                response="嗯，我需要再考虑一下。",
+                mood_before=mood_value,
+                mood_after=max(0.0, mood_value - 0.05),
                 mood_change_reason="系统异常，默认轻微负面反应",
                 expressed_signals=["观望"],
                 persona_consistency=0.5,
             )
+
+    async def generate_response(
+        self,
+        user_message: str,
+        conversation_history: List[Dict[str, Any]],
+        fsm_state: FSMState,
+        intent_result: IntentGateOutput,
+    ) -> NPCOutput:
+        return await self.process(
+            user_message=user_message,
+            conversation_history=conversation_history,
+            fsm_state=fsm_state,
+            intent_result=intent_result,
+        )
 
     async def generate_response_with_stream(
         self,

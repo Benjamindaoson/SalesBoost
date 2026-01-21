@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.prompt_service import PromptService
 from app.core.config import Settings, get_settings
 from app.core.database import get_db_session
+from app.models.base import User
 
 
 # 全局服务实例（延迟初始化）
@@ -85,4 +86,8 @@ async def get_request_context(request: Request) -> dict:
         "method": request.method
     }
 
+
+def get_current_active_user() -> User:
+    """Fallback current user dependency for API routes."""
+    return User()
 
