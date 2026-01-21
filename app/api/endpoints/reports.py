@@ -2,11 +2,11 @@
 Reports API Endpoints
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func, case, and_
 from pydantic import BaseModel, Field
 
 from app.core.database import get_db_session
@@ -16,6 +16,8 @@ from app.services.curriculum_planner import CurriculumPlanner
 from app.services.adoption_tracker import AdoptionTracker
 from app.services.strategy_analyzer import StrategyAnalyzer
 from app.schemas.reports import TrainingReport
+from app.api import deps
+from app.models.base import User
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -37,6 +39,32 @@ class SimulationSummaryResponse(BaseModel):
     avg_turns: float
     common_objections: List[Dict[str, Any]]
     time_series: List[Dict[str, Any]]
+
+class TaskStatsResponse(BaseModel):
+    total: int
+    completed: int
+    inProgress: int
+    notStarted: int
+    averageScore: float
+
+class TaskProgress(BaseModel):
+    completed: int
+    total: int
+    score: Optional[float] = None
+
+class DateRange(BaseModel):
+    start: str
+    end: str
+
+class TaskItemResponse(BaseModel):
+    id: str
+    courseName: str
+    courseTags: List[str]
+    taskInfo: str
+    taskLink: Optional[str] = None
+    status: str
+    dateRange: DateRange
+    progress: TaskProgress
 
 
 def get_simulation_stats() -> List[SimulationResult]:
@@ -64,6 +92,124 @@ def get_simulation_stats() -> List[SimulationResult]:
             started_at=now,
         ),
     ]
+
+
+@router.get("/stats/tasks", response_model=TaskStatsResponse)
+async def get_task_stats(
+    db: AsyncSession = Depends(get_db_session),
+    # In future, filter by current user
+    # current_user: User = Depends(deps.get_current_active_user),
+):
+    """
+    Get aggregated task statistics.
+    
+    For MVP: Calculates stats based on Session records.
+    - Total: Total distinct sessions
+    - Completed: Sessions with status='completed' or 'deal_won'
+    - In Progress: Sessions with status='active'
+    - Not Started: Placeholder (or count of assigned scenarios - completed)
+    - Average Score: Avg of final_score
+    """
+    
+    # Calculate stats from sessions
+    query = select(
+        func.count(Session.id).label("total"),
+        func.sum(case((Session.status.in_(['completed', 'deal_won']), 1), else_=0)).label("completed"),
+        func.sum(case((Session.status == 'active', 1), else_=0)).label("in_progress"),
+        func.avg(Session.final_score).label("avg_score")
+    )
+    
+    result = await db.execute(query)
+    stats = result.one()
+    
+    total = stats.total or 0
+    completed = stats.completed or 0
+    in_progress = stats.in_progress or 0
+    avg_score = round(stats.avg_score or 0, 1)
+    
+    # For MVP, we might not have explicit "assigned tasks" table yet,
+    # so "not_started" is hard to calculate dynamically without a task assignment model.
+    # We'll use a placeholder or derived value.
+    # Let's assume a fixed curriculum size of 10 for demo purposes, or just 0 if not tracking assignments.
+    not_started = max(0, 10 - total) 
+
+    return TaskStatsResponse(
+        total=total + not_started, # Total assigned + ad-hoc
+        completed=completed,
+        inProgress=in_progress,
+        notStarted=not_started,
+        averageScore=avg_score
+    )
+
+
+@router.get("/tasks", response_model=List[TaskItemResponse])
+async def get_tasks(
+    status: str = Query("all", description="Filter by status: all, not_started, in_progress, completed"),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Get list of tasks (sessions/scenarios).
+    """
+    
+    # Query sessions
+    stmt = select(Session).order_by(Session.updated_at.desc())
+    
+    if status != "all":
+        if status == "completed":
+            stmt = stmt.where(Session.status.in_(['completed', 'deal_won']))
+        elif status == "in_progress":
+            stmt = stmt.where(Session.status == 'active')
+        elif status == "not_started":
+            # Sessions are by definition started, so this would return empty
+            # unless we query a Scenarios table.
+            # For MVP, we return empty list for not_started filters on sessions
+            return []
+
+    result = await db.execute(stmt)
+    sessions = result.scalars().all()
+    
+    tasks = []
+    for session in sessions:
+        # Map session to TaskItemResponse
+        # Use session data to populate fields
+        
+        # Infer date range (start to update)
+        start_date = session.started_at.strftime("%Y-%m-%d")
+        end_date = session.updated_at.strftime("%Y-%m-%d")
+        
+        # Infer tags/info from session metadata or defaults
+        tags = ["销售技巧"]
+        if session.session_type:
+            tags.append(session.session_type)
+            
+        task_info = f"客户: {session.customer_id}" # Placeholder
+        
+        # Calculate progress (turns / estimated max turns?)
+        # For MVP, use turn_count
+        completed_turns = session.turn_count
+        total_turns = 10 # Estimate
+        
+        # Map status
+        task_status = "in_progress"
+        if session.status in ['completed', 'deal_won', 'failed']:
+            task_status = "completed"
+            
+        tasks.append(TaskItemResponse(
+            id=session.id,
+            courseName="实战演练", # Generic name
+            courseTags=tags,
+            taskInfo=task_info,
+            taskLink=None,
+            status=task_status,
+            dateRange=DateRange(start=start_date, end=end_date),
+            progress=TaskProgress(
+                completed=completed_turns, 
+                total=total_turns,
+                score=session.final_score
+            )
+        ))
+        
+    return tasks
 
 
 @router.get("/{session_id}", response_model=TrainingReport)

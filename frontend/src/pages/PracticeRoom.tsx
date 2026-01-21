@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { PracticeRoomHeader } from "@/components/practice-room/PracticeRoomHeader";
 import { MessageList, type ChatMessage } from "@/components/practice-room/MessageList";
@@ -8,6 +8,7 @@ import { CoachSidebar, type CoachHint } from "@/components/practice-room/CoachSi
 import type {
   CoachMessage,
   NPCMessage,
+  EndSessionMessage,
   PracticeRoomProps,
   TextMessage,
   WSMessage,
@@ -49,10 +50,23 @@ function parseWSMessage(raw: unknown): WSMessage | null {
     };
     return msg;
   }
+  if (
+    raw.role === "system" &&
+    raw.type === "session_end"
+  ) {
+    const msg: EndSessionMessage = {
+      role: "system",
+      type: "session_end",
+      reportId: typeof raw.reportId === "string" ? raw.reportId : undefined,
+      reason: typeof raw.reason === "string" ? raw.reason : undefined,
+    };
+    return msg;
+  }
   return null;
 }
 
 export function PracticeRoom(props: PracticeRoomProps) {
+  const navigate = useNavigate();
   const wsUrl = useMemo(
     () => {
       const baseUrl = import.meta.env.VITE_WS_URL ?? "ws://localhost:8000/api/v1/ws";
@@ -87,6 +101,15 @@ export function PracticeRoom(props: PracticeRoomProps) {
     const t = window.setInterval(() => {
       const next = incomingQueueRef.current.shift();
       if (!next) return;
+
+      if (next.role === "system" && next.type === "session_end") {
+        if (next.reportId) {
+          navigate(`/history`); // In future: navigate to specific report `/history/${next.reportId}`
+        } else {
+          navigate("/dashboard");
+        }
+        return;
+      }
 
       if (next.role === "npc") {
         const item: ChatMessage = {

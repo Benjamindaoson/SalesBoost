@@ -14,15 +14,20 @@ export default function DashboardPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const navigate = useNavigate();
   
-  const { data: stats } = useQuery({
+  const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ['taskStats'],
     queryFn: taskService.getStats
   });
 
-  const { data: tasks } = useQuery({
+  const { data: tasks, refetch: refetchTasks } = useQuery({
     queryKey: ['tasks', filterStatus],
     queryFn: () => taskService.getTasks({ status: filterStatus })
   });
+
+  const handleRefresh = () => {
+    refetchStats();
+    refetchTasks();
+  };
 
   const tabs = [
     { id: 'all', label: '全部' },
@@ -101,7 +106,7 @@ export default function DashboardPage() {
                     </button>
                 ))}
             </div>
-            <Button variant="ghost" size="icon" className="text-blue-500 rounded-full hover:bg-blue-50">
+            <Button variant="ghost" size="icon" className="text-blue-500 rounded-full hover:bg-blue-50" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4" />
             </Button>
         </div>

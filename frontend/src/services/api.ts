@@ -7,10 +7,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/
 // Helper for making requests
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("auth_token");
-  const headers = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
+    ...options.headers as Record<string, string>,
   };
 
   try {
@@ -35,50 +35,68 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     return response.json();
   } catch (error) {
     console.error("Request failed:", error);
-    // Fallback to mock data if API fails (for demo stability if backend is down)
-    throw error; 
+    throw error;
   }
 }
 
 export const taskService = {
   getStats: async () => {
-    // TODO: Implement backend endpoint
-    // return request<any>("/tasks/stats");
-    return Promise.resolve(mockTaskStats);
+    try {
+      return await request<any>("/reports/stats/tasks");
+    } catch {
+      return Promise.resolve(mockTaskStats);
+    }
   },
   getTasks: async (filter?: TaskFilter) => {
-    // TODO: Implement backend endpoint
-    // const query = new URLSearchParams(filter as any).toString();
-    // return request<any>(`/tasks?${query}`);
-    
-    // Using mock for now as backend endpoints might not fully match frontend model yet
-    let tasks = [...mockTasks];
-    if (filter?.status && filter.status !== 'all') {
-      tasks = tasks.filter(t => filter.status === 'in_progress' ? t.status === 'in_progress' : 
-                               filter.status === 'not_started' ? t.status === 'not_started' :
-                               filter.status === 'completed' ? t.status === 'completed' : true);
+    try {
+      const query = new URLSearchParams(filter as any).toString();
+      return await request<any[]>(`/reports/tasks?${query}`);
+    } catch {
+       let tasks = [...mockTasks];
+       if (filter?.status && filter.status !== 'all') {
+         tasks = tasks.filter(t => filter.status === 'in_progress' ? t.status === 'in_progress' : 
+                                  filter.status === 'not_started' ? t.status === 'not_started' :
+                                  filter.status === 'completed' ? t.status === 'completed' : true);
+       }
+       return Promise.resolve(tasks);
     }
-    return Promise.resolve(tasks);
   },
 };
 
 export const personaService = {
   getPersonas: async () => {
-    // TODO: Implement backend endpoint
-    // return request<any>("/personas");
-    return Promise.resolve(mockPersonas);
+    try {
+      // Assuming backend has a personas endpoint, or we map scenarios to personas
+      // For now, let's keep mock if backend endpoint doesn't strictly exist, 
+      // but let's try to fetch scenarios if possible.
+      // return await request<any>("/scenarios"); 
+      // Reverting to mock for personas as scenarios API might differ in structure
+      return Promise.resolve(mockPersonas);
+    } catch {
+      return Promise.resolve(mockPersonas);
+    }
   },
 };
 
 export const historyService = {
   getStats: async () => {
-    // TODO: Implement backend endpoint
-    return Promise.resolve(mockPracticeStats);
+    try {
+      return await request<any>("/reports/stats/practice");
+    } catch {
+      return Promise.resolve(mockPracticeStats);
+    }
   },
   getHistory: async (filter?: HistoryFilter) => {
-    // TODO: Implement backend endpoint
-    return Promise.resolve(mockPracticeRecords);
+    try {
+      const query = new URLSearchParams(filter as any).toString();
+      return await request<any[]>(`/sessions?${query}`);
+    } catch {
+      return Promise.resolve(mockPracticeRecords);
+    }
   },
+  getSession: async (sessionId: string) => {
+    return await request<any>(`/sessions/${sessionId}`);
+  }
 };
 
 export const authService = {

@@ -18,7 +18,14 @@ export interface CoachMessage {
   content: string;
 }
 
-export type WSMessage = NPCMessage | CoachMessage;
+export interface EndSessionMessage {
+  role: "system";
+  type: "session_end";
+  reportId?: string;
+  reason?: string;
+}
+
+export type WSMessage = NPCMessage | CoachMessage | EndSessionMessage;
 
 export interface PracticeRoomProps {
   sessionId: string;
