@@ -14,7 +14,8 @@ SalesBoost Configuration Management (基础设施层)
 ├── LLM 配置: OPENAI_API_KEY, OPENAI_MODEL, OPENAI_BASE_URL
 ├── 会话管理: SESSION_TIMEOUT_MINUTES, MAX_ACTIVE_SESSIONS
 ├── FSM 规则: OPENING_TO_DISCOVERY_TURN_THRESHOLD
-└── 性能调优: WEBSOCKET_PING_INTERVAL, GRAPH_MAX_RETRIES
+├── 性能调优: WEBSOCKET_PING_INTERVAL, GRAPH_MAX_RETRIES
+└── 数据服务: DATABASE_URL, REDIS_URL, QDRANT_URL
 
 使用示例:
     from app.core.config import get_settings
@@ -22,8 +23,9 @@ SalesBoost Configuration Management (基础设施层)
     model_name = settings.OPENAI_MODEL
 """
 
-from typing import Optional
+from typing import Optional, Any
 from enum import Enum
+from pydantic import field_validator
 
 try:
     from pydantic_settings import BaseSettings
@@ -86,10 +88,26 @@ class Settings(BaseSettings):
     GRAPH_RETRY_DELAY: float = 1.0
     
     # 数据库配置
+    # 默认使用本地 SQLite，生产环境通过环境变量覆盖
     DATABASE_URL: str = "sqlite+aiosqlite:///./salesboost.db"
     
     # Redis 配置
     REDIS_URL: str = "redis://localhost:6379/0"
+
+    # Qdrant 配置
+    QDRANT_URL: Optional[str] = None
+    QDRANT_API_KEY: Optional[str] = None
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: Optional[str]) -> Any:
+        """
+        处理数据库连接字符串
+        1. Neon Postgres 默认使用 postgres:// 协议头，SQLAlchemy 需要 postgresql://
+        """
+        if isinstance(v, str) and v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql://", 1)
+        return v
 
     class Config:
         """Pydantic 配置"""
