@@ -48,6 +48,8 @@ from app.services.state_updater import StateUpdater
 from app.services.adoption_tracker import AdoptionTracker
 from app.services.strategy_analyzer import StrategyAnalyzer
 from app.services.curriculum_planner import CurriculumPlanner
+from app.services.memory_tiering import MemoryTierManager
+from app.services.context_bus import ContextBus
 from app.models.config_models import ScenarioConfig, CustomerPersona
 from app.models.runtime_models import Session, Message
 
@@ -89,6 +91,8 @@ class SessionOrchestrator:
         self.adoption_tracker = AdoptionTracker()
         self.strategy_analyzer = StrategyAnalyzer()
         self.curriculum_planner = CurriculumPlanner()
+        self.memory_manager = MemoryTierManager()
+        self.context_bus = ContextBus()
         
         # 会话状态
         self.fsm_state: Optional[FSMState] = None
@@ -119,6 +123,7 @@ class SessionOrchestrator:
         self.user_id = user_id
         self.fsm_state = self.fsm_engine.create_initial_state()
         self.conversation_history = []
+        self.context_bus.reset()
         
         logger.info(f"Session initialized: {session_id}, user: {user_id}")
         return self.fsm_state
@@ -164,6 +169,15 @@ class SessionOrchestrator:
             "turn": current_turn,
             "timestamp": turn_start_time.isoformat(),
         })
+        if self.user_id:
+            self.memory_manager.add_episode(
+                user_id=self.user_id,
+                session_id=self.session_id or "unknown",
+                content=user_message,
+                metadata={"stage": self.fsm_state.current_stage.value},
+            )
+            if current_turn % 3 == 0:
+                self.memory_manager.consolidate(self.user_id)
 
         # ========== Step 1: Context & Knowledge (P0-2, P0-4) ==========
         full_context = {}
@@ -173,6 +187,11 @@ class SessionOrchestrator:
             context_builder.add_layer("state", f"当前阶段: {self.fsm_state.current_stage.value}", priority=1)
             history_str = "\n".join([f"{m['role']}: {m['content']}" for m in self.conversation_history[-5:]])
             context_builder.add_layer("history", history_str, priority=2)
+            if self.user_id:
+                memory_hits = self.memory_manager.retrieve(self.user_id, user_message, top_k=3)
+                memory_summary = self._format_memory_hits(memory_hits)
+                if memory_summary:
+                    context_builder.add_layer("memory", memory_summary, priority=2, source="memory")
             
             # Knowledge Retrieval (Fast Path 必需)
             start_t = time.time()
@@ -205,6 +224,8 @@ class SessionOrchestrator:
             conversation_history=self.conversation_history,
             stage_config=self.fsm_engine.get_stage_config(self.fsm_state.current_stage),
         )
+        self.context_bus.publish("intent", self._dump_model(intent_result))
+        self.context_bus.publish("state", {"stage": self.fsm_state.current_stage.value})
         if self.v3_enabled:
             trace_manager.record_agent_call(trace_id, AgentDecision(
                 agent_name="IntentGate",
@@ -219,11 +240,15 @@ class SessionOrchestrator:
         # 注意：这里的 RAG 可能是冗余的，如果 ContextBuilder 已经检索了知识
         # 为了兼容现有架构，我们只在 V3 关闭时调用完整 RAG，或者在 V3 中仅作补充
         # 这里简化处理：V3 模式下 rag_agent 复用 context
+        rag_context = {
+            **full_context,
+            **self.context_bus.view_for("rag"),
+        }
         rag_result, compliance_result = await asyncio.gather(
             self.rag_agent.retrieve(
                 query=user_message,
                 stage=self.fsm_state.current_stage,
-                context=full_context,
+                context=rag_context,
             ),
             self.compliance_agent.check(
                 message=user_message,
@@ -582,6 +607,26 @@ class SessionOrchestrator:
             "current_stage": self.fsm_state.current_stage.value if self.fsm_state else None,
             "scenario": self.scenario_config.name if self.scenario_config else None,
         }
+
+    def _format_memory_hits(self, memory_hits: Dict[str, Any]) -> str:
+        if not memory_hits:
+            return ""
+        lines = []
+        for tier in ("semantic", "procedural", "episodic"):
+            hits = memory_hits.get(tier, [])
+            if not hits:
+                continue
+            lines.append(f"[{tier.upper()}]")
+            for hit in hits:
+                lines.append(f"- {hit.content}")
+        return "\n".join(lines)
+
+    def _dump_model(self, obj: Any) -> Any:
+        if hasattr(obj, "model_dump"):
+            return obj.model_dump()
+        if hasattr(obj, "dict"):
+            return obj.dict()
+        return obj
     
     def is_session_completed(self) -> bool:
         """

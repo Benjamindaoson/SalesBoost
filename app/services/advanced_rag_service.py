@@ -17,6 +17,8 @@ from app.services.advanced_rag.rag_fusion import RAGFusion
 from app.services.advanced_rag.context_compressor import ContextCompressor
 from app.services.advanced_rag.adaptive_retriever import AdaptiveRetriever
 from app.services.advanced_rag.multi_vector_retriever import MultiVectorRetriever
+from app.services.advanced_rag.agentic_controller import AgenticController
+from app.security.context_safety import sanitize_documents
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,8 @@ class AdvancedRAGService:
         enable_adaptive: bool = True,  # 自适应检索
         enable_multi_vector: bool = False,  # 多向量检索（默认关闭）
         enable_context_compression: bool = False,  # 上下文压缩（默认关闭）
+        enable_agentic: bool = True,  # Agentic RAG（默认开启）
+        enable_context_security: bool = True,  # 上下文安全过滤
         enable_caching: bool = True,  # 查询缓存
         financial_optimized: bool = True,  # 金融场景优化
     ):
@@ -158,6 +162,13 @@ class AdvancedRAGService:
                 logger.warning(f"Failed to enable multi-vector retrieval: {e}")
         else:
             self._multi_vector_enabled = False
+
+        # Agentic RAG
+        self.agentic_controller = None
+        self._agentic_enabled = enable_agentic
+
+        # 上下文安全
+        self.enable_context_security = enable_context_security
         
         # 缓存配置
         self.enable_caching = enable_caching
@@ -173,12 +184,19 @@ class AdvancedRAGService:
         if financial_optimized:
             logger.info("Financial scene optimization enabled")
     
-    def _get_cache_key(self, query: str, top_k: int, filter_meta: Optional[Dict]) -> str:
+    def _get_cache_key(
+        self,
+        query: str,
+        top_k: int,
+        filter_meta: Optional[Dict],
+        mode_flags: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """生成缓存key"""
         cache_data = {
             "query": query,
             "top_k": top_k,
             "filter_meta": filter_meta or {},
+            "mode": mode_flags or {},
         }
         cache_str = json.dumps(cache_data, sort_keys=True)
         return hashlib.md5(cache_str.encode()).hexdigest()
@@ -219,6 +237,7 @@ class AdvancedRAGService:
         use_adaptive: Optional[bool] = None,  # None = auto
         use_multi_vector: bool = False,
         use_compression: bool = False,
+        use_agentic: Optional[bool] = None,
     ) -> List[Dict[str, Any]]:
         """
         高级检索入口
@@ -238,7 +257,18 @@ class AdvancedRAGService:
         """
         # 检查缓存
         if self.enable_caching:
-            cache_key = self._get_cache_key(query, top_k, filter_meta)
+            cache_key = self._get_cache_key(
+                query,
+                top_k,
+                filter_meta,
+                mode_flags={
+                    "rag_fusion": use_rag_fusion,
+                    "adaptive": use_adaptive,
+                    "multi_vector": use_multi_vector,
+                    "compression": use_compression,
+                    "agentic": use_agentic,
+                },
+            )
             cache_file = self.cache_dir / f"query_{cache_key}.json"
             
             if cache_file.exists():
@@ -250,6 +280,24 @@ class AdvancedRAGService:
                 except Exception as e:
                     logger.warning(f"Failed to load cache: {e}")
         
+        # Agentic RAG（主动检索与纠错）
+        if (use_agentic is True) or (use_agentic is None and self._agentic_enabled):
+            if self.agentic_controller is None:
+                self.agentic_controller = AgenticController(base_retriever=self)
+            try:
+                results = await self.agentic_controller.search(
+                    query=query,
+                    top_k=top_k,
+                    filter_meta=filter_meta,
+                    context=context,
+                )
+                results = await self._postprocess_results(results, use_compression, query)
+                if self.enable_caching and results:
+                    self._save_query_cache(cache_key, results)
+                return results
+            except Exception as e:
+                logger.error(f"Agentic search failed: {e}, falling back")
+
         # 自适应检索（如果启用）
         if (use_adaptive is True) or (use_adaptive is None and self._adaptive_enabled):
             if self.adaptive_retriever is None:
@@ -267,6 +315,7 @@ class AdvancedRAGService:
                 if self.enable_caching and results:
                     self._save_query_cache(cache_key, results)
                 
+                results = await self._postprocess_results(results, use_compression, query)
                 return results
             except Exception as e:
                 logger.error(f"Adaptive search failed: {e}, falling back")
@@ -286,6 +335,7 @@ class AdvancedRAGService:
                 if self.enable_caching and results:
                     self._save_query_cache(cache_key, results)
                 
+                results = await self._postprocess_results(results, use_compression, query)
                 return results
             except Exception as e:
                 logger.error(f"Multi-vector search failed: {e}, falling back")
@@ -299,6 +349,7 @@ class AdvancedRAGService:
                     top_k=top_k,
                     filter_meta=filter_meta,
                 )
+                results = await self._postprocess_results(results, use_compression, query)
                 return results
             except Exception as e:
                 logger.error(f"RAG-Fusion failed: {e}, falling back to hybrid search")
@@ -346,9 +397,11 @@ class AdvancedRAGService:
                             "rank": rerank_result["rank"],
                             "source": "hybrid_reranked",
                         })
+                    final_results = await self._postprocess_results(final_results, use_compression, query)
                     return final_results
-                
-                return results[:top_k]
+
+                results = await self._postprocess_results(results[:top_k], use_compression, query)
+                return results
                 
             except Exception as e:
                 logger.error(f"Hybrid search failed: {e}, falling back to vector search")
@@ -362,7 +415,26 @@ class AdvancedRAGService:
             rerank=True,
         )
         
-        # 上下文压缩（如果启用）
+        results = await self._postprocess_results(results, use_compression, query)
+        
+        # 保存缓存
+        if self.enable_caching and results:
+            self._save_query_cache(cache_key, results)
+        
+        return results
+
+    async def _postprocess_results(
+        self,
+        results: List[Dict[str, Any]],
+        use_compression: bool,
+        query: str,
+    ) -> List[Dict[str, Any]]:
+        if not results:
+            return results
+
+        if self.enable_context_security:
+            results = sanitize_documents(results)
+
         if use_compression and self.context_compressor and results:
             try:
                 documents = [r["content"] for r in results]
@@ -372,18 +444,13 @@ class AdvancedRAGService:
                     max_tokens=300,
                     preserve_financial_data=self.financial_optimized,
                 )
-                
                 for i, comp in enumerate(compressed):
                     if i < len(results):
                         results[i]["content"] = comp["compressed"]
                         results[i]["compression_ratio"] = comp["compression_ratio"]
             except Exception as e:
                 logger.warning(f"Context compression failed: {e}")
-        
-        # 保存缓存
-        if self.enable_caching and results:
-            self._save_query_cache(cache_key, results)
-        
+
         return results
     
     def _save_query_cache(self, cache_key: str, results: List[Dict]) -> None:
@@ -425,4 +492,3 @@ class AdvancedRAGService:
         except Exception as e:
             logger.error(f"Failed to build BM25 index: {e}")
             return False
-

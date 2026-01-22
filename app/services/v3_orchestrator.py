@@ -35,6 +35,8 @@ from app.security.runtime_guard import runtime_guard, SecurityAction
 from app.services.context_engine import ContextBuilder
 from app.services.knowledge_engine import knowledge_engine
 from app.schemas.trace import AgentDecision, CallType
+from app.services.memory_tiering import MemoryTierManager
+from app.services.context_bus import ContextBus
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +73,8 @@ class V3Orchestrator:
         self.conversation_history: list[Dict[str, Any]] = []
         self.session_id: Optional[str] = None
         self.user_id: Optional[str] = None
+        self.memory_manager = MemoryTierManager()
+        self.context_bus = ContextBus()
         
         # 指标追踪
         self.metrics = {
@@ -96,6 +100,7 @@ class V3Orchestrator:
         self.user_id = user_id
         self.fsm_state = fsm_state
         self.conversation_history = []
+        self.context_bus.reset()
         self.budget_manager.initialize_session(session_id)
         logger.info(f"V3 Orchestrator initialized: {session_id}")
     
@@ -121,6 +126,15 @@ class V3Orchestrator:
             "turn": turn_number,
             "timestamp": datetime.utcnow().isoformat(),
         })
+        if self.user_id:
+            self.memory_manager.add_episode(
+                user_id=self.user_id,
+                session_id=self.session_id,
+                content=user_message,
+                metadata={"stage": self.fsm_state.current_stage.value},
+            )
+            if turn_number % 3 == 0:
+                self.memory_manager.consolidate(self.user_id)
         
         fast_trace_id = trace_manager.start_trace(self.session_id, turn_number, CallType.FAST_PATH)
         slow_trace_id: Optional[str] = None
@@ -212,6 +226,11 @@ class V3Orchestrator:
         context_builder.add_layer("state", f"stage={self.fsm_state.current_stage.value}", priority=1, source="fsm")
         history_str = "\n".join([f"{m['role']}: {m['content']}" for m in self.conversation_history[-5:]])
         context_builder.add_layer("history", history_str, priority=2, source="memory")
+        if self.user_id:
+            memory_hits = self.memory_manager.retrieve(self.user_id, user_message, top_k=3)
+            memory_summary = self._format_memory_hits(memory_hits)
+            if memory_summary:
+                context_builder.add_layer("memory", memory_summary, priority=2, source="memory")
         context_builder.add_layer("knowledge", knowledge_engine.format_for_prompt(evidences), priority=3, source="retriever")
         _ = context_builder.build()
         trace_manager.set_context_usage(fast_trace_id, context_builder.get_usage())
@@ -560,6 +579,19 @@ class V3Orchestrator:
             evaluation=evaluation,
             db=db,
         )
+
+    def _format_memory_hits(self, memory_hits: Dict[str, Any]) -> str:
+        if not memory_hits:
+            return ""
+        lines = []
+        for tier in ("semantic", "procedural", "episodic"):
+            hits = memory_hits.get(tier, [])
+            if not hits:
+                continue
+            lines.append(f"[{tier.upper()}]")
+            for hit in hits:
+                lines.append(f"- {hit.content}")
+        return "\n".join(lines)
     
     def get_metrics(self) -> Dict[str, Any]:
         """获取指标"""

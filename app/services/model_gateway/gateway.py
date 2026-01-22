@@ -19,6 +19,7 @@ from app.services.model_gateway.router import ModelRouter
 from app.services.model_gateway.budget import BudgetManager
 from app.services.model_gateway.providers import create_provider
 from app.services.model_gateway.providers.base import BaseProvider
+from app.services.model_gateway.prefix_cache import PromptCache
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ class ModelGateway:
         self.budget_manager = budget_manager or BudgetManager()
         # Provider 缓存：provider_type -> BaseProvider
         self.provider_cache: Dict[str, BaseProvider] = {}
+        self.prompt_cache = PromptCache()
         # 调用统计
         self.call_stats: Dict[str, int] = {}
         # 指标追踪
@@ -46,6 +48,7 @@ class ModelGateway:
         context: RoutingContext,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        use_prompt_cache: bool = True,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -69,6 +72,22 @@ class ModelGateway:
         try:
             # 1. 路由决策
             decision = self.router.route(context)
+
+            # 1.1 Prompt Cache (prefix/response cache)
+            cache_key = None
+            if use_prompt_cache:
+                cache_key = self.prompt_cache.build_key(
+                    messages=messages,
+                    model=decision.model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+                cached = self.prompt_cache.get(cache_key)
+                if cached:
+                    cached["cache_hit"] = True
+                    cached["provider"] = decision.provider.value
+                    cached["model"] = decision.model
+                    return cached
             
             # 2. 检查预算
             is_available, remaining = self.budget_manager.check_budget(
@@ -185,6 +204,10 @@ class ModelGateway:
             result["budget_remaining"] = remaining_after
             result["downgrade_reason"] = downgrade_reason
             result["fallback_used"] = used_fallback
+            result["cache_hit"] = False
+
+            if cache_key:
+                self.prompt_cache.set(cache_key, result)
             
             return result
             

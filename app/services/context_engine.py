@@ -21,7 +21,9 @@ class ContextPolicy(BaseModel):
         "system": 500,
         "history": 1500,
         "evidence": 1500,
-        "state": 500
+        "state": 500,
+        "memory": 600,
+        "blackboard": 400,
     }
 
 class ContextBuilder:
