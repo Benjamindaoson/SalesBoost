@@ -225,3 +225,4 @@ pip install -r requirements.txt
 - `app/sales_simulation/schemas/scenario.py`: Scenario schemas
 - `app/sales_simulation/schemas/trajectory.py`: Trajectory schemas
 
+

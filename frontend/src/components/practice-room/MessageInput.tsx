@@ -11,8 +11,12 @@ export function MessageInput(props: {
   disabled?: boolean;
   sending?: boolean;
   onSend: (text: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
 }) {
-  const [value, setValue] = useState("");
+  const [internalValue, setInternalValue] = useState("");
+  const value = props.value !== undefined ? props.value : internalValue;
+  const setValue = props.onChange || setInternalValue;
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
@@ -61,6 +65,9 @@ export function MessageInput(props: {
     if (!canSend) return;
     props.onSend(trimmed);
     setValue("");
+    if (props.onChange) {
+      props.onChange("");
+    }
   };
 
   return (

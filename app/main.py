@@ -29,6 +29,7 @@ from app.core.exceptions import SalesBoostException, create_error_response
 from app.core.database import init_db, close_db
 from app.core.redis import get_redis, close_redis
 from app.api.deps import get_session_count
+from app.api.middleware.tenant_middleware import TenantMiddleware
 
 # API Routers
 from app.api.endpoints import websocket as ws_router
@@ -37,6 +38,11 @@ from app.api.endpoints import scenarios as scenarios_router
 from app.api.endpoints import reports as reports_router
 from app.api.endpoints import knowledge as knowledge_router
 from app.api.endpoints import profile as profile_router
+from app.api.endpoints import auth as auth_router
+from app.api.endpoints import admin as admin_router
+from app.api.endpoints import mvp_suggest as mvp_suggest_router
+from app.api.endpoints import mvp_compliance as mvp_compliance_router
+from app.api.endpoints import mvp_feedback as mvp_feedback_router
 
 # 配置日志
 logging.basicConfig(
@@ -120,6 +126,12 @@ def create_application(settings: Settings = None) -> FastAPI:
 
     # 配置中间件
     _configure_middleware(app, settings)
+    
+    # 注册多租户中间件 (必须在 AuthMiddleware 之后，但在业务逻辑之前)
+    # 由于 BaseHTTPMiddleware 的执行顺序，后添加的先执行
+    # 我们希望 TenantMiddleware 在 Auth 解析出 User 之后执行，或者直接从 Header 解析
+    # 这里简单添加到中间件栈中
+    app.add_middleware(TenantMiddleware)
 
     # 配置路由
     _configure_routes(app)
@@ -181,11 +193,16 @@ def _configure_routes(app: FastAPI) -> None:
 
     # 注册 API 路由
     app.include_router(ws_router.router, tags=["websocket"])
+    app.include_router(auth_router.router, prefix="/api/v1", tags=["auth"])
     app.include_router(sessions_router.router, prefix="/api/v1", tags=["sessions"])
     app.include_router(scenarios_router.router, prefix="/api/v1", tags=["scenarios"])
     app.include_router(reports_router.router, prefix="/api/v1", tags=["reports"])
     app.include_router(knowledge_router.router, prefix="/api/v1/knowledge", tags=["knowledge"])
     app.include_router(profile_router.router, prefix="/api/v1/profile", tags=["profile"])
+    app.include_router(admin_router.router, prefix="/api/v1", tags=["admin"])
+    app.include_router(mvp_suggest_router.router, prefix="/api/v1", tags=["mvp"])
+    app.include_router(mvp_compliance_router.router, prefix="/api/v1", tags=["mvp"])
+    app.include_router(mvp_feedback_router.router, prefix="/api/v1", tags=["mvp"])
 
 
 def _configure_exception_handlers(app: FastAPI) -> None:

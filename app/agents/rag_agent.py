@@ -104,18 +104,21 @@ class RAGAgent:
     ) -> RAGOutput:
         """
         检索相关知识
-        
-        Args:
-            query: 检索查询
-            stage: 当前销售阶段
-            context: 上下文信息
-            top_k: 返回结果数量
-            mode: 检索模式 ("basic" | "advanced" | "graph" | "hybrid")
-            
-        Returns:
-            RAG 检索结果
         """
         logger.info(f"RAG retrieval: query='{query[:50]}...', stage={stage.value}, mode={mode}")
+        
+        # PRD B2: RAG 查询必须标注使用的 version_id
+        # 我们需要在查询上下文中查找 version 限制
+        active_version_id = context.get("active_version_id")
+        
+        # 注入过滤条件到 context['filter_meta']
+        if active_version_id:
+            if "filter_meta" not in context:
+                context["filter_meta"] = {}
+            # 注意：如果后端知识库每次更新都是新文档，则 active_version_id 是唯一标识
+            # 如果是 Qdrant 中存储，metadata 中可能有 version_id
+            context["filter_meta"]["is_active"] = True # 默认只查 active
+            # context["filter_meta"]["version_id"] = active_version_id # 如果指定了特定版本
         
         # 构建检索查询，包含阶段信息以增强相关性
         search_query = f"{stage.value}: {query}"
@@ -210,6 +213,10 @@ class RAGAgent:
             meta = item.get("metadata", {})
             content_type = meta.get("type", "knowledge")
             source = meta.get("source", "Knowledge Base")
+            
+            # PRD B3: 必须标注版本号
+            version_num = meta.get("version_number", "v1")
+            source = f"{source} (v{version_num})"
             
             # 添加 GraphRAG 来源标记
             if item.get("graph_source"):

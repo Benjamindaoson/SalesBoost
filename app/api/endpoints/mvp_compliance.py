@@ -1,0 +1,98 @@
+"""
+MVP 合规检测 API - 实时合规检测
+"""
+import logging
+import uuid
+from datetime import datetime
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db_session
+from app.schemas.mvp import ComplianceCheckRequest, ComplianceCheckResponse, RiskLevel
+from app.agents.compliance_agent import ComplianceAgent
+from app.models.compliance_models import ComplianceLog
+from app.schemas.fsm import SalesStage
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/mvp/compliance", tags=["mvp"])
+
+compliance_agent = ComplianceAgent()
+
+
+@router.post("/check", response_model=ComplianceCheckResponse)
+async def check_compliance(
+    request: ComplianceCheckRequest,
+    session_id: Optional[str] = Query(None),
+    turn_number: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    实时合规检测（debounce调用）
+    
+    输入：{text, context}
+    输出：{risk_level, risk_tags, safe_rewrite, original, reason}
+    """
+    try:
+        # 调用合规检测
+        compliance_result = await compliance_agent.check(
+            message=request.text,
+            stage=SalesStage.OBJECTION_HANDLING,  # 默认阶段，实际可以从context获取
+            context=request.context,
+        )
+        
+        # 确定风险等级
+        risk_level = RiskLevel.OK
+        if compliance_result.risk_level == "BLOCK":
+            risk_level = RiskLevel.BLOCK
+        elif compliance_result.risk_level == "WARN":
+            risk_level = RiskLevel.WARN
+        
+        # 提取风险标签
+        risk_tags = [flag.risk_type for flag in compliance_result.risk_flags]
+        
+        # 生成轻提示文案
+        reason = None
+        if risk_level != RiskLevel.OK:
+            if risk_level == RiskLevel.BLOCK:
+                reason = "这句话有合规风险，建议这样说："
+            else:
+                reason = "这句话可以更安全，建议这样说："
+        
+        # 如果命中风险，记录日志
+        if risk_level != RiskLevel.OK and session_id:
+            try:
+                log_entry = ComplianceLog(
+                    id=str(uuid.uuid4()),
+                    session_id=session_id,
+                    turn_number=turn_number or 0,
+                    original=request.text,
+                    rewrite=compliance_result.safe_rewrite,
+                    risk_tags=risk_tags,
+                    risk_level=risk_level.value,
+                    detected_at=datetime.utcnow(),
+                )
+                db.add(log_entry)
+                await db.commit()
+            except Exception as e:
+                logger.error(f"Failed to log compliance event: {e}")
+        
+        return ComplianceCheckResponse(
+            risk_level=risk_level,
+            risk_tags=risk_tags,
+            safe_rewrite=compliance_result.safe_rewrite,
+            original=request.text,
+            reason=reason,
+        )
+        
+    except Exception as e:
+        logger.error(f"Compliance check failed: {e}", exc_info=True)
+        # Fail-closed: 如果检测失败，返回BLOCK
+        return ComplianceCheckResponse(
+            risk_level=RiskLevel.BLOCK,
+            risk_tags=["system_error"],
+            safe_rewrite="系统检测异常，请稍后重试。",
+            original=request.text,
+            reason="系统检测异常",
+        )
+

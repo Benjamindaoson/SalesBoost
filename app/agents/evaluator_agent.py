@@ -6,7 +6,10 @@ Evaluator / Judge Agent
 import logging
 from typing import Dict, Any, List, Optional, Type
 from pydantic import BaseModel
+from sqlalchemy import select
 
+from app.core.database import get_db_session_context
+from app.models.evaluation_models import EvaluationDimension
 from app.agents.base import BaseAgent
 from app.schemas.agent_outputs import (
     EvaluatorOutput,
@@ -26,32 +29,67 @@ class EvaluatorAgent(BaseAgent):
     评估 Agent
     
     核心职责：
-    - 对销售员的每轮表现进行五维评分
+    - 对销售员的每轮表现进行动态维度评分
     - 判断是否推进了阶段目标
     - 提取本轮填充的 Slot
     - 给出改进建议
     
-    五维评分标准（PRD 强制要求）：
-    1. Integrity（完整性）：信息是否完整，是否遗漏关键点
-    2. Relevance（相关性）：回复是否切题，是否与客户需求相关
-    3. Correctness（正确性）：信息是否准确，是否有错误陈述
-    4. Logic（逻辑性）：表达是否有条理，论证是否清晰
-    5. Compliance（合规性）：是否符合销售规范，是否有违规表述
+    评分维度：
+    - 从数据库加载配置 (EvaluationDimension)
+    - 动态生成 System Prompt
     """
-    
+
     def __init__(self, **kwargs):
         super().__init__(temperature=0.1, **kwargs)  # 评估需要高确定性
         self.strategy_analyzer = StrategyAnalyzer()
-    
+        self._dimensions_cache: List[EvaluationDimension] = []
+        self._last_prompt_cache: str = ""
+
+    async def _load_dimensions(self):
+        """加载评估维度配置"""
+        async with get_db_session_context() as db:
+            result = await db.execute(select(EvaluationDimension).where(EvaluationDimension.is_active == True))
+            self._dimensions_cache = result.scalars().all()
+            
+    async def _build_system_prompt(self) -> str:
+        """动态构建 System Prompt"""
+        if not self._dimensions_cache:
+            await self._load_dimensions()
+            
+        # 如果数据库为空，回退到默认
+        if not self._dimensions_cache:
+            return self._fallback_system_prompt
+            
+        dimensions_str = ""
+        for dim in self._dimensions_cache:
+            criteria = dim.criteria_prompt or "Based on general professional standards."
+            dimensions_str += f"{dim.name} (Weight: {dim.weight}):\n{criteria}\n\n"
+            
+        return f"""You are the **Professional Evaluator** for SalesBoost.
+
+## Scoring Dimensions
+Please score based on the following configured dimensions:
+
+{dimensions_str}
+
+## Output Format
+Strictly follow the JSON schema provided.
+"""
+
     @property
-    def system_prompt(self) -> str:
+    def _fallback_system_prompt(self) -> str:
         try:
             with open("app/prompts/evaluator_prompt.md", "r", encoding="utf-8") as f:
                 return f.read()
         except Exception:
-            # Fallback
-            return """你是 SalesBoost 系统的【专业评估官】... (Fallback)"""
-    
+            return """You are the SalesBoost Evaluator. Score on: Integrity, Relevance, Correctness, Logic, Compliance."""
+
+    @property
+    def system_prompt(self) -> str:
+        # Note: This property is sync in BaseAgent, but we need async data loading.
+        # Temporary workaround: return cached prompt or fallback
+        return self._last_prompt_cache or self._fallback_system_prompt
+
     @property
     def output_schema(self) -> Type[BaseModel]:
         return EvaluatorOutput
@@ -79,6 +117,10 @@ class EvaluatorAgent(BaseAgent):
         Returns:
             (评估结果, 策略分析结果)
         """
+        # 1. 动态构建 Prompt
+        system_prompt = await self._build_system_prompt()
+        self._last_prompt_cache = system_prompt
+        
         # 获取上一轮 NPC 消息用于情境判断
         prev_npc_message = ""
         for msg in reversed(conversation_history[:-1]):

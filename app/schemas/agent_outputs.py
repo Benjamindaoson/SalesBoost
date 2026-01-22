@@ -144,6 +144,9 @@ class ComplianceOutput(BaseModel):
     blocked: bool = Field(default=False, description="是否被拦截")
     block_reason: Optional[str] = Field(None, description="拦截原因")
     sanitized_message: Optional[str] = Field(None, description="净化后的消息（如果需要）")
+    # MVP 增强字段
+    risk_level: str = Field(default="OK", description="风险等级: OK/WARN/BLOCK")
+    safe_rewrite: Optional[str] = Field(None, description="完整的安全改写版本（短句，可直接替换发送）")
 
 
 # ============================================================
@@ -156,12 +159,12 @@ class OrchestratorTurnResult(BaseModel):
     user_message: str
     
     # 各 Agent 输出
-    intent_result: IntentGateOutput
-    rag_result: RAGOutput
-    compliance_result: ComplianceOutput
-    npc_result: NPCOutput
-    coach_result: CoachOutput
-    evaluator_result: EvaluatorOutput
+    intent_result: Optional[IntentGateOutput] = None
+    rag_result: Optional[RAGOutput] = None
+    compliance_result: Optional[ComplianceOutput] = None
+    npc_result: Optional[NPCOutput] = None
+    coach_result: Optional[CoachOutput] = None
+    evaluator_result: Optional[EvaluatorOutput] = None
     
     # 策略分析（销冠能力复制系统）
     strategy_analysis: Optional[Dict[str, Any]] = Field(
@@ -178,12 +181,13 @@ class OrchestratorTurnResult(BaseModel):
     )
     
     # FSM 状态
-    transition_decision: TransitionDecision
-    fsm_state_snapshot: FSMState
+    transition_decision: Optional[TransitionDecision] = None
+    fsm_state_snapshot: Optional[FSMState] = None
     
     # 元数据
-    processing_time_ms: float
+    processing_time_ms: float = 0.0
     timestamp: str
+    trace_id: Optional[str] = None
 
 
 class SessionCompleteResult(BaseModel):

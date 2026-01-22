@@ -76,6 +76,12 @@ class Settings(BaseSettings):
     # 会话管理
     SESSION_TIMEOUT_MINUTES: int = 60
     MAX_ACTIVE_SESSIONS: int = 100
+    
+    # 认证配置
+    SECRET_KEY: str = "your-secret-key-change-in-production"  # 生产环境必须更改
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "admin"
 
     # FSM 配置
     FSM_OPENING_TO_DISCOVERY_TURN_THRESHOLD: int = 2  # Opening -> Discovery 需要的对话轮数
@@ -97,6 +103,18 @@ class Settings(BaseSettings):
     # Qdrant 配置
     QDRANT_URL: Optional[str] = None
     QDRANT_API_KEY: Optional[str] = None
+    
+    # V3 Architecture 配置
+    AGENTIC_V3_ENABLED: bool = False  # 是否启用 V3 架构
+    
+    # 多模型 Provider 配置
+    QWEN_API_KEY: Optional[str] = None
+    DEEPSEEK_API_KEY: Optional[str] = None
+    
+    # Model Gateway 预算配置
+    MODEL_BUDGET_SESSION_TOKENS: int = 10000  # 会话预算 tokens
+    MODEL_BUDGET_TURN_TOKENS: int = 2000  # 每轮预算 tokens
+    MODEL_BUDGET_EMERGENCY_RESERVE: float = 0.1  # 紧急储备比例
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

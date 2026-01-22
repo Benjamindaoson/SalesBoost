@@ -230,14 +230,26 @@ class ComplianceAgent(BaseAgent):
             if high_risks:
                 block_reason = f"检测到 {len(high_risks)} 个高风险表述：{high_risks[0].risk_reason}"
         
-        # 生成净化消息
+        # 生成净化消息和安全改写版本
         sanitized_message = None
+        safe_rewrite = None
+        risk_level = "OK"
+        
         if risk_flags:
             sanitized_message = self._sanitize_message(message, risk_flags)
+            # 生成完整的安全改写版本（MVP要求）
+            safe_rewrite = self._generate_safe_rewrite(message, risk_flags)
+            
+            # 确定风险等级
+            high_risks = [f for f in risk_flags if f.severity == "high"]
+            if high_risks:
+                risk_level = "BLOCK"
+            elif risk_flags:
+                risk_level = "WARN"
         
         is_compliant = len(risk_flags) == 0
         
-        logger.info(f"Compliance result: compliant={is_compliant}, blocked={blocked}, risks={len(risk_flags)}")
+        logger.info(f"Compliance result: compliant={is_compliant}, blocked={blocked}, risks={len(risk_flags)}, level={risk_level}")
         
         return ComplianceOutput(
             is_compliant=is_compliant,
@@ -245,6 +257,8 @@ class ComplianceAgent(BaseAgent):
             blocked=blocked,
             block_reason=block_reason,
             sanitized_message=sanitized_message,
+            risk_level=risk_level,
+            safe_rewrite=safe_rewrite,
         )
     
     async def _llm_deep_check(
@@ -344,6 +358,56 @@ class ComplianceAgent(BaseAgent):
                 sanitized = sanitized.replace(flag.original_text, f"[建议修改: {flag.safe_alternative}]")
         
         return sanitized
+    
+    def _generate_safe_rewrite(
+        self,
+        message: str,
+        risk_flags: List[RiskFlag],
+    ) -> str:
+        """
+        生成完整的安全改写版本（MVP要求：短句，可直接替换发送）
+        
+        Args:
+            message: 原始消息
+            risk_flags: 风险标记列表
+            
+        Returns:
+            完整的安全改写版本
+        """
+        # 优先使用第一个高风险标记的替代方案
+        high_risks = [f for f in risk_flags if f.severity == "high"]
+        if high_risks and high_risks[0].safe_alternative:
+            # 如果有完整替代方案，使用它
+            alternative = high_risks[0].safe_alternative
+            # 尝试在消息中替换风险文本
+            original_text = high_risks[0].original_text
+            if original_text != "(LLM 检测)" and original_text in message:
+                rewrite = message.replace(original_text, alternative)
+                # 确保改写版本不超过220字符
+                if len(rewrite) <= 220:
+                    return rewrite
+        
+        # 如果没有完整替代，生成通用安全版本
+        # 移除所有风险词汇，用安全表述替换
+        safe_message = message
+        for flag in risk_flags:
+            if flag.safe_alternative:
+                # 简单替换（实际可以用更智能的NLP）
+                safe_message = safe_message.replace(flag.original_text, flag.safe_alternative)
+        
+        # 如果替换后仍然有问题，生成通用安全版本
+        if len(safe_message) > 220 or safe_message == message:
+            # 生成通用安全版本
+            if "绝对" in message or "100%" in message or "肯定" in message:
+                return "根据过往经验，大多数情况下可以满足您的需求。"
+            elif "最好" in message or "最强" in message:
+                return "我们的产品在相关方面表现优秀，值得您考虑。"
+            elif "稳赚" in message or "保本" in message:
+                return "根据历史数据，收益表现稳定，但不代表未来收益。"
+            else:
+                return "我理解您的想法，让我为您提供更准确的信息。"
+        
+        return safe_message[:220]  # 确保不超过220字符
     
     def add_custom_rule(
         self,

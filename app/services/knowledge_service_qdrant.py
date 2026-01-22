@@ -421,3 +421,4 @@ class QdrantKnowledgeService:
             logger.error(f"Failed to delete document {doc_id}: {e}")
             return False
 
+

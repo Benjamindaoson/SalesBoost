@@ -3,7 +3,7 @@ SQLAlchemy Base Model
 """
 from datetime import datetime
 from typing import Any
-from sqlalchemy import DateTime, func
+from sqlalchemy import DateTime, func, String, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -13,6 +13,17 @@ class Base(DeclarativeBase):
     type_annotation_map = {
         datetime: DateTime(timezone=True),
     }
+
+
+class TenantMixin:
+    """多租户隔离 Mixin"""
+    tenant_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("tenants.id"),
+        nullable=True,
+        index=True,
+        doc="租户ID，为空表示系统级/公共资源"
+    )
 
 
 class TimestampMixin:

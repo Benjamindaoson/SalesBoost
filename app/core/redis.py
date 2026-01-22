@@ -14,25 +14,32 @@ settings = get_settings()
 _redis_client = None
 
 
+async def get_redis_client():
+    """Alias for get_redis"""
+    return await get_redis()
+
 async def get_redis():
     """获取 Redis 客户端"""
     global _redis_client
     if _redis_client is None:
         try:
+            # 优先尝试 redis.asyncio
             import redis.asyncio as redis
+            
             _redis_client = redis.from_url(
                 settings.REDIS_URL,
                 encoding="utf-8",
                 decode_responses=True,
             )
-            logger.info("Redis client initialized")
-        except ImportError:
-            logger.warning("redis package not installed, using in-memory fallback")
+            # 测试连接
+            await _redis_client.ping()
+            logger.info("Redis client initialized and connected")
+        except (ImportError, Exception) as e:
+            logger.warning(f"Redis connection failed or not installed: {e}, using in-memory fallback")
             _redis_client = InMemoryCache()
-        except Exception as e:
-            logger.warning(f"Redis connection failed: {e}, using in-memory fallback")
-            _redis_client = InMemoryCache()
+            
     return _redis_client
+
 
 
 async def close_redis():

@@ -56,6 +56,10 @@ async_session_factory = async_sessionmaker(
 )
 
 
+from contextlib import asynccontextmanager
+
+# ...
+
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """获取数据库会话（依赖注入）"""
     async with async_session_factory() as session:
@@ -67,6 +71,20 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
+@asynccontextmanager
+async def get_db_session_context() -> AsyncGenerator[AsyncSession, None]:
+    """获取数据库会话（Context Manager）"""
+    async with async_session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
 
 
 async def init_db() -> None:

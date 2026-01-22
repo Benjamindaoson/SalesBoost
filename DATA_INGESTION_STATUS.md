@@ -197,3 +197,4 @@ python scripts/ingest_sales_data.py
 - [模块数据使用说明](MODULES_DATA_USAGE.md)
 - [RAG优化方案](RAG_OPTIMIZATION_PLAN.md)
 
+

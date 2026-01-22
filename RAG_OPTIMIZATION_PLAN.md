@@ -224,3 +224,4 @@ print(f"文档数: {service.count_documents()}")
 - [ChromaDB Windows问题](https://docs.trychroma.com/troubleshooting)
 - [Qdrant替代方案](https://qdrant.tech/documentation/)
 
+

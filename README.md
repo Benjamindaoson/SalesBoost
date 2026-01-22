@@ -51,14 +51,53 @@ SalesBoost/
 4. **OBJECTION_HANDLING** - 反对意见处理
 5. **CLOSING** - 结单与成交
 
-## 🚀 快速开始
+## 🚀 SaaS 升级 (v2.0.0)
 
-### 1. 环境要求
+2026 年最新架构，从 API 系统升级为可售卖的 SaaS 产品：
 
-- Python 3.11+ (支持 StrEnum)
-- pip (包管理器)
+- **Multi-Tenancy**: 完整的租户隔离 (Tenant/User/Subscription)。
+- **Admin Panel**: 可视化管理后台 (React + Shadcn UI)。
+- **Knowledge Governance**: 知识库版本控制与回滚。
+- **Production Ready WS**: 分布式 WebSocket，支持断线重连与 Redis 广播。
+- **Silicon Valley Features**:
+    - **Voice Interface**: ASR/TTS 语音链路。
+    - **Persona Gen**: 一键生成客户人设。
+    - **Live Copilot**: 实时辅助侧栏。
 
-### 2. 安装依赖
+### 🔧 部署与迁移
+
+#### 1. 数据库迁移
+```bash
+# 初始化数据库
+python scripts/check_db_consistency.py
+
+# 执行 Alembic 迁移
+alembic upgrade head
+```
+
+#### 2. 本地双实例测试 (WebSocket)
+为了验证 Redis 广播能力，可以启动两个不同端口的实例：
+```bash
+# Terminal 1
+uvicorn app.main:app --port 8000
+
+# Terminal 2
+uvicorn app.main:app --port 8001
+```
+客户端连接任一端口，Redis 负责消息路由。
+
+#### 3. 前端启动
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### 🔒 鉴权与租户
+- **Admin**: 登录 `/admin` 管理后台，可管理所有租户。
+- **Tenant Admin**: 登录后管理本租户的课程与学员。
+- **Student**: 登录后进入 `/practice-room`。
+
 
 ```bash
 pip install -r requirements.txt

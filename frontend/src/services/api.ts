@@ -1,4 +1,4 @@
-import { mockTasks, mockTaskStats, mockPersonas, mockPracticeRecords, mockPracticeStats } from "@/mocks/data";
+// Mock data imports removed - using real API endpoints
 import { TaskFilter, HistoryFilter } from "@/types";
 
 // Base API URL handling
@@ -41,39 +41,36 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 export const taskService = {
   getStats: async () => {
-    try {
-      return await request<any>("/reports/stats/tasks");
-    } catch {
-      return Promise.resolve(mockTaskStats);
-    }
+    return await request<any>("/reports/stats/tasks");
   },
   getTasks: async (filter?: TaskFilter) => {
-    try {
-      const query = new URLSearchParams(filter as any).toString();
-      return await request<any[]>(`/reports/tasks?${query}`);
-    } catch {
-       let tasks = [...mockTasks];
-       if (filter?.status && filter.status !== 'all') {
-         tasks = tasks.filter(t => filter.status === 'in_progress' ? t.status === 'in_progress' : 
-                                  filter.status === 'not_started' ? t.status === 'not_started' :
-                                  filter.status === 'completed' ? t.status === 'completed' : true);
-       }
-       return Promise.resolve(tasks);
-    }
+    const query = new URLSearchParams(filter as any).toString();
+    return await request<any[]>(`/reports/tasks?${query}`);
   },
 };
 
 export const personaService = {
   getPersonas: async () => {
     try {
-      // Assuming backend has a personas endpoint, or we map scenarios to personas
-      // For now, let's keep mock if backend endpoint doesn't strictly exist, 
-      // but let's try to fetch scenarios if possible.
-      // return await request<any>("/scenarios"); 
-      // Reverting to mock for personas as scenarios API might differ in structure
-      return Promise.resolve(mockPersonas);
-    } catch {
-      return Promise.resolve(mockPersonas);
+      // Fetch scenarios from API
+      const response = await request<any>("/scenarios");
+      
+      // Handle both array and paginated response
+      const items = Array.isArray(response) ? response : (response.items || []);
+      
+      // Map scenarios to Persona format expected by UI
+      return items.map((scenario: any) => ({
+        id: scenario.id,
+        name: scenario.name,
+        description: scenario.description || "暂无描述",
+        avatar: "/favicon.svg",
+        tags: [scenario.product_category, scenario.difficulty_level],
+        lastPracticed: "从未练习", // Placeholder as backend doesn't track this yet
+        note: `难度: ${scenario.difficulty_level}`
+      }));
+    } catch (error) {
+      console.error("Failed to fetch personas:", error);
+      return []; // Return empty array instead of throwing
     }
   },
 };
@@ -81,17 +78,38 @@ export const personaService = {
 export const historyService = {
   getStats: async () => {
     try {
-      return await request<any>("/reports/stats/practice");
+      // Backend doesn't have /reports/stats/practice yet, use task stats for now or mock
+      // Ideally we should implement this endpoint in backend
+      return await request<any>("/reports/stats/tasks"); 
     } catch {
-      return Promise.resolve(mockPracticeStats);
+       return {
+         totalSessions: 0,
+         averageScore: 0,
+         highestScore: 0,
+         totalDuration: 0
+       };
     }
   },
   getHistory: async (filter?: HistoryFilter) => {
     try {
       const query = new URLSearchParams(filter as any).toString();
-      return await request<any[]>(`/sessions?${query}`);
-    } catch {
-      return Promise.resolve(mockPracticeRecords);
+      const response = await request<any>(`/sessions?${query}`);
+      
+      const items = response.items || [];
+      
+      // Map session items to HistoryRecord format
+      return items.map((session: any) => ({
+        id: session.id,
+        dateTime: new Date(session.started_at).toLocaleString(),
+        courseInfo: "实战演练", // Generic
+        customerRole: "客户", // Generic
+        category: "销售技巧",
+        duration: "15分钟", // Placeholder
+        score: session.final_score || 0
+      }));
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+      return [];
     }
   },
   getSession: async (sessionId: string) => {

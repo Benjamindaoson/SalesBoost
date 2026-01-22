@@ -17,7 +17,7 @@ from app.services.adoption_tracker import AdoptionTracker
 from app.services.strategy_analyzer import StrategyAnalyzer
 from app.schemas.reports import TrainingReport
 from app.api import deps
-from app.models.base import User
+from app.models.saas_models import User
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/reports", tags=["reports"])
