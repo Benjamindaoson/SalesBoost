@@ -7,6 +7,7 @@ import PersonaPage from "./pages/Persona/PersonaPage";
 import HistoryPage from "./pages/History/HistoryPage";
 import PracticeRoomPage from "./pages/PracticeRoom";
 import LoginPage from "./pages/Login/LoginPage";
+import { ToastProvider } from "./components/common/ToastProvider";
 
 // Admin Pages
 import AdminDashboard from "./pages/Admin/Dashboard";
@@ -14,6 +15,7 @@ import AdminCourses from "./pages/Admin/Courses";
 import AdminPersonas from "./pages/Admin/Personas";
 import AdminEvaluation from "./pages/Admin/Evaluation";
 import AdminKnowledge from "./pages/Admin/Knowledge";
+import AdminUserManagement from "./pages/Admin/UserManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +86,10 @@ const router = createBrowserRouter([
         path: "knowledge",
         element: <AdminKnowledge />,
       },
+      {
+        path: "users",
+        element: <AdminUserManagement />,
+      },
     ],
   },
   {
@@ -95,7 +101,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

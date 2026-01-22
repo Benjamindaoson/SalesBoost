@@ -8,9 +8,12 @@ import { Search, Download, RefreshCw, LineChart, Award, Clock, Eye, RotateCcw, C
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/common/ToastProvider";
 
 export default function HistoryPage() {
   const navigate = useNavigate();
+  const { pushToast } = useToast();
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
   const { data: stats } = useQuery({
     queryKey: ['historyStats'],
     queryFn: historyService.getStats
@@ -25,6 +28,28 @@ export default function HistoryPage() {
       if (score >= 90) return "text-green-600 border-green-200 bg-green-50";
       if (score >= 80) return "text-blue-600 border-blue-200 bg-blue-50";
       return "text-orange-600 border-orange-200 bg-orange-50";
+  };
+
+  const handleExport = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`${API_BASE_URL}/reports/export/sessions`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error("导出失败");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "sessions_export.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      pushToast("导出失败，请稍后重试", "error");
+    }
   };
 
   return (
@@ -87,7 +112,7 @@ export default function HistoryPage() {
             <Button variant="outline" className="text-gray-500 border-gray-200">
                 <Filter className="mr-2 h-4 w-4" /> 全部分数
             </Button>
-            <Button variant="outline" className="text-gray-500 border-gray-200">
+            <Button variant="outline" className="text-gray-500 border-gray-200" onClick={handleExport}>
                 <Download className="mr-2 h-4 w-4" /> 导出
             </Button>
         </div>

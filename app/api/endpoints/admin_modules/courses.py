@@ -2,6 +2,7 @@
 Admin API - Courses
 """
 import uuid
+from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +17,7 @@ router = APIRouter()
 
 # 权限依赖
 async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.username != "admin": # MVP check
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
@@ -29,12 +30,14 @@ class CourseCreate(BaseModel):
     description: Optional[str] = None
     difficulty_level: str = "beginner"
     is_active: bool = True
+    product_category: str = "General"
 
 class CourseUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     difficulty_level: Optional[str] = None
     is_active: Optional[bool] = None
+    product_category: Optional[str] = None
 
 class CourseResponse(BaseModel):
     id: str
@@ -42,6 +45,8 @@ class CourseResponse(BaseModel):
     description: Optional[str]
     difficulty_level: str
     is_active: bool
+    product_category: str
+    created_at: datetime
     
     class Config:
         from_attributes = True
@@ -58,6 +63,7 @@ async def create_course(
         id=str(uuid.uuid4()),
         name=course.name,
         description=course.description,
+        product_category=course.product_category,
         difficulty_level=course.difficulty_level,
         is_active=course.is_active
     )

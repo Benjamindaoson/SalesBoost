@@ -2,9 +2,12 @@
 Reports API Endpoints
 """
 import logging
+import csv
+import io
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, case, and_
 from pydantic import BaseModel, Field
@@ -24,6 +27,31 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 report_service = ReportService()
 curriculum_planner = CurriculumPlanner()
+
+
+def ensure_user_access(user_id: str, current_user: User) -> None:
+    if current_user.role != "admin" and user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+
+def apply_session_user_filter(query, current_user: User):
+    if current_user.role != "admin":
+        return query.where(Session.user_id == current_user.id)
+    return query
+
+
+def parse_date_range(date_value: Optional[str], end_of_day: bool = False) -> Optional[datetime]:
+    if not date_value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(date_value)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {date_value}") from exc
+    if end_of_day and len(date_value) == 10:
+        return parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
+    if not end_of_day and len(date_value) == 10:
+        return parsed.replace(hour=0, minute=0, second=0, microsecond=0)
+    return parsed
 
 
 class SimulationResult(BaseModel):
@@ -97,8 +125,7 @@ def get_simulation_stats() -> List[SimulationResult]:
 @router.get("/stats/tasks", response_model=TaskStatsResponse)
 async def get_task_stats(
     db: AsyncSession = Depends(get_db_session),
-    # In future, filter by current user
-    # current_user: User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     Get aggregated task statistics.
@@ -119,7 +146,7 @@ async def get_task_stats(
         func.avg(Session.final_score).label("avg_score")
     )
     
-    result = await db.execute(query)
+    result = await db.execute(apply_session_user_filter(query, current_user))
     stats = result.one()
     
     total = stats.total or 0
@@ -146,13 +173,14 @@ async def get_task_stats(
 async def get_tasks(
     status: str = Query("all", description="Filter by status: all, not_started, in_progress, completed"),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     Get list of tasks (sessions/scenarios).
     """
     
     # Query sessions
-    stmt = select(Session).order_by(Session.updated_at.desc())
+    stmt = apply_session_user_filter(select(Session), current_user).order_by(Session.updated_at.desc())
     
     if status != "all":
         if status == "completed":
@@ -212,17 +240,73 @@ async def get_tasks(
     return tasks
 
 
+@router.get("/export/sessions")
+async def export_sessions(
+    start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD or ISO)"),
+    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD or ISO)"),
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
+):
+    """导出历史会话 CSV"""
+    start_dt = parse_date_range(start_date, end_of_day=False)
+    end_dt = parse_date_range(end_date, end_of_day=True)
+
+    query = apply_session_user_filter(select(Session), current_user).order_by(Session.started_at.desc())
+    if start_dt:
+        query = query.where(Session.started_at >= start_dt)
+    if end_dt:
+        query = query.where(Session.started_at <= end_dt)
+
+    result = await db.execute(query)
+    sessions = result.scalars().all()
+
+    def generate_rows():
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "session_id",
+            "status",
+            "started_at",
+            "completed_at",
+            "total_turns",
+            "final_score",
+            "final_stage",
+        ])
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
+
+        for session in sessions:
+            writer.writerow([
+                session.id,
+                session.status,
+                session.started_at.isoformat() if session.started_at else "",
+                session.completed_at.isoformat() if session.completed_at else "",
+                session.total_turns,
+                session.final_score if session.final_score is not None else "",
+                session.final_stage or "",
+            ])
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
+
+    headers = {
+        "Content-Disposition": "attachment; filename=sessions_export.csv"
+    }
+    return StreamingResponse(generate_rows(), media_type="text/csv", headers=headers)
+
+
 @router.get("/{session_id}", response_model=TrainingReport)
 async def get_session_report(
     session_id: str,
     include_details: bool = Query(False, description="是否包含轮次详情"),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """获取训练报告"""
     # 查询会话
-    result = await db.execute(
-        select(Session).where(Session.id == session_id)
-    )
+    query = select(Session).where(Session.id == session_id)
+    result = await db.execute(apply_session_user_filter(query, current_user))
     session = result.scalar_one_or_none()
     
     if not session:
@@ -251,8 +335,10 @@ async def get_user_summary(
     user_id: str,
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """获取用户训练摘要"""
+    ensure_user_access(user_id, current_user)
     result = await db.execute(
         select(Session)
         .where(Session.user_id == user_id)
@@ -339,6 +425,7 @@ async def get_curriculum_plan(
     user_id: str,
     max_focus_items: int = Query(3, ge=1, le=5, description="最大训练焦点数"),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     获取个性化训练计划
@@ -348,6 +435,7 @@ async def get_curriculum_plan(
     - 为什么推荐这个场景？
     - 如果我继续练 N 次，大概能补多少差距？
     """
+    ensure_user_access(user_id, current_user)
     plan = await curriculum_planner.generate_curriculum(
         db=db,
         user_id=user_id,
@@ -366,6 +454,7 @@ async def get_curriculum_plan(
 async def get_strategy_profile(
     user_id: str,
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     获取用户策略画像
@@ -374,6 +463,7 @@ async def get_strategy_profile(
     - 我在哪些情境下最常偏离销冠策略？
     - 我的整体最优策略选择率是多少？
     """
+    ensure_user_access(user_id, current_user)
     profile = await StrategyAnalyzer.get_user_strategy_profile(db=db, user_id=user_id)
     return profile
 
@@ -383,6 +473,7 @@ async def get_strategy_deviations(
     user_id: str,
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     获取策略偏离统计
@@ -391,6 +482,7 @@ async def get_strategy_deviations(
     - 我在哪些情境下最常偏离销冠策略？
     - 我最常用的非最优策略是什么？
     """
+    ensure_user_access(user_id, current_user)
     deviations = await StrategyAnalyzer.get_strategy_deviation_stats(
         db=db,
         user_id=user_id,
@@ -407,6 +499,7 @@ async def get_effective_suggestions(
     user_id: str,
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     获取最有效的建议类型统计
@@ -414,6 +507,7 @@ async def get_effective_suggestions(
     回答核心问题：
     - 哪 3 类 Coach 建议，最容易让我变强？
     """
+    ensure_user_access(user_id, current_user)
     stats = await AdoptionTracker.get_effective_suggestions_stats(
         db=db,
         user_id=user_id,
@@ -430,6 +524,7 @@ async def get_skill_improvements(
     user_id: str,
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     获取最近的能力提升来源
@@ -437,6 +532,7 @@ async def get_skill_improvements(
     回答核心问题：
     - 我最近 10 次能力提升来自哪些采纳？
     """
+    ensure_user_access(user_id, current_user)
     improvements = await curriculum_planner.get_recent_skill_improvements(
         db=db,
         user_id=user_id,
@@ -453,6 +549,7 @@ async def get_future_estimate(
     user_id: str,
     training_count: int = Query(3, ge=1, le=10, description="预估训练次数"),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     预估未来训练提升
@@ -460,6 +557,7 @@ async def get_future_estimate(
     回答核心问题：
     - 如果我继续练 N 次，大概能补多少差距？
     """
+    ensure_user_access(user_id, current_user)
     estimate = await curriculum_planner.estimate_future_improvement(
         db=db,
         user_id=user_id,
@@ -476,12 +574,14 @@ async def get_future_estimate(
 async def update_user_profile(
     user_id: str,
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     更新用户策略画像
     
     触发 UserStrategyProfile 的重新计算和持久化
     """
+    ensure_user_access(user_id, current_user)
     profile = await curriculum_planner.update_user_profile(db=db, user_id=user_id)
     await db.commit()
     

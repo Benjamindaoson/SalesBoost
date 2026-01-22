@@ -33,7 +33,7 @@ function parseWSMessage(raw: unknown): WSMessage | any {
   if (!isObject(raw)) return null;
   
   // 处理后端返回的 turn_result 消息
-  if (raw.type === "turn_result" || raw.type === "session_complete" || raw.type === "init") {
+  if (raw.type === "turn_result" || raw.type === "turn_result_partial" || raw.type === "session_complete" || raw.type === "init") {
     return raw; // 直接返回，由 useEffect 处理
   }
   
@@ -149,18 +149,30 @@ export function PracticeRoom(props: PracticeRoomProps) {
         return;
       }
 
-      // 处理 turn_result 消息（后端主要消息格式）
-      if (next.type === "turn_result") {
+      const handleTurnResult = (appendNpc: boolean) => {
         // NPC 消息
         if (next.npc_response) {
-          const item: ChatMessage = {
-            id: makeId(),
-            role: "npc",
-            content: next.npc_response,
-            emotion: next.npc_mood ? String(next.npc_mood) : undefined,
-            receivedAt: Date.now(),
-          };
           setChatMessages((prev) => {
+            const lastMessage = prev[prev.length - 1];
+            if (appendNpc && lastMessage?.role === "npc") {
+              const updated = [
+                ...prev.slice(0, -1),
+                {
+                  ...lastMessage,
+                  content: `${lastMessage.content}${next.npc_response}`,
+                  emotion: next.npc_mood ? String(next.npc_mood) : lastMessage.emotion,
+                },
+              ];
+              return updated.length > 2000 ? updated.slice(updated.length - 2000) : updated;
+            }
+
+            const item: ChatMessage = {
+              id: makeId(),
+              role: "npc",
+              content: next.npc_response,
+              emotion: next.npc_mood ? String(next.npc_mood) : undefined,
+              receivedAt: Date.now(),
+            };
             const updated = [...prev, item];
             return updated.length > 2000 ? updated.slice(updated.length - 2000) : updated;
           });
@@ -205,6 +217,16 @@ export function PracticeRoom(props: PracticeRoomProps) {
             return updated.length > 200 ? updated.slice(0, 200) : updated;
           });
         }
+      };
+
+      // 处理 turn_result 消息（后端主要消息格式）
+      if (next.type === "turn_result") {
+        handleTurnResult(false);
+        return;
+      }
+
+      if (next.type === "turn_result_partial") {
+        handleTurnResult(true);
         return;
       }
 
@@ -386,4 +408,3 @@ export default function PracticeRoomPage() {
     />
   );
 }
-

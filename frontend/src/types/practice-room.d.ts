@@ -25,7 +25,28 @@ export interface EndSessionMessage {
   reason?: string;
 }
 
-export type WSMessage = NPCMessage | CoachMessage | EndSessionMessage;
+export type WSMessage = Partial<NPCMessage> &
+  Partial<CoachMessage> &
+  Partial<EndSessionMessage> & {
+    type?: string;
+    npc_response?: string;
+    npc_mood?: string;
+    coach_suggestion?: string;
+    quick_suggest?: {
+      intent_label?: string;
+      suggested_reply?: string;
+      alt_replies?: string[];
+      confidence?: number;
+    };
+    adoption_analysis?: {
+      is_effective?: boolean;
+      feedback_text?: string;
+    };
+    micro_feedback?: {
+      feedback_items?: any[];
+      total_turns?: number;
+    };
+  };
 
 export interface PracticeRoomProps {
   sessionId: string;
@@ -34,4 +55,3 @@ export interface PracticeRoomProps {
     tags: string[];
   };
 }
-

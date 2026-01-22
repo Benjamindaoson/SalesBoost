@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2, Edit, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/common/ToastProvider";
 
 // Types
 interface Course {
@@ -18,24 +19,93 @@ interface Course {
   created_at: string;
 }
 
-// API Service (Mock for now, replace with real fetch)
-const fetchCourses = async (): Promise<Course[]> => {
-  // TODO: Replace with real API call
-  // const res = await fetch('/api/v1/admin/courses');
-  // return res.json();
-  return [
-    { id: "1", name: "基础销售技巧", description: "销售入门必修", difficulty_level: "beginner", is_active: true, product_category: "General", created_at: "2024-01-01" },
-    { id: "2", name: "金融产品进阶", description: "理财产品销售话术", difficulty_level: "advanced", is_active: true, product_category: "Finance", created_at: "2024-01-02" },
-  ];
-};
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
 
 export default function CoursesPage() {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newCourse, setNewCourse] = useState({
+    name: "",
+    description: "",
+    difficulty_level: "beginner",
+    is_active: true,
+    product_category: "General",
+  });
 
   const { data: courses, isLoading } = useQuery({
     queryKey: ["admin", "courses"],
-    queryFn: fetchCourses,
+    queryFn: async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        const response = await fetch(`${API_BASE_URL}/admin/courses`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!response.ok) throw new Error("加载课程失败");
+        return (await response.json()) as Course[];
+      } catch (error) {
+        console.error(error);
+        pushToast("课程加载失败，请稍后重试", "error");
+        throw error;
+      }
+    },
+  });
+
+  const createCourse = useMutation({
+    mutationFn: async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        const response = await fetch(`${API_BASE_URL}/admin/courses`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(newCourse),
+        });
+        if (!response.ok) throw new Error("创建课程失败");
+        return response.json();
+      } catch (error) {
+        console.error(error);
+        pushToast("课程创建失败，请检查输入", "error");
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      pushToast("课程创建成功", "success");
+      setNewCourse({
+        name: "",
+        description: "",
+        difficulty_level: "beginner",
+        is_active: true,
+        product_category: "General",
+      });
+      setShowCreateForm(false);
+      queryClient.invalidateQueries({ queryKey: ["admin", "courses"] });
+    },
+  });
+
+  const deleteCourse = useMutation({
+    mutationFn: async (courseId: string) => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        const response = await fetch(`${API_BASE_URL}/admin/courses/${courseId}`, {
+          method: "DELETE",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!response.ok) throw new Error("删除课程失败");
+        return response;
+      } catch (error) {
+        console.error(error);
+        pushToast("课程删除失败，请稍后重试", "error");
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      pushToast("课程已删除", "success");
+      queryClient.invalidateQueries({ queryKey: ["admin", "courses"] });
+    },
   });
 
   const filteredCourses = courses?.filter(course => 
@@ -47,7 +117,7 @@ export default function CoursesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">课程管理</h1>
-        <Button>
+        <Button onClick={() => setShowCreateForm((prev) => !prev)}>
           <Plus className="mr-2 h-4 w-4" /> 新建课程
         </Button>
       </div>
@@ -68,6 +138,52 @@ export default function CoursesPage() {
           </div>
         </CardHeader>
         <CardContent>
+          {showCreateForm && (
+            <div className="mb-6 grid gap-4 rounded-lg border border-dashed border-slate-200 p-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input
+                  placeholder="课程名称"
+                  value={newCourse.name}
+                  onChange={(e) => setNewCourse((prev) => ({ ...prev, name: e.target.value }))}
+                />
+                <Input
+                  placeholder="课程分类"
+                  value={newCourse.product_category}
+                  onChange={(e) => setNewCourse((prev) => ({ ...prev, product_category: e.target.value }))}
+                />
+              </div>
+              <Input
+                placeholder="课程描述"
+                value={newCourse.description}
+                onChange={(e) => setNewCourse((prev) => ({ ...prev, description: e.target.value }))}
+              />
+              <div className="flex flex-wrap items-center gap-4">
+                <select
+                  className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm"
+                  value={newCourse.difficulty_level}
+                  onChange={(e) => setNewCourse((prev) => ({ ...prev, difficulty_level: e.target.value }))}
+                >
+                  <option value="beginner">beginner</option>
+                  <option value="intermediate">intermediate</option>
+                  <option value="advanced">advanced</option>
+                </select>
+                <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={newCourse.is_active}
+                    onChange={(e) => setNewCourse((prev) => ({ ...prev, is_active: e.target.checked }))}
+                  />
+                  立即发布
+                </label>
+                <Button
+                  disabled={!newCourse.name.trim() || createCourse.isPending}
+                  onClick={() => createCourse.mutate()}
+                >
+                  保存课程
+                </Button>
+              </div>
+            </div>
+          )}
           {isLoading ? (
             <div className="py-8 text-center text-slate-500">加载中...</div>
           ) : (
@@ -112,7 +228,12 @@ export default function CoursesPage() {
                         <Button variant="ghost" size="icon">
                           <Edit className="h-4 w-4 text-slate-500 hover:text-blue-600" />
                         </Button>
-                        <Button variant="ghost" size="icon">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteCourse.mutate(course.id)}
+                          disabled={deleteCourse.isPending}
+                        >
                           <Trash2 className="h-4 w-4 text-slate-500 hover:text-red-600" />
                         </Button>
                       </div>

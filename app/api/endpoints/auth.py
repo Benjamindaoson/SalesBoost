@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel
 from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 from app.core.database import get_db_session
 from app.core.config import get_settings
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 settings = get_settings()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 配置
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
@@ -50,6 +52,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
     return encoded_jwt
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """验证密码哈希"""
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 async def get_current_user(
@@ -105,7 +112,7 @@ async def login(
     password = form_data.password
     
     # 1. 验证 Admin 环境变量 (系统级管理员)
-    if (username == settings.ADMIN_USERNAME and password == settings.ADMIN_PASSWORD):
+    if (username == settings.ADMIN_USERNAME and settings.ADMIN_PASSWORD and verify_password(password, settings.ADMIN_PASSWORD)):
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": username, "role": "admin", "tenant_id": None}, 
@@ -121,7 +128,7 @@ async def login(
     ))
     db_user = result.scalar_one_or_none()
     
-    if db_user and db_user.hashed_password == password: # MVP: 明文比对，生产环境需 hash
+    if db_user and verify_password(password, db_user.hashed_password):
         if not db_user.is_active:
              raise HTTPException(status_code=400, detail="Inactive user")
              
@@ -161,4 +168,3 @@ async def login(
 async def read_users_me(current_user: User = Depends(get_current_user)):
     """获取当前用户信息"""
     return current_user
-

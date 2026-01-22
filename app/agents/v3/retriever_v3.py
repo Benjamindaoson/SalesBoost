@@ -23,9 +23,13 @@ class RetrieverV3:
         self,
         model_gateway: ModelGateway,
         budget_manager: BudgetManager,
+        hard_budget_limit: float = 2000,
+        use_graphrag: bool = False,
     ):
         self.model_gateway = model_gateway
         self.budget_manager = budget_manager
+        self.hard_budget_limit = hard_budget_limit
+        self.use_graphrag = use_graphrag
         # 封装现有 RAG Agent
         self.rag_agent = RAGAgent(use_advanced_rag=True, use_graph_rag=True)
     
@@ -62,10 +66,10 @@ class RetrieverV3:
         
         # HR-2: 快路径不可阻塞，禁 GraphRAG
         # HR-1: 预算熔断，禁 GraphRAG
-        hard_budget = hard_budget_limit or 0.01
+        hard_budget = self.hard_budget_limit or 0.01
         can_use_graphrag = (
             latency_mode == LatencyMode.SLOW and
-            use_graphrag and
+            self.use_graphrag and
             budget_remaining >= hard_budget
         )
         

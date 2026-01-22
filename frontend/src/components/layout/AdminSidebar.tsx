@@ -33,6 +33,11 @@ export function AdminSidebar() {
       label: "知识库",
       path: "/admin/knowledge",
     },
+    {
+      icon: Users,
+      label: "学员账号",
+      path: "/admin/users",
+    },
   ];
 
   return (
