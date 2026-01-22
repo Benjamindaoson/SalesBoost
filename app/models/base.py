@@ -52,3 +52,11 @@ class SoftDeleteMixin:
     @property
     def is_deleted(self) -> bool:
         return self.deleted_at is not None
+
+
+class User(Base, TimestampMixin):
+    """Minimal User model for API type hints."""
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

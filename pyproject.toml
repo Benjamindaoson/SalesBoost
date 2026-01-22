@@ -6,6 +6,9 @@ testpaths = [
 ]
 python_files = "test_*.py"
 asyncio_mode = "auto"
+pythonpath = [
+    ".",
+]
 
 [tool.ruff]
 line-length = 120
