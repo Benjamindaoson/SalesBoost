@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from app.core.database import get_db_session
 from app.api.endpoints.auth import get_current_user, User
-from app.api.endpoints.admin_modules import courses, personas, scenarios, evaluation, knowledge
+from app.api.endpoints.admin_modules import courses, personas, scenarios, evaluation, knowledge, users
 from app.api.endpoints.experimental import voice, persona_gen, copilot
 
 logger = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ router.include_router(personas.router, prefix="/personas", tags=["admin-personas
 router.include_router(scenarios.router, prefix="/scenarios", tags=["admin-scenarios"])
 router.include_router(evaluation.router, prefix="/evaluation", tags=["admin-evaluation"])
 router.include_router(knowledge.router, prefix="/knowledge", tags=["admin-knowledge"])
+router.include_router(users.router, prefix="/users", tags=["admin-users"])
 
 # 实验性功能 (挂载在 /admin 下或独立 /experimental)
 # 这里为了方便管理，暂时挂载在 admin 下，实际 SaaS 可能开放给用户
@@ -33,7 +34,7 @@ router.include_router(copilot.router, prefix="/copilot", tags=["experimental-cop
 async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     # 简单的基于用户名的管理员检查 (MVP)
     # 在生产环境中，应该检查 User.role 或 claims
-    if current_user.username != "admin":
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",

@@ -11,7 +11,9 @@ from sqlalchemy import select
 from pydantic import BaseModel
 
 from app.core.database import get_db_session
+from app.api import deps
 from app.models.runtime_models import Session, Message, SessionState
+from app.models.saas_models import User
 from app.schemas.fsm import SalesStage
 
 logger = logging.getLogger(__name__)
@@ -55,8 +57,11 @@ class SessionListResponse(BaseModel):
 async def create_session(
     request: SessionCreate,
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """创建新训练会话"""
+    if current_user.role != "admin" and request.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     session_id = str(uuid.uuid4())
     now = datetime.utcnow()
     
@@ -85,10 +90,13 @@ async def list_sessions(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """获取会话列表"""
     query = select(Session)
     
+    if current_user.role != "admin":
+        user_id = current_user.id
     if user_id:
         query = query.where(Session.user_id == user_id)
     if status:
@@ -123,6 +131,7 @@ async def list_sessions(
 async def get_session(
     session_id: str,
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """获取会话详情"""
     result = await db.execute(
@@ -132,6 +141,8 @@ async def get_session(
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    if current_user.role != "admin" and session.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     
     return session
 
@@ -140,6 +151,7 @@ async def get_session(
 async def get_session_review(
     session_id: str,
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """
     Get session review data for frontend dashboard.
@@ -153,6 +165,8 @@ async def get_session_review(
     session = session_res.scalar_one_or_none()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    if current_user.role != "admin" and session.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
         
     # 2. Get Strategy Decisions
     strategies_res = await db.execute(
@@ -228,6 +242,7 @@ async def get_session_review(
 async def complete_session(
     session_id: str,
     db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(deps.get_current_active_user),
 ):
     """完成会话"""
     result = await db.execute(
@@ -237,6 +252,8 @@ async def complete_session(
     
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    if current_user.role != "admin" and session.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     
     session.status = "completed"
     session.completed_at = datetime.utcnow()

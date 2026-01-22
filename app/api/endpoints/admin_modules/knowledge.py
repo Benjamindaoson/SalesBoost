@@ -4,7 +4,7 @@ Admin API - Knowledge Governance
 import uuid
 from typing import List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from pydantic import BaseModel
@@ -19,7 +19,7 @@ router = APIRouter()
 
 # 权限依赖
 async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.username != "admin": 
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
@@ -55,6 +55,8 @@ class AssetResponse(BaseModel):
     source_type: str
     active_version_id: Optional[str]
     active_version: Optional[VersionResponse] = None
+    active_version_number: Optional[int] = None
+    vector_status: str
     created_at: datetime
     updated_at: datetime
     
@@ -62,13 +64,13 @@ class AssetResponse(BaseModel):
         from_attributes = True
 
 # Helper to sync with Vector DB
-async def sync_to_vector_db(asset: KnowledgeAsset, version: KnowledgeVersion):
+async def sync_to_vector_db(asset: KnowledgeAsset, version: KnowledgeVersion) -> bool:
     """
     同步到向量数据库
     Metadata: asset_id, version_id, version_number, source_type
     """
     if not HAS_QDRANT:
-        return
+        return False
         
     try:
         service = QdrantKnowledgeService()
@@ -100,6 +102,9 @@ async def sync_to_vector_db(asset: KnowledgeAsset, version: KnowledgeVersion):
         
     except Exception as e:
         print(f"Vector DB sync failed: {e}")
+        return False
+
+    return True
 
 # Routes
 @router.post("", response_model=AssetResponse)
@@ -137,7 +142,7 @@ async def create_asset(
     await db.commit()
     
     # 3. Sync to Vector DB
-    await sync_to_vector_db(db_asset, db_version)
+    vector_synced = await sync_to_vector_db(db_asset, db_version)
     
     await db.refresh(db_asset)
     # Manually attach version for response
@@ -149,9 +154,63 @@ async def create_asset(
         title=db_asset.title,
         source_type=db_asset.source_type,
         active_version_id=db_asset.active_version_id,
+        active_version_number=db_version.version_number,
+        vector_status="synced" if vector_synced else "disabled",
         created_at=db_asset.created_at,
         updated_at=db_asset.updated_at,
         active_version=VersionResponse.from_orm(db_version)
+    )
+
+
+@router.post("/upload", response_model=AssetResponse)
+async def upload_asset(
+    file: UploadFile = File(...),
+    source_type: str = Form("script"),
+    commit_message: Optional[str] = Form("Initial upload"),
+    db: AsyncSession = Depends(get_db_session),
+    admin: User = Depends(get_current_admin),
+):
+    """上传知识文档"""
+    content = (await file.read()).decode("utf-8")
+    asset_id = str(uuid.uuid4())
+    version_id = str(uuid.uuid4())
+    title = file.filename.rsplit(".", 1)[0] if file.filename else "Untitled"
+
+    db_asset = KnowledgeAsset(
+        id=asset_id,
+        title=title,
+        source_type=source_type,
+        active_version_id=version_id,
+    )
+
+    content_hash = KnowledgeVersion.calculate_hash(content)
+    db_version = KnowledgeVersion(
+        id=version_id,
+        asset_id=asset_id,
+        version_number=1,
+        content=content,
+        content_hash=content_hash,
+        commit_message=commit_message,
+        created_by=admin.username,
+    )
+
+    db.add(db_asset)
+    db.add(db_version)
+    await db.commit()
+
+    vector_synced = await sync_to_vector_db(db_asset, db_version)
+
+    await db.refresh(db_asset)
+    return AssetResponse(
+        id=db_asset.id,
+        title=db_asset.title,
+        source_type=db_asset.source_type,
+        active_version_id=db_asset.active_version_id,
+        active_version_number=db_version.version_number,
+        vector_status="synced" if vector_synced else "disabled",
+        created_at=db_asset.created_at,
+        updated_at=db_asset.updated_at,
+        active_version=VersionResponse.from_orm(db_version),
     )
 
 @router.get("", response_model=List[AssetResponse])
@@ -183,6 +242,8 @@ async def list_assets(
             title=asset.title,
             source_type=asset.source_type,
             active_version_id=asset.active_version_id,
+            active_version_number=active_v.version_number if active_v else None,
+            vector_status="synced" if HAS_QDRANT else "disabled",
             created_at=asset.created_at,
             updated_at=asset.updated_at,
             active_version=VersionResponse.from_orm(active_v) if active_v else None
@@ -231,7 +292,7 @@ async def update_asset(
     await db.commit()
     
     # Sync
-    await sync_to_vector_db(asset, new_version)
+    vector_synced = await sync_to_vector_db(asset, new_version)
     
     await db.refresh(asset)
     return AssetResponse(
@@ -239,6 +300,8 @@ async def update_asset(
         title=asset.title,
         source_type=asset.source_type,
         active_version_id=asset.active_version_id,
+        active_version_number=new_version.version_number,
+        vector_status="synced" if vector_synced else "disabled",
         created_at=asset.created_at,
         updated_at=asset.updated_at,
         active_version=VersionResponse.from_orm(new_version)
@@ -291,6 +354,8 @@ async def rollback_version(
         title=asset.title,
         source_type=asset.source_type,
         active_version_id=asset.active_version_id,
+        active_version_number=version.version_number,
+        vector_status="synced" if HAS_QDRANT else "disabled",
         created_at=asset.created_at,
         updated_at=asset.updated_at,
         active_version=VersionResponse.from_orm(version)

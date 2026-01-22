@@ -70,7 +70,7 @@ class EvaluatorV3:
         )
         
         # 调用现有 Evaluator Agent
-        npc_response = npc_reply.response if hasattr(npc_reply, 'response') else str(npc_reply)
+        npc_response = npc_response.response if hasattr(npc_response, "response") else str(npc_response)
         evaluator_output, strategy_analysis = await self.evaluator_agent.evaluate(
             user_message=user_message,
             npc_response=npc_response,
