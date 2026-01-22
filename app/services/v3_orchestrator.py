@@ -35,6 +35,11 @@ from app.security.runtime_guard import runtime_guard, SecurityAction
 from app.services.context_engine import ContextBuilder
 from app.services.knowledge_engine import knowledge_engine
 from app.schemas.trace import AgentDecision, CallType
+from app.schemas.memory import TurnState, MemoryCandidate, MemoryScope, MemoryType
+from app.services.memory_read_service import MemoryReadService
+from app.services.memory_write_service import MemoryWriteService
+from app.services.memory_event_store import MemoryEventStore
+from app.models.memory_models import AgentEventType
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +63,9 @@ class V3Orchestrator:
         self.budget_manager = budget_manager
         self.session_director = session_director
         self.persona = persona
+        self.persona_id = persona.id
+        self.scenario_id = persona.scenario_id
+        self.tenant_id = persona.tenant_id
         
         # 初始化 V3 Agents
         self.retriever = retriever or RetrieverV3(model_gateway, budget_manager)
@@ -65,6 +73,11 @@ class V3Orchestrator:
         self.coach_generator = coach_generator or CoachGeneratorV3(model_gateway, budget_manager)
         self.evaluator = evaluator or EvaluatorV3(model_gateway, budget_manager)
         self.adoption_tracker = adoption_tracker or AdoptionTrackerV3(model_gateway, budget_manager)
+
+        # Memory Layer
+        self.memory_read_service = MemoryReadService()
+        self.memory_write_service = MemoryWriteService()
+        self.memory_event_store = MemoryEventStore()
         
         # 状态
         self.fsm_state: Optional[FSMState] = None
@@ -121,6 +134,17 @@ class V3Orchestrator:
             "turn": turn_number,
             "timestamp": datetime.utcnow().isoformat(),
         })
+
+        await self.memory_event_store.record_event(
+            db,
+            tenant_id=self.tenant_id,
+            user_id=self.user_id,
+            session_id=self.session_id,
+            turn_id=turn_number,
+            agent_name="User",
+            event_type=AgentEventType.USER_MESSAGE,
+            payload={"content": user_message},
+        )
         
         fast_trace_id = trace_manager.start_trace(self.session_id, turn_number, CallType.FAST_PATH)
         slow_trace_id: Optional[str] = None
@@ -131,6 +155,7 @@ class V3Orchestrator:
             turn_number=turn_number,
             user_message=user_message,
             fast_trace_id=fast_trace_id,
+            db=db,
         )
 
         # Step 2: Slow Path（异步，不影响 TTFS）
@@ -173,6 +198,7 @@ class V3Orchestrator:
         turn_number: int,
         user_message: str,
         fast_trace_id: str,
+        db: Optional[AsyncSession] = None,
     ) -> FastPathResult:
         """执行 Fast Path（<3s TTFS）"""
         fast_start_time = time.time()
@@ -196,6 +222,21 @@ class V3Orchestrator:
             trace_manager.record_evidence(fast_trace_id, ev)
         retrieval_ms = (time.time() - retrieval_start) * 1000
         retrieval_confidence = sum(e.confidence for e in evidences) / len(evidences) if evidences else 0.0
+        await self.memory_event_store.record_event(
+            db,
+            tenant_id=self.tenant_id,
+            user_id=self.user_id,
+            session_id=self.session_id,
+            turn_id=turn_number,
+            agent_name="Retriever",
+            event_type=AgentEventType.RETRIEVAL,
+            payload={
+                "top_k": 3,
+                "evidence_ids": [e.evidence_id for e in evidences],
+                "confidence": retrieval_confidence,
+            },
+            trace_id=fast_trace_id,
+        )
         trace_manager.record_agent_call(
             fast_trace_id,
             AgentDecision(
@@ -208,10 +249,32 @@ class V3Orchestrator:
 
         # 2) ContextBuilder (mandatory) for NPC model call
         context_builder = ContextBuilder()
+        turn_state = TurnState(
+            tenant_id=self.tenant_id,
+            user_id=self.user_id,
+            session_id=self.session_id,
+            turn_id=turn_number,
+            scenario_id=self.scenario_id,
+            persona_id=self.persona_id,
+            stage=self.fsm_state.current_stage.value,
+            user_message=user_message,
+            trace_id=fast_trace_id,
+        )
+        memory_context = await self.memory_read_service.get_context(turn_state, db)
         context_builder.add_layer("system", "你是销售实战练习系统的 NPC。", priority=0, source="system")
         context_builder.add_layer("state", f"stage={self.fsm_state.current_stage.value}", priority=1, source="fsm")
         history_str = "\n".join([f"{m['role']}: {m['content']}" for m in self.conversation_history[-5:]])
         context_builder.add_layer("history", history_str, priority=2, source="memory")
+        if memory_context.semantic_snippets:
+            semantic_text = "\n".join(
+                [f"- {s.title}: {s.content}" for s in memory_context.semantic_snippets]
+            )
+            context_builder.add_layer("semantic_memory", semantic_text, priority=3, source="memory")
+        if memory_context.reflective_actions:
+            reflective_text = "\n".join(
+                [f"- {a.action} (trigger={a.trigger})" for a in memory_context.reflective_actions]
+            )
+            context_builder.add_layer("reflective_rules", reflective_text, priority=4, source="memory")
         context_builder.add_layer("knowledge", knowledge_engine.format_for_prompt(evidences), priority=3, source="retriever")
         _ = context_builder.build()
         trace_manager.set_context_usage(fast_trace_id, context_builder.get_usage())
@@ -246,6 +309,33 @@ class V3Orchestrator:
         if retrieval_confidence < 0.6:
             npc_text = f"【无证据/需确认】{npc_text}"
 
+        cited_memory_ids = [
+            snippet.memory_id
+            for snippet in memory_context.semantic_snippets
+            if snippet.title in npc_text or snippet.content in npc_text
+        ]
+        memory_hit_rate = (
+            len(cited_memory_ids) / len(memory_context.semantic_snippets)
+            if memory_context.semantic_snippets
+            else 0.0
+        )
+        await self.memory_event_store.record_event(
+            db,
+            tenant_id=self.tenant_id,
+            user_id=self.user_id,
+            session_id=self.session_id,
+            turn_id=turn_number,
+            agent_name="MemoryMetrics",
+            event_type=AgentEventType.METRIC,
+            payload={
+                "memory_hit_rate": memory_hit_rate,
+                "memory_contribution_rate": memory_hit_rate,
+                "replay_consistency": 1.0,
+                "shadow_to_active_rate": 0.0,
+            },
+            trace_id=fast_trace_id,
+        )
+
         # Security Output Guard (post-generate)
         out_action, modified_text, out_event = runtime_guard.check_output(npc_text)
         if out_event:
@@ -268,6 +358,24 @@ class V3Orchestrator:
                 budget_remaining=model_result.get("budget_remaining"),
                 reasoning="npc_returned" if retrieval_confidence >= 0.6 else "npc_returned (weak_assertion: no_evidence)",
             ),
+        )
+        await self.memory_event_store.record_event(
+            db,
+            tenant_id=self.tenant_id,
+            user_id=self.user_id,
+            session_id=self.session_id,
+            turn_id=turn_number,
+            agent_name="NPC",
+            event_type=AgentEventType.LLM_CALL,
+            payload={
+                "provider": model_result.get("provider"),
+                "model": model_result.get("model"),
+                "latency_ms": model_result.get("latency_ms", npc_latency_ms),
+                "input_tokens": model_result.get("usage", {}).get("prompt_tokens", 0),
+                "output_tokens": model_result.get("usage", {}).get("completion_tokens", 0),
+                "cited_memory_ids": cited_memory_ids,
+            },
+            trace_id=fast_trace_id,
         )
 
         npc_reply = NpcReply(
@@ -400,6 +508,23 @@ class V3Orchestrator:
             )
             # 让 Slow Path 明显慢于 Fast Path（不影响 TTFS）
             await asyncio.sleep(0.3)
+            await self.memory_event_store.record_event(
+                db,
+                tenant_id=self.tenant_id,
+                user_id=self.user_id,
+                session_id=self.session_id,
+                turn_id=turn_number,
+                agent_name="Coach",
+                event_type=AgentEventType.LLM_CALL,
+                payload={
+                    "provider": model_result.get("provider"),
+                    "model": model_result.get("model"),
+                    "latency_ms": model_result.get("latency_ms"),
+                    "input_tokens": model_result.get("usage", {}).get("prompt_tokens", 0),
+                    "output_tokens": model_result.get("usage", {}).get("completion_tokens", 0),
+                },
+                trace_id=slow_trace_id,
+            )
             trace_manager.record_agent_call(
                 slow_trace_id,
                 AgentDecision(
@@ -426,6 +551,45 @@ class V3Orchestrator:
                 confidence=0.6,
                 technique_name=None,
             )
+
+            turn_state = TurnState(
+                tenant_id=self.tenant_id,
+                user_id=self.user_id,
+                session_id=self.session_id,
+                turn_id=turn_number,
+                scenario_id=self.scenario_id,
+                persona_id=self.persona_id,
+                stage=self.fsm_state.current_stage.value,
+                user_message=user_message,
+                npc_reply=npc_reply.response,
+                trace_id=slow_trace_id,
+            )
+            episode_id = await self.memory_write_service.ensure_episode(
+                db,
+                turn_state=turn_state,
+                outcome=None,
+                score_overall=None,
+                summary=None,
+                replay_pointer=slow_trace_id,
+            )
+            if adoption_log and adoption_log.is_effective and episode_id:
+                candidate = MemoryCandidate(
+                    memory_type=MemoryType.SEMANTIC,
+                    title="有效建议沉淀",
+                    content=adoption_log.suggestion_text,
+                    tags=["adoption", "coach"],
+                    confidence=0.7,
+                    scope=MemoryScope.USER,
+                    scope_id=self.user_id,
+                    source_episode_id=episode_id,
+                    created_by="adoption_tracker",
+                )
+                await self.memory_write_service.enqueue_candidates(
+                    db,
+                    turn_state=turn_state,
+                    candidates=[candidate],
+                    trace_id=slow_trace_id,
+                )
             
             total_latency_ms = (time.time() - slow_start_time) * 1000
             trace = trace_manager.get_trace(slow_trace_id)
