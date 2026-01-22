@@ -39,6 +39,57 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 }
 
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  full_name?: string;
+  role: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  is_system: boolean;
+}
+
+export const adminService = {
+  getUsers: async (role?: string) => {
+    const query = role ? `?role=${role}` : "";
+    return await request<User[]>(`/admin/users${query}`);
+  },
+  createUser: async (userData: any) => {
+    return await request<User>("/admin/users", {
+      method: "POST",
+      body: JSON.stringify(userData),
+    });
+  },
+  updateUser: async (userId: string, userData: any) => {
+    return await request<User>(`/admin/users/${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify(userData),
+    });
+  },
+  deleteUser: async (userId: string) => {
+    return await request<void>(`/admin/users/${userId}`, {
+      method: "DELETE",
+    });
+  },
+  updateUserStatus: async (userId: string, isActive: boolean) => {
+    return await request<User>(`/admin/users/${userId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ is_active: isActive }),
+    });
+  },
+  getRoles: async () => {
+    return await request<Role[]>("/admin/roles");
+  },
+};
+
 export const taskService = {
   getStats: async () => {
     return await request<any>("/reports/stats/tasks");

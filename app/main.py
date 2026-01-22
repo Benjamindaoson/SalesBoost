@@ -43,6 +43,7 @@ from app.api.endpoints import admin as admin_router
 from app.api.endpoints import mvp_suggest as mvp_suggest_router
 from app.api.endpoints import mvp_compliance as mvp_compliance_router
 from app.api.endpoints import mvp_feedback as mvp_feedback_router
+from app.api.endpoints import assistant as assistant_router
 
 # 配置日志
 logging.basicConfig(
@@ -203,6 +204,7 @@ def _configure_routes(app: FastAPI) -> None:
     app.include_router(mvp_suggest_router.router, prefix="/api/v1", tags=["mvp"])
     app.include_router(mvp_compliance_router.router, prefix="/api/v1", tags=["mvp"])
     app.include_router(mvp_feedback_router.router, prefix="/api/v1", tags=["mvp"])
+    app.include_router(assistant_router.router, prefix="/api/v1/assistant", tags=["assistant"])
 
 
 def _configure_exception_handlers(app: FastAPI) -> None:

@@ -1,7 +1,7 @@
 """
 MVP 功能 Schema 定义
-信用卡KOS销售实时辅助 + 轻量复盘
-"""
+3→信用卡KOS销售实时辅助 + 轻量复盘
+4→"""
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 from enum import Enum
@@ -40,6 +40,10 @@ class QuickSuggestResponse(BaseModel):
     evidence: Optional[Dict[str, Any]] = Field(
         None,
         description="若是权益/活动类，必须可追溯：{source_titles: [], source_snippets: []}"
+    )
+    warning: Optional[str] = Field(
+        None,
+        description="实时合规警告（UI Toast）"
     )
 
 
@@ -85,4 +89,3 @@ class MicroFeedbackResponse(BaseModel):
     )
     session_id: str
     total_turns: int
-

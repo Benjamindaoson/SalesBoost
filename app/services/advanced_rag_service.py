@@ -17,6 +17,7 @@ from app.services.advanced_rag.rag_fusion import RAGFusion
 from app.services.advanced_rag.context_compressor import ContextCompressor
 from app.services.advanced_rag.adaptive_retriever import AdaptiveRetriever
 from app.services.advanced_rag.multi_vector_retriever import MultiVectorRetriever
+from app.services.advanced_rag.graph_rag import GraphRAGService
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ class AdvancedRAGService:
         enable_rag_fusion: bool = False,  # 默认关闭（性能考虑）
         enable_adaptive: bool = True,  # 自适应检索
         enable_multi_vector: bool = False,  # 多向量检索（默认关闭）
+        enable_graph_rag: bool = True, # 知识图谱增强（SOTA必须）
         enable_context_compression: bool = False,  # 上下文压缩（默认关闭）
         enable_caching: bool = True,  # 查询缓存
         financial_optimized: bool = True,  # 金融场景优化
@@ -158,6 +160,15 @@ class AdvancedRAGService:
                 logger.warning(f"Failed to enable multi-vector retrieval: {e}")
         else:
             self._multi_vector_enabled = False
+            
+        # GraphRAG 服务
+        self.graph_rag = None
+        if enable_graph_rag:
+            try:
+                self.graph_rag = GraphRAGService()
+                logger.info("GraphRAG Service initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize GraphRAG: {e}")
         
         # 缓存配置
         self.enable_caching = enable_caching
@@ -218,6 +229,7 @@ class AdvancedRAGService:
         context: Optional[Dict[str, Any]] = None,
         use_adaptive: Optional[bool] = None,  # None = auto
         use_multi_vector: bool = False,
+        use_graph_rag: bool = True,
         use_compression: bool = False,
     ) -> List[Dict[str, Any]]:
         """
@@ -231,6 +243,7 @@ class AdvancedRAGService:
             context: 上下文信息（用于查询扩展）
             use_adaptive: 是否使用自适应检索（None=自动选择）
             use_multi_vector: 是否使用多向量检索
+            use_graph_rag: 是否使用知识图谱增强
             use_compression: 是否使用上下文压缩
             
         Returns:
@@ -303,6 +316,35 @@ class AdvancedRAGService:
             except Exception as e:
                 logger.error(f"RAG-Fusion failed: {e}, falling back to hybrid search")
         
+        # GraphRAG 增强（合并图谱检索结果）
+        graph_results = []
+        if use_graph_rag and self.graph_rag:
+            try:
+                # 针对异议处理的特殊逻辑
+                if "异议" in query or "太贵" in query or "不需要" in query:
+                    scripts = await self.graph_rag.get_objection_handling(query)
+                    for script in scripts:
+                        graph_results.append({
+                            "content": script,
+                            "metadata": {"source": "knowledge_graph", "type": "script"},
+                            "score": 1.0, # 强制高分
+                            "rank": 0,
+                            "source": "graph_rag"
+                        })
+                else:
+                    # 通用图谱检索
+                    g_res = await self.graph_rag.search(query, hops=2)
+                    for r in g_res:
+                        graph_results.append({
+                            "content": f"[{r['type']}] {r['content']}",
+                            "metadata": r['metadata'],
+                            "score": 0.8,
+                            "rank": 0,
+                            "source": "graph_rag"
+                        })
+            except Exception as e:
+                logger.error(f"GraphRAG failed: {e}")
+
         # 混合检索模式
         if self.hybrid_retriever:
             try:
@@ -324,6 +366,11 @@ class AdvancedRAGService:
                     filter_meta=filter_meta,
                     use_bm25=self.hybrid_retriever.has_bm25 or bool(documents),
                 )
+                
+                # 合并 GraphRAG 结果
+                if graph_results:
+                    # 将图谱结果加入候选池
+                    results.extend(graph_results)
                 
                 # 应用Reranker
                 if self.reranker and results:

@@ -11,12 +11,14 @@ from pydantic import BaseModel
 
 from app.core.database import get_db_session
 from app.api.endpoints.auth import get_current_user, User
-from app.api.endpoints.admin_modules import courses, personas, scenarios, evaluation, knowledge
+from app.api.endpoints.admin_modules import courses, personas, scenarios, evaluation, knowledge, users, roles
 from app.api.endpoints.experimental import voice, persona_gen, copilot
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+router.include_router(users.router, prefix="/users", tags=["admin-users"])
+router.include_router(roles.router, prefix="/roles", tags=["admin-roles"])
 router.include_router(courses.router, prefix="/courses", tags=["admin-courses"])
 router.include_router(personas.router, prefix="/personas", tags=["admin-personas"])
 router.include_router(scenarios.router, prefix="/scenarios", tags=["admin-scenarios"])

@@ -7,13 +7,15 @@ import PersonaPage from "./pages/Persona/PersonaPage";
 import HistoryPage from "./pages/History/HistoryPage";
 import PracticeRoomPage from "./pages/PracticeRoom";
 import LoginPage from "./pages/Login/LoginPage";
+import AssistantPage from "./pages/Assistant/AssistantPage";
 
 // Admin Pages
-import AdminDashboard from "./pages/Admin/Dashboard";
-import AdminCourses from "./pages/Admin/Courses";
-import AdminPersonas from "./pages/Admin/Personas";
-import AdminEvaluation from "./pages/Admin/Evaluation";
+import AdminDashboard from "./pages/Admin/Dashboard/index";
+import AdminCourses from "./pages/Admin/CourseManagement/index";
+import AdminEvaluation from "./pages/Admin/EvaluationSystem/index";
+import AdminRules from "./pages/Admin/Rules/index";
 import AdminKnowledge from "./pages/Admin/Knowledge";
+import AccountAndPermissionsPage from "./pages/Admin/AccountAndPermissions";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +56,10 @@ const router = createBrowserRouter([
         path: "practice/:sessionId",
         element: <PracticeRoomPage />,
       },
+      {
+        path: "assistant",
+        element: <AssistantPage />,
+      },
     ],
   },
   {
@@ -73,16 +79,20 @@ const router = createBrowserRouter([
         element: <AdminCourses />,
       },
       {
-        path: "personas",
-        element: <AdminPersonas />,
-      },
-      {
         path: "evaluation",
         element: <AdminEvaluation />,
       },
       {
+        path: "rules",
+        element: <AdminRules />,
+      },
+      {
         path: "knowledge",
         element: <AdminKnowledge />,
+      },
+      {
+        path: "users",
+        element: <AccountAndPermissionsPage />,
       },
     ],
   },

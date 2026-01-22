@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, History } from "lucide-react";
+import { LayoutDashboard, Users, History, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +17,11 @@ export function Sidebar() {
       icon: Users,
       label: "客户预演",
       path: "/persona",
+    },
+    {
+      icon: MessageSquare,
+      label: "问答助手",
+      path: "/assistant",
     },
     {
       icon: History,

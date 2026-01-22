@@ -103,6 +103,18 @@ async def get_current_user(
         raise credentials_exception
     return user
 
+async def get_current_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Check if current user is admin"""
+    # Simple check for MVP - can be expanded to check roles/permissions
+    if current_user.role != "admin" and current_user.username != "admin":
+         raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions",
+        )
+    return current_user
+
 async def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
