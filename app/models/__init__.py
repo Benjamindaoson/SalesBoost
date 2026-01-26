@@ -10,6 +10,17 @@ from app.models.adoption_models import (
     StrategyDecision,
     UserStrategyProfile,
 )
+from app.models.memory_models import (
+    AgentEvent,
+    AgentEventType,
+    Episode,
+    MemoryItem,
+    MemoryType,
+    MemoryScope,
+    MemoryStatus,
+    ReflectiveRule,
+    RuleStatus,
+)
 
 __all__ = [
     "Base",
@@ -26,4 +37,14 @@ __all__ = [
     "AdoptionStyle",
     "StrategyDecision",
     "UserStrategyProfile",
+    # Memory Layer
+    "AgentEvent",
+    "AgentEventType",
+    "Episode",
+    "MemoryItem",
+    "MemoryType",
+    "MemoryScope",
+    "MemoryStatus",
+    "ReflectiveRule",
+    "RuleStatus",
 ]
