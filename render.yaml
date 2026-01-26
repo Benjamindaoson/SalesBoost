@@ -10,18 +10,3 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-
-  # Frontend Service (React + Vite)
-  - type: static
-    name: salesboost-frontend
-    region: singapore
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          type: web
-          name: salesboost-backend
-          property: url
-      - key: VITE_WS_URL
-        value: auto_configured_by_client_logic
