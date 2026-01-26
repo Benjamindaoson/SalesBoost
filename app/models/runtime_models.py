@@ -129,6 +129,9 @@ class SessionState(Base, TimestampMixin):
     
     # 轮次
     turn_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    # Context snapshot
+    context_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
     
     # 关联
     session: Mapped["Session"] = relationship("Session", back_populates="state")

@@ -2,6 +2,7 @@
 Database Configuration
 生产级数据库引擎抽象 - 支持 SQLite (Dev) / PostgreSQL (Prod) 自动切换
 """
+
 import logging
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -20,7 +21,7 @@ def _create_engine():
     - postgresql: 使用 asyncpg，配置连接池
     """
     database_url = settings.DATABASE_URL
-    
+
     if "sqlite" in database_url:
         logger.info("Using SQLite database (Development mode)")
         return create_async_engine(
@@ -56,10 +57,6 @@ async_session_factory = async_sessionmaker(
 )
 
 
-from contextlib import asynccontextmanager
-
-# ...
-
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """获取数据库会话（依赖注入）"""
     async with async_session_factory() as session:
@@ -72,9 +69,9 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
-@asynccontextmanager
+
 async def get_db_session_context() -> AsyncGenerator[AsyncSession, None]:
-    """获取数据库会话（Context Manager）"""
+    """获取数据库会话上下文（与get_db_session功能相同）"""
     async with async_session_factory() as session:
         try:
             yield session
@@ -84,7 +81,6 @@ async def get_db_session_context() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
-
 
 
 async def init_db() -> None:

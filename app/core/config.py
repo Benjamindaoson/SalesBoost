@@ -1,149 +1,105 @@
 """
-SalesBoost Configuration Management (基础设施层)
-
-核心职责：
-- 统一管理所有配置项，避免硬编码
-- 支持环境变量和 .env 文件配置
-- 提供类型安全的配置访问
-- 遵循 12-Factor App 配置外部化原则
-
-配置分类：
-├── 项目信息: PROJECT_NAME, VERSION, DESCRIPTION
-├── 环境控制: ENV_STATE, DEBUG
-├── 服务器设置: HOST, PORT, CORS_ORIGINS
-├── LLM 配置: OPENAI_API_KEY, OPENAI_MODEL, OPENAI_BASE_URL
-├── 会话管理: SESSION_TIMEOUT_MINUTES, MAX_ACTIVE_SESSIONS
-├── FSM 规则: OPENING_TO_DISCOVERY_TURN_THRESHOLD
-├── 性能调优: WEBSOCKET_PING_INTERVAL, GRAPH_MAX_RETRIES
-└── 数据服务: DATABASE_URL, REDIS_URL, QDRANT_URL
-
-使用示例:
-    from app.core.config import get_settings
-    settings = get_settings()
-    model_name = settings.OPENAI_MODEL
+SalesBoost configuration management.
 """
-
-from typing import Optional, Any
 from enum import Enum
-from pydantic import field_validator
+from typing import Optional
 
 try:
     from pydantic_settings import BaseSettings
-except ImportError:
+except ImportError:  # pragma: no cover - fallback for older pydantic installs
     from pydantic import BaseSettings
 
 
 class EnvironmentState(str, Enum):
-    """环境状态枚举"""
+    """Runtime environment."""
+
     DEVELOPMENT = "development"
     PRODUCTION = "production"
     TESTING = "testing"
 
 
 class Settings(BaseSettings):
-    """
-    应用配置类
-    所有配置项都通过环境变量或 .env 文件设置
-    """
+    """Application settings loaded from env or .env."""
 
-    # 项目基本信息
+    # Project metadata
     PROJECT_NAME: str = "SalesBoost"
     VERSION: str = "1.0.0"
-    DESCRIPTION: str = "基于 Multi-Agent 的销售能力复制平台"
+    DESCRIPTION: str = "Multi-agent sales coaching platform."
 
-    # 环境配置
+    # Environment
     ENV_STATE: EnvironmentState = EnvironmentState.DEVELOPMENT
     DEBUG: bool = True
 
-    # 服务器配置
+    # Server
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
-    # CORS 配置
-    CORS_ORIGINS: list[str] = ["*"]  # 生产环境请设置具体域名
+    # CORS
+    CORS_ORIGINS: list[str] = ["*"]
 
-    # OpenAI 配置 (目前可选，用于未来替换 Mock)
+    # OpenAI (optional)
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_MODEL: str = "gpt-4"
     OPENAI_BASE_URL: Optional[str] = None
     OPENAI_MAX_TOKENS: int = 2000
     OPENAI_TEMPERATURE: float = 0.7
 
-    # WebSocket 配置
+    # WebSocket
     WEBSOCKET_PING_INTERVAL: int = 30
     WEBSOCKET_PING_TIMEOUT: int = 10
 
-    # 会话管理
+    # Session management
     SESSION_TIMEOUT_MINUTES: int = 60
     MAX_ACTIVE_SESSIONS: int = 100
-    
-    # 认证配置
-    SECRET_KEY: str = "your-secret-key-change-in-production"  # 生产环境必须更改
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    ADMIN_USERNAME: str = "admin"
-    ADMIN_PASSWORD: str = "admin"
 
-    # FSM 配置
-    FSM_OPENING_TO_DISCOVERY_TURN_THRESHOLD: int = 2  # Opening -> Discovery 需要的对话轮数
+    # FSM
+    FSM_OPENING_TO_DISCOVERY_TURN_THRESHOLD: int = 2
 
-    # 日志配置
+    # Logging
     LOG_LEVEL: str = "INFO"
 
-    # LangGraph 配置
+    # Feature flags
+    AGENTIC_V3_ENABLED: bool = True
+
+    # Graph execution
     GRAPH_MAX_RETRIES: int = 3
     GRAPH_RETRY_DELAY: float = 1.0
-    
-    # 数据库配置
-    # 默认使用本地 SQLite，生产环境通过环境变量覆盖
+
+    # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./salesboost.db"
-    
-    # Redis 配置
+
+    # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # Qdrant 配置
-    QDRANT_URL: Optional[str] = None
-    QDRANT_API_KEY: Optional[str] = None
-    
-    # V3 Architecture 配置
-    AGENTIC_V3_ENABLED: bool = False  # 是否启用 V3 架构
-    
-    # 多模型 Provider 配置
-    QWEN_API_KEY: Optional[str] = None
-    DEEPSEEK_API_KEY: Optional[str] = None
-    
-    # Model Gateway 预算配置
-    MODEL_BUDGET_SESSION_TOKENS: int = 10000  # 会话预算 tokens
-    MODEL_BUDGET_TURN_TOKENS: int = 2000  # 每轮预算 tokens
-    MODEL_BUDGET_EMERGENCY_RESERVE: float = 0.1  # 紧急储备比例
+    # Memory service
+    MEMORY_STORAGE_BACKEND: str = "sqlite"  # redis|sqlite|local
+    MEMORY_STORAGE_PATH: str = "./data/memory"
 
-    @field_validator("DATABASE_URL", mode="before")
-    @classmethod
-    def assemble_db_connection(cls, v: Optional[str]) -> Any:
-        """
-        处理数据库连接字符串
-        1. Neon Postgres 默认使用 postgres:// 协议头，SQLAlchemy 需要 postgresql://
-        """
-        if isinstance(v, str) and v.startswith("postgres://"):
-            return v.replace("postgres://", "postgresql://", 1)
-        return v
+    # Context summarization
+    CONTEXT_MAX_TOKENS: int = 4000
+    CONTEXT_SUMMARY_ENABLED: bool = True
+    CONTEXT_SUMMARY_MODEL: str = "qwen-turbo"
+
+    # Semantic cache
+    SEMANTIC_CACHE_ENABLED: bool = True
+    SEMANTIC_CACHE_SIMILARITY_THRESHOLD: float = 0.86
+    SEMANTIC_CACHE_TTL_SECONDS: int = 3600
+    SEMANTIC_CACHE_MAX_ENTRIES: int = 100
+
+    # Observability
+    TRACE_DB_PATH: str = "./monitoring/trace.db"
+    TRACE_RETENTION_DAYS: int = 14
 
     class Config:
-        """Pydantic 配置"""
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
 
-        # 环境变量前缀 (可选)
-        # env_prefix = "SALESBOOST_"
 
-
-# 全局配置实例
 settings = Settings()
 
 
 def get_settings() -> Settings:
-    """
-    获取配置实例
-    用于依赖注入
-    """
+    """Return cached settings."""
+
     return settings

@@ -4,7 +4,7 @@ Quick Suggest Service - MVP 实时辅助服务
 """
 import logging
 from typing import List, Dict, Optional, Any
-from app.schemas.mvp import IntentLabel, QuickSuggestResponse, ComplianceCheckResponse, RiskLevel
+from app.schemas.mvp import IntentLabel, QuickSuggestResponse
 from app.schemas.agent_outputs import RAGOutput, CoachOutput
 from app.schemas.fsm import FSMState, SalesStage
 from app.agents.coach_agent import CoachAgent
@@ -23,7 +23,6 @@ class QuickSuggestService:
     - 提供至少2条备用话术
     - 权益类必须带来源追溯
     - 只给"可发的话"，不要教学解释
-    - 实时合规/风险检测 (Evaluator-in-the-Loop)
     """
     
     def __init__(self):
@@ -52,71 +51,26 @@ class QuickSuggestService:
         Returns:
             快速建议响应
         """
-        # Step 0: 实时合规检测 (Evaluator-in-the-Loop)
-        compliance_check = self._check_compliance_fast(last_user_msg)
-        warning_msg = None
-        if compliance_check.risk_level != RiskLevel.OK:
-            warning_msg = f"风险提示：{compliance_check.reason}"
-            if compliance_check.risk_level == RiskLevel.BLOCK:
-                # 严重违规，建议直接返回警告，不生成建议（或者生成修正后的建议）
-                pass
-
         # Step 1: 意图分类
         intent_label = self.intent_classifier.classify(last_user_msg, optional_context)
         
         # Step 2: 根据意图生成建议
-        response = None
         if intent_label == IntentLabel.BENEFIT_QA:
-            response = await self._generate_benefit_qa_suggest(
+            return await self._generate_benefit_qa_suggest(
                 last_user_msg, conversation_history, fsm_state
             )
         elif intent_label == IntentLabel.OBJECTION_HANDLING:
-            response = await self._generate_objection_suggest(
+            return await self._generate_objection_suggest(
                 last_user_msg, conversation_history, fsm_state
             )
         elif intent_label == IntentLabel.CLOSING_PUSH:
-            response = await self._generate_closing_suggest(
+            return await self._generate_closing_suggest(
                 last_user_msg, conversation_history, fsm_state
             )
         else:
-            response = await self._generate_generic_suggest(
+            return await self._generate_generic_suggest(
                 last_user_msg, conversation_history, fsm_state
             )
-            
-        # 注入警告
-        if warning_msg:
-            response.warning = warning_msg
-            
-        return response
-
-    def _check_compliance_fast(self, text: str) -> ComplianceCheckResponse:
-        """
-        快速合规检测 (Regex/Keyword based)
-        """
-        import re
-        risk_level = RiskLevel.OK
-        reason = None
-        
-        # 1. 虚假承诺
-        if re.search(r"(一定|百分百|保证|绝对).*收益", text):
-            risk_level = RiskLevel.BLOCK
-            reason = "严禁承诺收益，请使用'预期'、'历史表现'等合规表述。"
-            
-        # 2. 诱导办卡
-        elif re.search(r"帮我个忙|求你了|凑个业绩", text):
-            risk_level = RiskLevel.WARN
-            reason = "请避免乞讨式营销，应强调产品价值。"
-            
-        # 3. 贬低竞品
-        elif re.search(r"垃圾|骗子|坑人", text):
-            risk_level = RiskLevel.WARN
-            reason = "请勿使用过激语言贬低竞品。"
-
-        return ComplianceCheckResponse(
-            risk_level=risk_level,
-            original=text,
-            reason=reason
-        )
     
     async def _generate_benefit_qa_suggest(
         self,

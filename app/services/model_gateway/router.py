@@ -13,6 +13,7 @@ from app.services.model_gateway.schemas import (
 )
 from app.services.model_gateway.router_rulebook import RouterRulebook
 from app.core.config import get_settings
+from app.core.circuit_breaker import circuit_breaker
 
 logger = logging.getLogger(__name__)
 
@@ -27,60 +28,83 @@ class ModelRouter:
     
     def _load_model_configs(self) -> Dict[str, ModelConfig]:
         """加载模型配置"""
-        configs = {}
-        
-        # OpenAI 配置
-        if hasattr(self.settings, 'OPENAI_API_KEY') and self.settings.OPENAI_API_KEY:
-            configs["openai_gpt4"] = ModelConfig(
-                provider=ProviderType.OPENAI,
-                model="gpt-4",
-                api_key=self.settings.OPENAI_API_KEY,
+        configs: Dict[str, ModelConfig] = {}
+
+        def add_model(model_name: Optional[str], provider: Optional[ProviderType] = None, timeout: float = 30.0) -> None:
+            if not model_name:
+                return
+            selected_provider = provider or self._infer_provider(model_name)
+            api_key, base_url = self._get_provider_credentials(selected_provider)
+            configs[model_name] = ModelConfig(
+                provider=selected_provider,
+                model=model_name,
+                api_key=api_key,
+                base_url=base_url,
                 temperature=0.7,
-                timeout=30.0,
+                timeout=timeout,
             )
-            configs["openai_gpt35"] = ModelConfig(
-                provider=ProviderType.OPENAI,
-                model="gpt-3.5-turbo",
-                api_key=self.settings.OPENAI_API_KEY,
-                temperature=0.7,
-                timeout=15.0,
-            )
-        
-        # Qwen 配置
-        if hasattr(self.settings, 'QWEN_API_KEY') and self.settings.QWEN_API_KEY:
-            configs["qwen_plus"] = ModelConfig(
-                provider=ProviderType.QWEN,
-                model="qwen-plus",
-                api_key=self.settings.QWEN_API_KEY,
-                temperature=0.7,
-                timeout=20.0,
-            )
-            configs["qwen_turbo"] = ModelConfig(
-                provider=ProviderType.QWEN,
-                model="qwen-turbo",
-                api_key=self.settings.QWEN_API_KEY,
-                temperature=0.7,
-                timeout=10.0,
-            )
-        
-        # DeepSeek 配置
-        if hasattr(self.settings, 'DEEPSEEK_API_KEY') and self.settings.DEEPSEEK_API_KEY:
-            configs["deepseek_chat"] = ModelConfig(
-                provider=ProviderType.DEEPSEEK,
-                model="deepseek-chat",
-                api_key=self.settings.DEEPSEEK_API_KEY,
-                temperature=0.7,
-                timeout=20.0,
-            )
-        
-        # Mock Provider（用于测试）
+
+        model_candidates = {
+            getattr(self.settings, "LLM_MODEL_INTENT_GATE", None),
+            getattr(self.settings, "LLM_MODEL_NPC", None),
+            getattr(self.settings, "LLM_MODEL_COACH", None),
+            getattr(self.settings, "LLM_MODEL_EVALUATOR", None),
+            getattr(self.settings, "LLM_MODEL_RAG", None),
+            getattr(self.settings, "LLM_MODEL_COMPLIANCE", None),
+            getattr(self.settings, "LLM_FALLBACK_MODEL", None),
+            getattr(self.settings, "OPENAI_MODEL", None),
+            "qwen-turbo",
+            "qwen-plus",
+            "qwen-max",
+            "glm-4",
+            "glm-4-flash",
+            "gpt-3.5-turbo",
+            "gpt-4",
+            "deepseek-chat",
+        }
+
+        for model_name in sorted(m for m in model_candidates if m):
+            add_model(model_name)
+
         configs["mock"] = ModelConfig(
             provider=ProviderType.MOCK,
             model="mock",
             timeout=1.0,
         )
-        
+
         return configs
+
+    def _infer_provider(self, model_name: str) -> ProviderType:
+        model = model_name.lower()
+        if model.startswith("qwen"):
+            return ProviderType.QWEN
+        if model.startswith("glm"):
+            return ProviderType.ZHIPU
+        if model.startswith("deepseek"):
+            return ProviderType.DEEPSEEK
+        return ProviderType.OPENAI
+
+    def _get_provider_credentials(self, provider: ProviderType) -> tuple[Optional[str], Optional[str]]:
+        if provider == ProviderType.QWEN:
+            return (
+                getattr(self.settings, "DASHSCOPE_API_KEY", None)
+                or getattr(self.settings, "QWEN_API_KEY", None),
+                getattr(self.settings, "QWEN_BASE_URL", None),
+            )
+        if provider == ProviderType.ZHIPU:
+            return (
+                getattr(self.settings, "ZHIPU_API_KEY", None),
+                getattr(self.settings, "ZHIPU_BASE_URL", None),
+            )
+        if provider == ProviderType.DEEPSEEK:
+            return (
+                getattr(self.settings, "DEEPSEEK_API_KEY", None),
+                getattr(self.settings, "DEEPSEEK_BASE_URL", None),
+            )
+        return (
+            getattr(self.settings, "OPENAI_API_KEY", None),
+            getattr(self.settings, "OPENAI_BASE_URL", None),
+        )
     
     def route(self, context: RoutingContext) -> RoutingDecision:
         """
@@ -208,35 +232,48 @@ class ModelRouter:
     
     def _get_default_model(self, agent_type: AgentType, latency_mode: LatencyMode) -> str:
         """获取默认模型"""
+        settings = self.settings
         defaults = {
-            AgentType.SESSION_DIRECTOR: "qwen_turbo" if latency_mode == LatencyMode.FAST else "qwen_plus",
-            AgentType.RETRIEVER: "deepseek_chat" if "deepseek_chat" in self.model_configs else "qwen_turbo",
-            AgentType.NPC_GENERATOR: "qwen_turbo" if latency_mode == LatencyMode.FAST else "qwen_plus",
-            AgentType.COACH_GENERATOR: "openai_gpt4" if "openai_gpt4" in self.model_configs else "qwen_plus",
-            AgentType.EVALUATOR: "openai_gpt4" if "openai_gpt4" in self.model_configs else "qwen_plus",
-            AgentType.ADOPTION_TRACKER: "qwen_turbo",
+            AgentType.INTENT_GATE: getattr(settings, "LLM_MODEL_INTENT_GATE", "qwen-turbo"),
+            AgentType.RAG: getattr(settings, "LLM_MODEL_RAG", "glm-4-flash"),
+            AgentType.COMPLIANCE: getattr(settings, "LLM_MODEL_COMPLIANCE", "qwen-turbo"),
+            AgentType.NPC: getattr(settings, "LLM_MODEL_NPC", "qwen-plus"),
+            AgentType.COACH: getattr(settings, "LLM_MODEL_COACH", "qwen-max"),
+            AgentType.SESSION_DIRECTOR: getattr(settings, "LLM_MODEL_INTENT_GATE", "qwen-turbo"),
+            AgentType.RETRIEVER: getattr(settings, "LLM_MODEL_RAG", "glm-4-flash"),
+            AgentType.NPC_GENERATOR: getattr(settings, "LLM_MODEL_NPC", "qwen-plus"),
+            AgentType.COACH_GENERATOR: getattr(settings, "LLM_MODEL_COACH", "qwen-max"),
+            AgentType.EVALUATOR: getattr(settings, "LLM_MODEL_EVALUATOR", "glm-4"),
+            AgentType.ADOPTION_TRACKER: getattr(settings, "LLM_MODEL_COMPLIANCE", "qwen-turbo"),
+            AgentType.STRATEGY: getattr(settings, "LLM_MODEL_COACH", "qwen-max"),
         }
-        return defaults.get(agent_type, "mock")
+        default_model = defaults.get(agent_type, "qwen-turbo")
+        if latency_mode == LatencyMode.FAST and default_model in {"qwen-max", "glm-4", "gpt-4"}:
+            return getattr(settings, "LLM_MODEL_INTENT_GATE", "qwen-turbo")
+        return default_model
     
     def _get_fast_model(self, agent_type: AgentType) -> Optional[str]:
         """获取快速模型"""
         fast_models = {
-            AgentType.NPC_GENERATOR: "qwen_turbo",
-            AgentType.RETRIEVER: "qwen_turbo",
-            AgentType.SESSION_DIRECTOR: "qwen_turbo",
+            AgentType.NPC: "qwen-turbo",
+            AgentType.NPC_GENERATOR: "qwen-turbo",
+            AgentType.RETRIEVER: "qwen-turbo",
+            AgentType.SESSION_DIRECTOR: "qwen-turbo",
+            AgentType.INTENT_GATE: "qwen-turbo",
+            AgentType.COMPLIANCE: "qwen-turbo",
         }
-        model_key = fast_models.get(agent_type)
-        if model_key and model_key in self.model_configs:
-            return model_key
+        model_name = fast_models.get(agent_type)
+        if model_name and model_name in self.model_configs:
+            return model_name
         return None
     
     def _upgrade_model(self, current_model: str) -> Optional[str]:
         """升级模型"""
         upgrades = {
-            "qwen_turbo": "qwen_plus",
-            "qwen_plus": "openai_gpt35",
-            "openai_gpt35": "openai_gpt4",
-            "deepseek_chat": "openai_gpt4",
+            "qwen-turbo": "qwen-plus",
+            "qwen-plus": "qwen-max",
+            "glm-4-flash": "glm-4",
+            "gpt-3.5-turbo": "gpt-4",
         }
         upgraded = upgrades.get(current_model)
         if upgraded and upgraded in self.model_configs:
@@ -246,34 +283,34 @@ class ModelRouter:
     def _downgrade_model(self, current_model: str) -> str:
         """降级模型"""
         downgrades = {
-            "openai_gpt4": "openai_gpt35",
-            "openai_gpt35": "qwen_plus",
-            "qwen_plus": "qwen_turbo",
-            "deepseek_chat": "qwen_turbo",
+            "gpt-4": "gpt-3.5-turbo",
+            "qwen-max": "qwen-plus",
+            "qwen-plus": "qwen-turbo",
+            "glm-4": "glm-4-flash",
+            "deepseek-chat": "qwen-turbo",
         }
-        downgraded = downgrades.get(current_model, "mock")
+        downgraded = downgrades.get(current_model, "qwen-turbo")
         if downgraded in self.model_configs:
             return downgraded
         return "mock"
     
     def _estimate_cost(self, agent_type: AgentType, model: str) -> float:
         """估算成本（美元）"""
-        # 基于模型和 Agent Type 估算
         base_costs = {
             "gpt-4": 0.05,
             "gpt-3.5-turbo": 0.002,
             "qwen-plus": 0.003,
             "qwen-turbo": 0.001,
+            "qwen-max": 0.02,
+            "glm-4": 0.05,
+            "glm-4-flash": 0.001,
             "deepseek-chat": 0.0007,
             "mock": 0.0,
         }
-        
-        # 查找模型基础成本
         for model_key, cost in base_costs.items():
             if model_key in model.lower():
                 return cost
-        
-        return 0.001  # 默认成本
+        return 0.001
     
     def _estimate_latency(self, model_config: ModelConfig, latency_mode: LatencyMode) -> float:
         """估算延迟（毫秒）"""

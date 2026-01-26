@@ -1,31 +1,59 @@
-FROM python:3.10-slim
+# Stage 1: Builder
+FROM python:3.11-slim as builder
+
+WORKDIR /app
 
 # Install system dependencies
-# gcc and libpq-dev are required for psycopg2 (PostgreSQL driver)
-# curl is useful for health checks
 RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
+    build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Install Python dependencies with cache
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100 \
+    PIP_CACHE_DIR=/root/.cache/pip
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
+
+# Pre-download models to cache
+COPY scripts/download_models.py scripts/
+ENV SENTENCE_TRANSFORMERS_HOME=/app/models_cache
+RUN python scripts/download_models.py
+
+# Stage 2: Runtime
+FROM python:3.11-slim
+
 WORKDIR /app
 
-# Copy requirements first to leverage Docker cache
-COPY requirements.txt .
+# Install runtime libs if needed (e.g. for sqlite)
+RUN apt-get update && apt-get install -y \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy project code
+# Copy cached models
+COPY --from=builder /app/models_cache /app/models_cache
+ENV SENTENCE_TRANSFORMERS_HOME=/app/models_cache
+
+# Copy application code
 COPY . .
 
-# Make start script executable
-RUN chmod +x start.sh
+# Environment setup
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
 # Expose port
 EXPOSE 8000
 
-# Start command
-CMD ["./start.sh"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+# Default command
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-2} --timeout-keep-alive 65 --proxy-headers --forwarded-allow-ips=*"]

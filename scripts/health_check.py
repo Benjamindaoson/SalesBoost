@@ -21,7 +21,7 @@ def check_health():
             return False
     except requests.exceptions.ConnectionError:
         print(f"❌ 无法连接到服务 (http://localhost:8000)")
-        print(f"   请确保服务已启动: python run.py")
+        print(f"   请确保服务已启动: uvicorn app.main:app --reload")
         return False
     except Exception as e:
         print(f"❌ 健康检查失败: {e}")

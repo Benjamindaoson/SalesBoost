@@ -27,7 +27,7 @@ def uvicorn_server():
     )
     
     # Wait for server to start
-    max_retries = 30 # Increased timeout
+    max_retries = 20
     server_started = False
     for i in range(max_retries):
         try:
@@ -40,10 +40,6 @@ def uvicorn_server():
             pass
             
     if not server_started:
-        # Dump server logs for debugging
-        outs, errs = proc.communicate(timeout=1)
-        print("Server stdout:", outs.decode() if outs else "None")
-        print("Server stderr:", errs.decode() if errs else "None")
         proc.terminate()
         pytest.fail("Server failed to start within timeout")
 
@@ -86,25 +82,17 @@ async def test_websocket_integration_real(uvicorn_server):
                 "content": "您好王总，我是小李。"
             }))
             
-            # 3. Receive Turn Result (Partial)
-            turn_partial_msg = await websocket.recv()
-            turn_partial = json.loads(turn_partial_msg)
+            # 3. Receive Turn Result
+            turn_result_msg = await websocket.recv()
+            turn_data = json.loads(turn_result_msg)
             
-            assert turn_partial["type"] == "turn_result_partial"
-            assert "npc_response" in turn_partial
-            print("Turn 1 (Partial) completed")
+            assert turn_data["type"] == "turn_result"
+            assert turn_data["turn"] == 1
+            assert "npc_response" in turn_data
+            assert "coach_suggestion" in turn_data
+            print("Turn 1 completed")
             
-            # 4. Receive Analysis Result (Full)
-            # Depending on processing speed, this might take a moment
-            # We set a timeout for the next message
-            turn_analysis_msg = await asyncio.wait_for(websocket.recv(), timeout=10.0)
-            turn_analysis = json.loads(turn_analysis_msg)
-            
-            assert turn_analysis["type"] == "turn_analysis"
-            assert "coach_suggestion" in turn_analysis
-            print("Turn 1 (Analysis) completed")
-            
-            # 5. Verify DB Persistence (Real Check)
+            # 4. Verify DB Persistence (Real Check)
             db_path = "salesboost.db"
             # In a real environment, we should configure the DB path via env var to ensure consistency
             # Assuming default salesboost.db is created in CWD

@@ -8,7 +8,7 @@ from app.schemas.v3_agent_outputs import CoachAdvice
 from app.schemas.fsm import FSMState
 from app.schemas.agent_outputs import RAGOutput, ComplianceOutput
 from app.schemas.strategy import StrategyAnalysis
-from app.agents.coach_agent import CoachAgent
+from app.agents.roles.coach_agent import CoachAgent
 from app.services.model_gateway import ModelGateway, AgentType, LatencyMode, RoutingContext
 from app.services.model_gateway.budget import BudgetManager
 

@@ -1,50 +1,54 @@
 """
-Model Gateway Schemas
-定义模型调用相关的数据结构
+Model gateway schemas.
 """
-from typing import Optional, Literal, Dict, Any, List
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, Field
 
 
 class ProviderType(str, Enum):
-    """Provider 类型"""
     OPENAI = "openai"
     QWEN = "qwen"
+    ZHIPU = "zhipu"
     DEEPSEEK = "deepseek"
-    MOCK = "mock"  # 用于测试
+    MOCK = "mock"
 
 
 class AgentType(str, Enum):
-    """Agent 类型"""
+    INTENT_GATE = "intent_gate"
+    RAG = "rag"
+    COMPLIANCE = "compliance"
+    NPC = "npc"
+    COACH = "coach"
     SESSION_DIRECTOR = "session_director"
     RETRIEVER = "retriever"
     NPC_GENERATOR = "npc_generator"
     COACH_GENERATOR = "coach_generator"
     EVALUATOR = "evaluator"
     ADOPTION_TRACKER = "adoption_tracker"
+    STRATEGY = "strategy"
+    GUARD = "guard"
 
 
 class LatencyMode(str, Enum):
-    """延迟模式"""
-    FAST = "fast"  # 快路径，<3s
-    SLOW = "slow"  # 慢路径，5-30s
+    FAST = "fast"
+    SLOW = "slow"
 
 
 class RoutingContext(BaseModel):
-    """路由上下文"""
     agent_type: AgentType
-    turn_importance: float = Field(..., ge=0.0, le=1.0, description="轮次重要性，0-1")
-    risk_level: str = Field(default="low", description="风险等级：low/medium/high")
-    budget_remaining: float = Field(..., ge=0.0, description="剩余预算（美元）")
+    turn_importance: float = Field(..., ge=0.0, le=1.0)
+    risk_level: str = Field(default="low")
+    budget_remaining: float = Field(..., ge=0.0)
     latency_mode: LatencyMode
-    retrieval_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="检索置信度")
+    retrieval_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
     turn_number: int = Field(..., ge=1)
     session_id: str
+    budget_authorized: bool = False
 
 
 class ModelCall(BaseModel):
-    """模型调用记录"""
     call_id: str
     agent_type: AgentType
     provider: ProviderType
@@ -60,15 +64,13 @@ class ModelCall(BaseModel):
 
 
 class BudgetConfig(BaseModel):
-    """预算配置"""
-    per_turn_budget: float = Field(default=0.05, description="每轮预算（美元）")
-    per_session_budget: float = Field(default=1.0, description="每会话预算（美元）")
-    fast_path_budget: float = Field(default=0.02, description="快路径预算（美元）")
-    slow_path_budget: float = Field(default=0.03, description="慢路径预算（美元）")
+    per_turn_budget: float = Field(default=0.05)
+    per_session_budget: float = Field(default=1.0)
+    fast_path_budget: float = Field(default=0.02)
+    slow_path_budget: float = Field(default=0.03)
 
 
 class ModelConfig(BaseModel):
-    """模型配置"""
     provider: ProviderType
     model: str
     api_key: Optional[str] = None
@@ -79,7 +81,6 @@ class ModelConfig(BaseModel):
 
 
 class RoutingDecision(BaseModel):
-    """路由决策"""
     provider: ProviderType
     model: str
     reason: str

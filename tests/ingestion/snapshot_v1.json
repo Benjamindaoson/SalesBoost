@@ -1,0 +1,79 @@
+[
+  {
+    "chunk_id": "test_doc_v1.md:aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5:Pricing Plan:0",
+    "chunk_index": 0,
+    "content": "# Pricing Plan",
+    "doc_sha256": "aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5",
+    "section_path": "Pricing Plan",
+    "semantic_schema_version": "v1",
+    "semantic_type": "pricing",
+    "source_id": "test_doc_v1.md",
+    "structural_role": "header"
+  },
+  {
+    "chunk_id": "test_doc_v1.md:aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5:Pricing Plan:1",
+    "chunk_index": 1,
+    "content": "The standard plan is $100/month.\nIt includes all basic features.",
+    "doc_sha256": "aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5",
+    "section_path": "Pricing Plan",
+    "semantic_schema_version": "v1",
+    "semantic_type": "pricing",
+    "source_id": "test_doc_v1.md",
+    "structural_role": "text"
+  },
+  {
+    "chunk_id": "test_doc_v1.md:aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5:Pricing Plan>Enterprise:2",
+    "chunk_index": 2,
+    "content": "## Enterprise",
+    "doc_sha256": "aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5",
+    "section_path": "Pricing Plan>Enterprise",
+    "semantic_schema_version": "v1",
+    "semantic_type": "other",
+    "source_id": "test_doc_v1.md",
+    "structural_role": "header"
+  },
+  {
+    "chunk_id": "test_doc_v1.md:aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5:Pricing Plan>Enterprise:3",
+    "chunk_index": 3,
+    "content": "The enterprise plan is custom quoted.\nContact sales for more info.",
+    "doc_sha256": "aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5",
+    "section_path": "Pricing Plan>Enterprise",
+    "semantic_schema_version": "v1",
+    "semantic_type": "pricing",
+    "source_id": "test_doc_v1.md",
+    "structural_role": "text"
+  },
+  {
+    "chunk_id": "test_doc_v1.md:aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5:Pricing Plan>Enterprise:4",
+    "chunk_index": 4,
+    "content": "| Feature | Standard | Enterprise |\n|---------|----------|------------|\n| Users   | 5        | Unlimited  |\n| Support | Email    | 24/7 Phone |",
+    "doc_sha256": "aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5",
+    "section_path": "Pricing Plan>Enterprise",
+    "semantic_schema_version": "v1",
+    "semantic_type": "structured_data",
+    "source_id": "test_doc_v1.md",
+    "structural_role": "table"
+  },
+  {
+    "chunk_id": "test_doc_v1.md:aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5:Pricing Plan>Enterprise>FAQ:5",
+    "chunk_index": 5,
+    "content": "### FAQ",
+    "doc_sha256": "aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5",
+    "section_path": "Pricing Plan>Enterprise>FAQ",
+    "semantic_schema_version": "v1",
+    "semantic_type": "other",
+    "source_id": "test_doc_v1.md",
+    "structural_role": "header"
+  },
+  {
+    "chunk_id": "test_doc_v1.md:aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5:Pricing Plan>Enterprise>FAQ:6",
+    "chunk_index": 6,
+    "content": "Q: Is it refundable?\nA: Yes, within 30 days.",
+    "doc_sha256": "aa0d646245efa7c42b9f6183b9532076555d2b013ecf9183e802a104067ad4e5",
+    "section_path": "Pricing Plan>Enterprise>FAQ",
+    "semantic_schema_version": "v1",
+    "semantic_type": "faq",
+    "source_id": "test_doc_v1.md",
+    "structural_role": "text"
+  }
+]

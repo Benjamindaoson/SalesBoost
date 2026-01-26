@@ -23,6 +23,8 @@ class AgentDecision(BaseModel):
     budget_remaining: Optional[float] = None
     fallback_triggered: bool = False
     fallback_reason: Optional[str] = None
+    prompt_version: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 class SecurityEvent(BaseModel):
     event_type: str  # input_injection, output_forbidden, compliance_risk
@@ -38,7 +40,7 @@ class KnowledgeEvidence(BaseModel):
     content_snippet: str
     confidence: float
     is_cited: bool = False
-    metadata: Dict[str, Any] = {}
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 class ContextLayerInfo(BaseModel):
     name: str
@@ -69,16 +71,16 @@ class TurnTrace(BaseModel):
     slow_total_ms: Optional[float] = None
     
     # Decisions & Agents
-    decisions: List[AgentDecision] = []
+    decisions: List[AgentDecision] = Field(default_factory=list)
     
     # Security & Compliance
-    security_events: List[SecurityEvent] = []
+    security_events: List[SecurityEvent] = Field(default_factory=list)
     
     # Context
     context_manifest: Optional[ContextManifest] = None
     
     # Knowledge
-    evidences: List[KnowledgeEvidence] = []
+    evidences: List[KnowledgeEvidence] = Field(default_factory=list)
     
     # Final Outcome
     status: str = "success" # success, partial_failure, blocked, error

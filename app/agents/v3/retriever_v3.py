@@ -9,7 +9,7 @@ import time
 from typing import Dict, Any, Optional
 from app.schemas.v3_agent_outputs import EvidencePack, EvidenceItem
 from app.schemas.fsm import SalesStage
-from app.agents.rag_agent import RAGAgent
+from app.agents.roles.rag_agent import RAGAgent
 from app.services.model_gateway import ModelGateway, AgentType, LatencyMode, RoutingContext
 from app.services.model_gateway.budget import BudgetManager
 

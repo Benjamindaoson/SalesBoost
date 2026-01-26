@@ -14,32 +14,25 @@ settings = get_settings()
 _redis_client = None
 
 
-async def get_redis_client():
-    """Alias for get_redis"""
-    return await get_redis()
-
 async def get_redis():
     """获取 Redis 客户端"""
     global _redis_client
     if _redis_client is None:
         try:
-            # 优先尝试 redis.asyncio
             import redis.asyncio as redis
-            
             _redis_client = redis.from_url(
                 settings.REDIS_URL,
                 encoding="utf-8",
                 decode_responses=True,
             )
-            # 测试连接
-            await _redis_client.ping()
-            logger.info("Redis client initialized and connected")
-        except (ImportError, Exception) as e:
-            logger.warning(f"Redis connection failed or not installed: {e}, using in-memory fallback")
+            logger.info("Redis client initialized")
+        except ImportError:
+            logger.warning("redis package not installed, using in-memory fallback")
             _redis_client = InMemoryCache()
-            
+        except Exception as e:
+            logger.warning(f"Redis connection failed: {e}, using in-memory fallback")
+            _redis_client = InMemoryCache()
     return _redis_client
-
 
 
 async def close_redis():
@@ -73,3 +66,33 @@ class InMemoryCache:
     
     async def exists(self, key: str) -> int:
         return 1 if key in self._store else 0
+
+    async def xadd(self, name: str, fields: dict, id: str = "*", maxlen: Optional[int] = None, approximate: bool = True) -> str:
+        """Simulate Redis XADD for streams"""
+        if name not in self._store:
+            self._store[name] = []
+        
+        # Simple ID generation: timestamp-sequence
+        import time
+        ts = int(time.time() * 1000)
+        if id == "*":
+            # Very simple ID generation
+            seq = len(self._store[name])
+            msg_id = f"{ts}-{seq}"
+        else:
+            msg_id = id
+            
+        self._store[name].append((msg_id, fields))
+        return msg_id
+
+    async def xrange(self, name: str, min: str = "-", max: str = "+", count: Optional[int] = None) -> list:
+        """Simulate Redis XRANGE for streams"""
+        if name not in self._store:
+            return []
+        
+        # Simplified implementation: return all, ignoring min/max parsing
+        # Real XRANGE is complex, but for WAL replay we usually want all
+        return self._store[name]
+
+    async def close(self):
+        pass

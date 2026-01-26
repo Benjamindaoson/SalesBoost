@@ -1,16 +1,6 @@
 """
-销售数据摄入脚本
-
-将"销冠能力复制数据库"文件夹中的数据导入到系统中：
-1. RAG系统（向量数据库）
-2. GraphRAG系统（知识图谱）
-3. 多智能体系统（话术、案例、策略）
-
-数据来源：
-- 产品权益（Excel）
-- 销售成交营销SOP和话术（PDF、Word、PPT）
-- 销售冠军成交经验分享（Word）
-- 销售录音（音频，可选，需要STT）
+Sales data ingestion script.
+Loads documents from a local data directory and ingests them into RAG/GraphRAG.
 """
 import asyncio
 import logging
@@ -54,7 +44,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # 数据目录
-DATA_DIR = Path(__file__).parent.parent / "销冠能力复制数据库"
+DATA_DIR = Path(__file__).parent.parent / "data"
 
 
 class SalesDataIngester:

@@ -22,37 +22,18 @@ class KnowledgeService:
             
         settings = get_settings()
         # Persist data to disk
-        try:
-            import chromadb
-            self.client = chromadb.PersistentClient(path="./knowledge_db")
-        except ImportError:
-            logger.warning("ChromaDB not installed, using mock")
-            self.client = None
-        except Exception as e:
-            logger.warning(f"ChromaDB initialization failed: {e}, using mock")
-            self.client = None
+        self.client = chromadb.PersistentClient(path="./knowledge_db")
         
         # Use default embedding function (all-MiniLM-L6-v2)
-        try:
-            from chromadb.utils import embedding_functions
-            self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2"
-            )
-        except Exception as e:
-            logger.warning(f"Embedding function init failed: {e}, using mock")
-            self.embedding_fn = None
+        # This will download the model on first use
+        self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name="all-MiniLM-L6-v2"
+        )
         
-        if self.client:
-            try:
-                self.collection = self.client.get_or_create_collection(
-                    name="sales_knowledge",
-                    embedding_function=self.embedding_fn
-                )
-            except Exception as e:
-                logger.warning(f"Collection init failed: {e}")
-                self.collection = None
-        else:
-            self.collection = None
+        self.collection = self.client.get_or_create_collection(
+            name="sales_knowledge",
+            embedding_function=self.embedding_fn
+        )
         self._initialized = True
         logger.info("KnowledgeService initialized with ChromaDB")
 
@@ -63,6 +44,8 @@ class KnowledgeService:
         if not doc_id:
             doc_id = str(uuid.uuid4())
             
+        meta = dict(meta or {})
+        meta["doc_id"] = doc_id
         self.collection.add(
             documents=[content],
             metadatas=[meta],
@@ -71,13 +54,10 @@ class KnowledgeService:
         logger.info(f"Document added: {doc_id}")
         return doc_id
 
-    def query(self, text: str, top_k: int = 3, filter_meta: Optional[Dict] = None, min_relevance: float = 0.0) -> List[Dict]:
+    def query(self, text: str, top_k: int = 3, filter_meta: Optional[Dict] = None) -> List[Dict]:
         """
         Query the knowledge base.
         """
-        if not self.collection:
-            return []
-            
         results = self.collection.query(
             query_texts=[text],
             n_results=top_k,
@@ -86,23 +66,17 @@ class KnowledgeService:
         
         # Format results
         formatted_results = []
-        if results["documents"]:
+        if results.get("documents"):
+            ids = results.get("ids", [[]])[0]
             for i, doc in enumerate(results["documents"][0]):
-                meta = results["metadatas"][0][i]
-                doc_id = results["ids"][0][i]
-                distance = results["distances"][0][i] if results["distances"] else 0
-                
-                # Simple relevance filtering (distance is dissimilarity)
-                # Lower distance means higher relevance
-                if min_relevance > 0 and distance > (1 - min_relevance):
-                    continue
-
+                meta = results.get("metadatas", [[]])[0][i] if results.get("metadatas") else {}
+                if ids and i < len(ids):
+                    meta = dict(meta or {})
+                    meta["doc_id"] = ids[i]
                 formatted_results.append({
-                    "id": doc_id,
                     "content": doc,
                     "metadata": meta,
-                    "distance": distance,
-                    "evidence_id": doc_id # Alias for V3 contract
+                    "distance": results["distances"][0][i] if results["distances"] else 0
                 })
                 
         return formatted_results

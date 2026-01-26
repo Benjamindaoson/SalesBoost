@@ -60,6 +60,8 @@ class MultiVectorRetriever:
             top_k=parent_top_k,
             filter_meta=parent_filter,
             use_rag_fusion=False,
+            use_adaptive=False,
+            use_multi_vector=False,
         )
         
         logger.info(f"Multi-vector: Found {len(parent_results)} parent documents")
@@ -92,6 +94,8 @@ class MultiVectorRetriever:
                     top_k=child_top_k,
                     filter_meta=child_filter,
                     use_rag_fusion=False,
+                    use_adaptive=False,
+                    use_multi_vector=False,
                 )
                 
                 # 为每个子块添加父文档信息

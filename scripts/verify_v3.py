@@ -8,7 +8,7 @@ from app.schemas.fsm import FSMState
 from app.services.model_gateway.budget import BudgetManager
 from app.services.model_gateway.gateway import ModelGateway
 from app.agents.v3.session_director_v3 import SessionDirectorV3
-from app.services.v3_orchestrator import V3Orchestrator
+from app.agents.coordination.v3_orchestrator import V3Orchestrator
 from app.services.observability import trace_manager
 from app.services.knowledge_engine import knowledge_engine, KnowledgeAsset
 

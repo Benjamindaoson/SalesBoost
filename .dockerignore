@@ -1,13 +1,40 @@
-venv
-.venv
-__pycache__
+# Git
 .git
-.env
-*.pyc
-tests
-frontend
-.pytest_cache
-.vscode
-.trae
-销冠能力复制数据库
-d:\SalesBoost_local_backup
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+.eggs/
+*.egg-info/
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.cursor/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Misc
+*.md
+*.log
+.env.example
+scripts/test_client.html

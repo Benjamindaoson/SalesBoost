@@ -27,4 +27,7 @@ __all__ = [
     "ModelCall",
     "BudgetConfig",
     "ModelConfig",
+    "model_gateway",
 ]
+
+model_gateway = ModelGateway()

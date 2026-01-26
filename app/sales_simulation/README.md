@@ -264,7 +264,7 @@ DatasetExporter.export_preference_pairs(
 继承 `BaseAgent` 并实现：
 
 ```python
-from app.agents.base import BaseAgent
+from app.agents.roles.base import BaseAgent
 
 class CustomAgent(BaseAgent):
     @property

@@ -6,7 +6,7 @@ import logging
 from typing import Dict, Any, Optional, Type
 from pydantic import BaseModel, Field
 
-from app.agents.base import BaseAgent
+from app.agents.roles.base import BaseAgent
 
 logger = logging.getLogger(__name__)
 

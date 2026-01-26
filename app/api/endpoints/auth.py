@@ -14,7 +14,6 @@ from jose import JWTError, jwt
 
 from app.core.database import get_db_session
 from app.core.config import get_settings
-from app.core.security import verify_password
 from app.models.saas_models import User as DBUser, Tenant
 
 logger = logging.getLogger(__name__)
@@ -122,15 +121,7 @@ async def login(
     ))
     db_user = result.scalar_one_or_none()
     
-    # 优先尝试 Hash 验证 (新用户)，兼容旧用户明文 (迁移期)
-    password_valid = False
-    if db_user:
-        if verify_password(password, db_user.hashed_password):
-            password_valid = True
-        elif db_user.hashed_password == password: # 兼容旧明文密码
-            password_valid = True
-            
-    if password_valid:
+    if db_user and db_user.hashed_password == password: # MVP: 明文比对，生产环境需 hash
         if not db_user.is_active:
              raise HTTPException(status_code=400, detail="Inactive user")
              

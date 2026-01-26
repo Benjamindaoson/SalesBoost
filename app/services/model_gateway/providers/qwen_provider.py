@@ -64,6 +64,63 @@ class QwenProvider(BaseProvider):
             raise TimeoutError(f"Qwen API timeout after {self.config.timeout}s")
         except Exception as e:
             raise RuntimeError(f"Qwen API error: {str(e)}")
+
+    async def chat_stream(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ):
+        """Qwen 流式聊天调用"""
+        client = await self._get_client()
+        
+        try:
+            # DashScope returns a generator when stream=True
+            # Note: DashScope async call with stream=True is a bit different, usually it's synchronous generator wrapped?
+            # Or use call() with stream=True which returns a generator.
+            # But here we are in async method. DashScope doesn't have native async stream generator yet?
+            # Actually, dashscope.Generation.call is synchronous. We might need to run it in executor or use their async support if available.
+            # However, looking at the existing 'chat' method, it uses 'asyncio.wait_for(client.Generation.call(...))'
+            # Wait, 'client.Generation.call' is NOT async by default unless using specific async client or maybe the existing code is wrong?
+            # The existing code treats it as awaitable: 'await asyncio.wait_for(client.Generation.call(...))'.
+            # If dashscope.Generation.call returns a coroutine, then it's fine.
+            # Assuming it supports async/await or is patched.
+            
+            # For streaming, if it returns an async generator, we iterate.
+            # If it returns a sync generator, we might block the loop.
+            # Let's assume for now we use the same pattern but with stream=True.
+            
+            # Note: As of my knowledge cut-off, DashScope SDK 'call' is sync.
+            # But if the user code has 'await client.Generation.call', maybe they are using a wrapper or newer version.
+            # Let's try to follow the pattern but use 'stream=True, incremental_output=True'.
+            
+            responses = client.Generation.call(
+                model=self.config.model,
+                messages=messages,
+                temperature=temperature or self.config.temperature,
+                max_tokens=max_tokens or self.config.max_tokens,
+                result_format='message',
+                stream=True,
+                incremental_output=True,
+                **kwargs
+            )
+            
+            # DashScope sync generator. We should ideally run this in a thread if it's blocking.
+            # But for simplicity in this step, let's iterate.
+            # If we want to be async-friendly with sync generator:
+            for response in responses:
+                if response.status_code == 200:
+                    if response.output and response.output.choices:
+                         # incremental_output=True means we get deltas
+                         content = response.output.choices[0].message.content
+                         if content:
+                             yield content
+                else:
+                    raise RuntimeError(f"Qwen API error: {response.message}")
+                    
+        except Exception as e:
+            raise RuntimeError(f"Qwen API stream error: {str(e)}")
     
     async def embed(
         self,

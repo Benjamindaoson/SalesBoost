@@ -6,10 +6,10 @@ from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import String, Text, Integer, Float, Boolean, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models.base import Base, TimestampMixin, SoftDeleteMixin, TenantMixin
+from app.models.base import Base, TimestampMixin, SoftDeleteMixin
 
 
-class Course(Base, TimestampMixin, SoftDeleteMixin, TenantMixin):
+class Course(Base, TimestampMixin, SoftDeleteMixin):
     """课程配置"""
     __tablename__ = "courses"
     
@@ -37,7 +37,7 @@ class Course(Base, TimestampMixin, SoftDeleteMixin, TenantMixin):
         return f"<Course(id={self.id}, name={self.name})>"
 
 
-class ScenarioConfig(Base, TimestampMixin, SoftDeleteMixin, TenantMixin):
+class ScenarioConfig(Base, TimestampMixin, SoftDeleteMixin):
     """场景配置"""
     __tablename__ = "scenario_configs"
     
@@ -83,7 +83,7 @@ class ScenarioConfig(Base, TimestampMixin, SoftDeleteMixin, TenantMixin):
         return f"<ScenarioConfig(id={self.id}, name={self.name})>"
 
 
-class CustomerPersona(Base, TimestampMixin, SoftDeleteMixin, TenantMixin):
+class CustomerPersona(Base, TimestampMixin, SoftDeleteMixin):
     """客户人设配置"""
     __tablename__ = "customer_personas"
     

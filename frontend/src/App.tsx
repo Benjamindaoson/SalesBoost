@@ -1,113 +1,77 @@
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Layout from "./components/layout/Layout";
-import AdminLayout from "./components/layout/AdminLayout";
-import DashboardPage from "./pages/Dashboard/DashboardPage";
-import PersonaPage from "./pages/Persona/PersonaPage";
-import HistoryPage from "./pages/History/HistoryPage";
-import PracticeRoomPage from "./pages/PracticeRoom";
-import LoginPage from "./pages/Login/LoginPage";
-import AssistantPage from "./pages/Assistant/AssistantPage";
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from '@/store/auth.store';
+import LoginPage from '@/pages/auth/LoginPage';
+import StudentLayout from '@/layouts/StudentLayout';
+import AdminLayout from '@/layouts/AdminLayout';
+import { Toaster } from "@/components/ui/toaster"
+
+// Student Pages
+import StudentDashboard from '@/pages/student/Dashboard';
+import CourseList from '@/pages/student/CourseList';
+import Training from '@/pages/student/Training';
+import Evaluation from '@/pages/student/Evaluation';
 
 // Admin Pages
-import AdminDashboard from "./pages/Admin/Dashboard/index";
-import AdminCourses from "./pages/Admin/CourseManagement/index";
-import AdminEvaluation from "./pages/Admin/EvaluationSystem/index";
-import AdminRules from "./pages/Admin/Rules/index";
-import AdminKnowledge from "./pages/Admin/Knowledge";
-import AccountAndPermissionsPage from "./pages/Admin/AccountAndPermissions";
+import AdminDashboard from '@/pages/admin/Dashboard';
+import AdminCourses from '@/pages/admin/Courses';
+import AdminUsers from '@/pages/admin/Users';
+import AdminSettings from '@/pages/admin/Settings';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <LoginPage />,
-  },
-  {
-    path: "/",
-    element: <Layout />,
-    children: [
-      {
-        index: true,
-        element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: "dashboard",
-        element: <DashboardPage />,
-      },
-      {
-        path: "persona",
-        element: <PersonaPage />,
-      },
-      {
-        path: "history",
-        element: <HistoryPage />,
-      },
-      {
-        path: "practice/:sessionId",
-        element: <PracticeRoomPage />,
-      },
-      {
-        path: "assistant",
-        element: <AssistantPage />,
-      },
-    ],
-  },
-  {
-    path: "/admin",
-    element: <AdminLayout />,
-    children: [
-      {
-        index: true,
-        element: <Navigate to="/admin/dashboard" replace />,
-      },
-      {
-        path: "dashboard",
-        element: <AdminDashboard />,
-      },
-      {
-        path: "courses",
-        element: <AdminCourses />,
-      },
-      {
-        path: "evaluation",
-        element: <AdminEvaluation />,
-      },
-      {
-        path: "rules",
-        element: <AdminRules />,
-      },
-      {
-        path: "knowledge",
-        element: <AdminKnowledge />,
-      },
-      {
-        path: "users",
-        element: <AccountAndPermissionsPage />,
-      },
-    ],
-  },
-  {
-    path: "*",
-    element: <Navigate to="/dashboard" replace />,
-  }
-]);
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
+function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) {
+  const { user, isLoading } = useAuthStore();
+  
+  if (isLoading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  
+  // TODO: Add actual admin check here based on user metadata or role
+  // if (requireAdmin && user.user_metadata.role !== 'admin') return <Navigate to="/student" replace />;
+  
+  return <>{children}</>;
 }
 
-export default App;
+export default function App() {
+  const { initialize } = useAuthStore();
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        
+        {/* Student Routes */}
+        <Route path="/student" element={
+          <ProtectedRoute>
+            <StudentLayout />
+          </ProtectedRoute>
+        }>
+          <Route path="dashboard" element={<StudentDashboard />} />
+          <Route path="courses" element={<CourseList />} />
+          <Route path="training" element={<Training />} />
+          <Route path="training/:courseId" element={<Training />} />
+          <Route path="evaluation" element={<Evaluation />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <ProtectedRoute requireAdmin>
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="courses" element={<AdminCourses />} />
+          <Route path="settings" element={<AdminSettings />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
+        </Route>
+
+        <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
+      </Routes>
+      <Toaster />
+    </BrowserRouter>
+  );
+}

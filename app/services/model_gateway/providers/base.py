@@ -3,7 +3,7 @@ Base Provider Interface
 所有 Provider 必须实现此接口
 """
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, AsyncGenerator
 from app.services.model_gateway.schemas import ModelConfig, ProviderType
 
 
@@ -24,16 +24,23 @@ class BaseProvider(ABC):
     ) -> Dict[str, Any]:
         """
         聊天调用
-        
-        Returns:
-            {
-                "content": str,
-                "usage": {"prompt_tokens": int, "completion_tokens": int, "total_tokens": int},
-                "model": str,
-                "finish_reason": str
-            }
         """
         pass
+
+    async def chat_stream(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> AsyncGenerator[str, None]:
+        """
+        流式聊天调用 (默认实现：调用 chat 并一次性 yield)
+        子类应覆盖此方法以支持真实流式
+        """
+        result = await self.chat(messages, temperature, max_tokens, **kwargs)
+        content = result.get("content", "")
+        yield content
     
     @abstractmethod
     async def embed(

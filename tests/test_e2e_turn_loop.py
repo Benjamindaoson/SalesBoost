@@ -8,7 +8,7 @@ from app.core.database import async_session_factory
 from app.models.config_models import Course, ScenarioConfig, CustomerPersona
 from app.models.runtime_models import Session
 from app.models.adoption_models import StrategyDecision
-from app.services.orchestrator import SessionOrchestrator
+from app.agents.coordination.orchestrator import SessionOrchestrator
 
 
 COURSE_ID = "course-credit-card-001"

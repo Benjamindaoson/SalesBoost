@@ -1,22 +1,27 @@
 services:
+  # Backend Service (FastAPI + WebSockets)
   - type: web
     name: salesboost-backend
-    env: docker
-    region: singapore # Optional: choose a region close to you
+    env: python
+    region: singapore
     plan: free
-    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 10000
     envVars:
-      - key: DATABASE_URL
-        sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: QDRANT_URL
-        sync: false
-      - key: QDRANT_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: ENV_STATE
-        value: production
-      - key: ENV_RUN_SEED
-        value: "true"
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+  # Frontend Service (React + Vite)
+  - type: static
+    name: salesboost-frontend
+    region: singapore
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: salesboost-backend
+          property: url
+      - key: VITE_WS_URL
+        value: auto_configured_by_client_logic

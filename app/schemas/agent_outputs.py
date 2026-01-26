@@ -159,12 +159,12 @@ class OrchestratorTurnResult(BaseModel):
     user_message: str
     
     # 各 Agent 输出
-    intent_result: Optional[IntentGateOutput] = None
-    rag_result: Optional[RAGOutput] = None
-    compliance_result: Optional[ComplianceOutput] = None
-    npc_result: Optional[NPCOutput] = None
-    coach_result: Optional[CoachOutput] = None
-    evaluator_result: Optional[EvaluatorOutput] = None
+    intent_result: IntentGateOutput
+    rag_result: RAGOutput
+    compliance_result: ComplianceOutput
+    npc_result: NPCOutput
+    coach_result: CoachOutput
+    evaluator_result: EvaluatorOutput
     
     # 策略分析（销冠能力复制系统）
     strategy_analysis: Optional[Dict[str, Any]] = Field(
@@ -181,13 +181,12 @@ class OrchestratorTurnResult(BaseModel):
     )
     
     # FSM 状态
-    transition_decision: Optional[TransitionDecision] = None
-    fsm_state_snapshot: Optional[FSMState] = None
+    transition_decision: TransitionDecision
+    fsm_state_snapshot: FSMState
     
     # 元数据
-    processing_time_ms: float = 0.0
+    processing_time_ms: float
     timestamp: str
-    trace_id: Optional[str] = None
 
 
 class SessionCompleteResult(BaseModel):

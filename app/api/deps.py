@@ -4,16 +4,12 @@ API Dependencies - 依赖注入
 """
 
 from typing import AsyncGenerator, Optional
-from fastapi import Depends, Request, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
-from sqlalchemy import select
+from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.prompt_service import PromptService
 from app.core.config import Settings, get_settings
 from app.core.database import get_db_session
-from app.models.saas_models import User
 
 
 # 全局服务实例（延迟初始化）
@@ -71,57 +67,6 @@ async def cleanup_expired_sessions():
     """清理过期会话（未来扩展）"""
     # TODO: 实现基于时间的会话清理
     pass
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
-
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db_session),
-    settings: Settings = Depends(get_settings_dependency)
-) -> User:
-    """获取当前登录用户"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-        
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
-    
-    if user is None:
-        raise credentials_exception
-    return user
-
-async def get_current_admin(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    """Check if current user is admin"""
-    # Simple check for MVP - can be expanded to check roles/permissions
-    if current_user.role != "admin" and current_user.username != "admin":
-         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
-        )
-    return current_user
-
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    """获取当前活跃用户"""
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
 
 
 # 数据库会话依赖

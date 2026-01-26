@@ -64,6 +64,35 @@ class OpenAIProvider(BaseProvider):
         except Exception as e:
             raise RuntimeError(f"OpenAI API error: {str(e)}")
     
+    async def chat_stream(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ):
+        """OpenAI 流式聊天调用"""
+        client = await self._get_client()
+        
+        try:
+            stream = await client.chat.completions.create(
+                model=self.config.model,
+                messages=messages,
+                temperature=temperature or self.config.temperature,
+                max_tokens=max_tokens or self.config.max_tokens,
+                stream=True,
+                **kwargs
+            )
+            
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+                    
+        except asyncio.TimeoutError:
+            raise TimeoutError(f"OpenAI API timeout after {self.config.timeout}s")
+        except Exception as e:
+            raise RuntimeError(f"OpenAI API error: {str(e)}")
+
     async def embed(
         self,
         texts: List[str],

@@ -8,7 +8,7 @@ from typing import Dict, Any, List, Optional
 from app.schemas.v3_agent_outputs import Evaluation, DimensionScore, ErrorTag
 from app.schemas.fsm import FSMState, SalesStage, StageSlotConfig
 from app.schemas.agent_outputs import ComplianceOutput
-from app.agents.evaluator_agent import EvaluatorAgent
+from app.agents.roles.evaluator_agent import EvaluatorAgent
 from app.services.model_gateway import ModelGateway, AgentType, LatencyMode, RoutingContext
 from app.services.model_gateway.budget import BudgetManager
 

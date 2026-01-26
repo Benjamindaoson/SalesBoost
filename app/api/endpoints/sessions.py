@@ -5,7 +5,7 @@ import uuid
 import logging
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel
@@ -13,9 +13,36 @@ from pydantic import BaseModel
 from app.core.database import get_db_session
 from app.models.runtime_models import Session, Message, SessionState
 from app.schemas.fsm import SalesStage
+from app.tasks.store import TASK_STORE, TaskStatus, TaskResult
+from app.tasks.evaluation_task import run_evaluation_task
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/sessions", tags=["sessions"])
+# ... (existing SessionCreate and SessionResponse)
+
+@router.get("/tasks/{task_id}", response_model=TaskResult)
+async def get_task_status(task_id: str):
+    """
+    Get the status of a background task.
+    """
+    if task_id not in TASK_STORE:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return TASK_STORE[task_id]
+
+@router.get("/tasks/{task_id}/result")
+async def get_task_result(task_id: str):
+    """
+    Get the result of a completed background task.
+    """
+    if task_id not in TASK_STORE:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task = TASK_STORE[task_id]
+    if task.status != TaskStatus.COMPLETED:
+        raise HTTPException(status_code=400, detail="Task not yet completed")
+        
+    return task.result
+
 
 
 class SessionCreate(BaseModel):
@@ -172,6 +199,9 @@ async def get_session_review(
     )
     evals = evals_res.scalars().all()
     
+    # 5. Get Matrix Evaluation (PRD)
+    matrix_result = session.matrix_eval_result
+    
     # Aggregate Data
     
     # Strategy Review
@@ -215,7 +245,8 @@ async def get_session_review(
         "summary": {
             "total_turns": session.total_turns,
             "final_score": session.final_score,
-            "skill_improvement": total_delta
+            "skill_improvement": total_delta,
+            "matrix_evaluation": matrix_result # Expose to frontend
         },
         "strategy_timeline": strategy_review,
         "highlights": {
@@ -224,12 +255,53 @@ async def get_session_review(
         }
     }
 
+@router.post("/{session_id}/evaluate")
+async def evaluate_session_endpoint(
+    session_id: str,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Trigger async evaluation for a session.
+    Returns a task_id immediately.
+    """
+    # 1. Verify Session Exists
+    result = await db.execute(select(Session).where(Session.id == session_id))
+    session = result.scalar_one_or_none()
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    if session.status != "completed":
+        raise HTTPException(status_code=400, detail="Session must be completed before evaluation")
+
+    # 2. Create Task ID
+    task_id = f"eval_{uuid.uuid4()}"
+    
+    # 3. Register Task (Queued)
+    TASK_STORE[task_id] = TaskResult(
+        task_id=task_id,
+        status=TaskStatus.QUEUED,
+        created_at=datetime.utcnow()
+    )
+    
+    # 4. Dispatch to BackgroundTasks
+    background_tasks.add_task(run_evaluation_task, task_id, session_id)
+    
+    logger.info(f"Dispatched evaluation task {task_id} for session {session_id}")
+    
+    return {"task_id": task_id, "status": "queued"}
+
 @router.patch("/{session_id}/complete")
 async def complete_session(
     session_id: str,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db_session),
 ):
-    """完成会话"""
+    """
+    完成会话并触发在线评估 (Legacy endpoint updated to use BackgroundTasks)
+    """
+    # 1. Fetch Session
     result = await db.execute(
         select(Session).where(Session.id == session_id)
     )
@@ -238,9 +310,25 @@ async def complete_session(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
+    # 2. Update Status
     session.status = "completed"
     session.completed_at = datetime.utcnow()
-    
     await db.flush()
     
-    return {"message": "Session completed", "session_id": session_id}
+    # 3. Trigger Evaluation via Background Task
+    # Reuse the logic from evaluate_session_endpoint
+    task_id = f"eval_{uuid.uuid4()}"
+    
+    TASK_STORE[task_id] = TaskResult(
+        task_id=task_id,
+        status=TaskStatus.QUEUED,
+        created_at=datetime.utcnow()
+    )
+    
+    background_tasks.add_task(run_evaluation_task, task_id, session_id)
+    
+    return {
+        "message": "Session completed and evaluation triggered", 
+        "session_id": session_id,
+        "task_id": task_id
+    }

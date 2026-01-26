@@ -122,13 +122,6 @@ class RobustSalesDataIngester:
             logger.error("Both KnowledgeService and GraphRAGService failed to initialize")
             logger.info("Will parse files but not ingest to database")
         
-        # 检查是否已有数据（简单的幂等性检查）
-        # 如果已经有向量或图谱数据，可能跳过
-        # 这里为了简化，我们仅在知识库服务初始化成功后进行检查
-        if self.knowledge_service:
-            # TODO: 实现更智能的增量更新
-            pass
-
         # 1. 摄入产品权益
         await self._ingest_product_benefits()
         

@@ -68,20 +68,15 @@ class HybridRetriever:
             return None
     
     def _tokenize(self, text: str) -> List[str]:
-        """
-        简单的中文分词（生产环境建议使用jieba）
-        
-        Args:
-            text: 文本
-            
-        Returns:
-            词列表
-        """
-        # 简单实现：按字符和常见分隔符分割
-        import re
-        # 保留中文、英文、数字
-        tokens = re.findall(r'[\u4e00-\u9fff]+|[a-zA-Z]+|\d+', text)
-        return tokens if tokens else [text]
+        try:
+            import jieba
+            tokens = jieba.lcut(text, cut_all=False)
+            tokens = [t for t in tokens if t and t.strip()]
+            return tokens if tokens else [text]
+        except Exception:
+            import re
+            tokens = re.findall(r'[\u4e00-\u9fff]+|[a-zA-Z]+|\d+', text)
+            return tokens if tokens else [text]
     
     def vector_search(
         self,
