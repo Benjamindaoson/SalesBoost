@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from sqlalchemy import text
-from app.core.database import get_db_session_context
+from core.database import get_db_session_context
 
 logger = logging.getLogger(__name__)
 

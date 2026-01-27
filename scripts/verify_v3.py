@@ -5,12 +5,12 @@ import logging
 from datetime import datetime
 from app.models.config_models import CustomerPersona
 from app.schemas.fsm import FSMState
-from app.services.model_gateway.budget import BudgetManager
-from app.services.model_gateway.gateway import ModelGateway
-from app.agents.v3.session_director_v3 import SessionDirectorV3
-from app.agents.coordination.v3_orchestrator import V3Orchestrator
-from app.services.observability import trace_manager
-from app.services.knowledge_engine import knowledge_engine, KnowledgeAsset
+from app.infra.gateway.model_gateway.budget import BudgetManager
+from app.infra.gateway.model_gateway.gateway import ModelGateway
+from app.agents.coordination.session_director_v3 import SessionDirectorV3
+from app.engine.coordinator.workflow_coordinator import SalesOrchestrator
+from app.observability import trace_manager
+from app.agents.study.knowledge_retriever import knowledge_engine, KnowledgeAsset
 
 async def verify_v3():
     if os.environ.get("AGENTIC_V3_ENABLED", "").lower() not in ["1", "true", "yes"]:
@@ -42,13 +42,13 @@ async def verify_v3():
     budget_manager = BudgetManager()
     model_gateway = ModelGateway(budget_manager=budget_manager)
     session_director = SessionDirectorV3(model_gateway, budget_manager)
-    orchestrator = V3Orchestrator(
+    orchestrator = SalesOrchestrator(
         model_gateway=model_gateway,
         budget_manager=budget_manager,
         session_director=session_director,
         persona=CustomerPersona(name="张总"),
     )
-    await orchestrator.initialize_session(session_id, user_id, FSMState())
+    orchestrator.initialize_session(session_id, user_id, FSMState())
 
     def _find_trace_id(turn: int, path: str) -> str:
         traces = trace_manager.get_session_history(session_id)

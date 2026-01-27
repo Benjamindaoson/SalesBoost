@@ -1,9 +1,9 @@
 import pytest
 import pytest_asyncio
 from unittest.mock import MagicMock, AsyncMock
-from app.services.adoption_tracker import AdoptionTracker
-from app.schemas.agent_outputs import CoachOutput
-from app.models.adoption_models import AdoptionStyle
+from cognitive.skills.evaluate.adoption_tracker import AdoptionTracker
+from schemas.agent_outputs import CoachOutput
+from models.adoption_models import AdoptionStyle
 from sqlalchemy.ext.asyncio import AsyncSession
 
 @pytest.mark.asyncio

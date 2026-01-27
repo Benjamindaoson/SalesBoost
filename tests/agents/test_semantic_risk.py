@@ -12,7 +12,7 @@ Tests for Semantic Risk Detector
 import pytest
 from unittest.mock import MagicMock, patch
 
-from app.agents.v3.semantic_risk_detector import (
+from cognitive.skills.v3.semantic_risk_detector import (
     SemanticRiskDetector,
     RiskCategory,
     RiskLevel,

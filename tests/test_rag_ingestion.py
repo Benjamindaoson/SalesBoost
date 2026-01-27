@@ -2,7 +2,7 @@ import pytest
 import os
 import shutil
 import asyncio
-from app.services.knowledge_service import KnowledgeService
+from cognitive.skills.study.knowledge_service import KnowledgeService
 
 # Use a temporary directory for ChromaDB in tests
 TEST_CHROMA_DIR = "./chroma_db_test"

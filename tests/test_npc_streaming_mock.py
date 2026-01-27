@@ -2,13 +2,13 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock
-from app.agents.v3.npc_generator_v3 import NPCGeneratorV3
-from app.services.model_gateway import ModelGateway
-from app.services.model_gateway.budget import BudgetManager
-from app.models.config_models import CustomerPersona
-from app.agents.roles.npc_agent import PersonaProfile
-from app.schemas.fsm import FSMState, SalesStage
-from app.schemas.agent_outputs import IntentGateOutput
+from cognitive.skills.v3.npc_generator_v3 import NPCGeneratorV3
+from cognitive.infra.gateway.model_gateway import ModelGateway
+from cognitive.infra.gateway.model_gateway.budget import BudgetManager
+from models.config_models import CustomerPersona
+from cognitive.skills.roles.npc_agent import PersonaProfile
+from schemas.fsm import FSMState, SalesStage
+from schemas.agent_outputs import IntentGateOutput
 
 @pytest.mark.asyncio
 async def test_npc_generator_stream():
@@ -51,12 +51,12 @@ async def test_npc_generator_stream():
     # Inject persona profile into internal agent
     generator.npc_agent.set_persona(profile)
     # Inject mock gateway into agent's global context (this is tricky as agent uses global 'model_gateway' import)
-    # But wait, BaseAgent uses 'from app.services.model_gateway import model_gateway'
+    # But wait, BaseAgent uses 'from cognitive.infra.gateway.model_gateway import model_gateway'
     # We need to patch that global instance.
     
     # Patching global model_gateway
     with pytest.MonkeyPatch.context() as m:
-        from app.agents.roles import base
+        from cognitive.skills.roles import base
         m.setattr(base, "model_gateway", mock_gateway)
         
         # 4. Prepare Inputs

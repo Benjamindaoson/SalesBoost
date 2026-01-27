@@ -1,8 +1,8 @@
 
 import asyncio
 import logging
-from app.services.advanced_rag_service import AdvancedRAGService
-from app.services.model_gateway.gateway import ModelGateway
+from cognitive.skills.study.advanced_rag_service import AdvancedRAGService
+from cognitive.infra.gateway.model_gateway import ModelGateway
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +35,7 @@ async def main():
         {"role": "user", "content": f"Context:\n{context_str}\n\nQuestion: {question}"}
     ]
     
-    from app.services.model_gateway.schemas import RoutingContext, AgentType, LatencyMode
+    from cognitive.infra.gateway.model_gateway.schemas import RoutingContext, AgentType, LatencyMode
     routing_context = RoutingContext(
         session_id="test_session",
         agent_type=AgentType.RETRIEVER, # Changed from ASSISTANT to RETRIEVER (valid enum)

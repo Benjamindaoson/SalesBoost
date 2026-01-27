@@ -1,0 +1,85 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    image: salesboost-api:latest
+    container_name: salesboost_api
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-salesboost}:${POSTGRES_PASSWORD:-salesboost}@postgres:5432/${POSTGRES_DB:-salesboost}
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - salesboost_logs:/app/logs
+      - salesboost_monitoring:/app/monitoring
+      - salesboost_knowledge:/app/knowledge_db
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - backend
+      - public
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api/v1
+    image: salesboost-web:latest
+    container_name: salesboost_web
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - backend
+      - public
+
+  redis:
+    image: redis:7-alpine
+    container_name: salesboost_redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - backend
+
+  postgres:
+    image: postgres:16
+    container_name: salesboost_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-salesboost}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-salesboost}
+      POSTGRES_DB: ${POSTGRES_DB:-salesboost}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - backend
+
+volumes:
+  salesboost_logs:
+  salesboost_monitoring:
+  salesboost_knowledge:
+  redis_data:
+  postgres_data:
+
+networks:
+  public:
+  backend:
+    internal: true

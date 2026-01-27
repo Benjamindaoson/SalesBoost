@@ -5,8 +5,8 @@ GraphRAG 集成测试
 """
 import pytest
 import asyncio
-from app.services.graph_rag_service import GraphRAGService
-from app.services.graph_rag.graph_schema import EntityType, RelationType
+from cognitive.skills.study.graph_rag_service import GraphRAGService
+from cognitive.skills.study.graph_rag.graph_schema import EntityType, RelationType
 
 
 @pytest.mark.asyncio
@@ -105,7 +105,7 @@ async def test_objection_retrieval():
 
 def test_graph_schema():
     """测试图 Schema"""
-    from app.services.graph_rag.graph_schema import (
+    from cognitive.skills.study.graph_rag.graph_schema import (
         Entity,
         EntityType,
         Relation,

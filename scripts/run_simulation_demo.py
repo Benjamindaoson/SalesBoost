@@ -36,7 +36,7 @@ from app.sales_simulation.schemas.trajectory import (
     StepObservation,
     ActionType
 )
-from app.core.config import get_settings
+from core.config import get_settings
 
 # Configure logging
 logging.basicConfig(

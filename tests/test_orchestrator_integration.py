@@ -4,14 +4,14 @@ import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
 from datetime import datetime
 
-from app.agents.coordination.v3_orchestrator import V3Orchestrator
-from app.services.model_gateway import ModelGateway, AgentType
-from app.services.model_gateway.budget import BudgetManager
-from app.agents.v3.session_director_v3 import SessionDirectorV3
+from app.engine.coordinator.workflow_coordinator import SalesOrchestrator
+from app.infra.gateway.model_gateway import ModelGateway, AgentType
+from app.infra.gateway.model_gateway.budget import BudgetManager
+from app.agents.coordination.session_director_v3 import SessionDirectorV3
 from app.models.config_models import CustomerPersona
 from app.schemas.fsm import FSMState, SalesStage
 from app.core.redis import InMemoryCache
-from app.services.state.wal import wal_manager
+from app.engine.state.write_ahead_log import wal_manager
 
 # Mock data
 MOCK_NPC_RESPONSE = "Hello Salesperson."
@@ -79,10 +79,10 @@ async def test_orchestrator_execute_turn_stream(
     with patch("app.agents.roles.base.model_gateway", mock_model_gateway), \
          patch("app.security.runtime_guard.runtime_guard.check_input", return_value=("allow", None)), \
          patch("app.security.runtime_guard.runtime_guard.check_output", return_value=("allow", "Hello Salesperson.", None)), \
-         patch("app.services.knowledge_engine.knowledge_engine.retrieve", return_value=[]):
+         patch("app.agents.study.knowledge_retriever.knowledge_engine.retrieve", return_value=[]):
         
         # 3. Initialize Orchestrator
-        orchestrator = V3Orchestrator(
+        orchestrator = SalesOrchestrator(
             model_gateway=mock_model_gateway,
             budget_manager=mock_budget_manager,
             session_director=mock_session_director,

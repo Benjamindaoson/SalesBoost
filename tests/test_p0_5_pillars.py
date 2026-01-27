@@ -1,11 +1,11 @@
 import pytest
 import re
 from datetime import datetime, timedelta
-from app.services.observability import trace_manager
-from app.services.context_engine import ContextBuilder, ContextPolicy
+from app.observability import trace_manager
+from cognitive.memory.context.context_engine import ContextBuilder, ContextPolicy
 from app.security.runtime_guard import runtime_guard, SecurityAction
-from app.services.knowledge_engine import knowledge_engine, KnowledgeAsset
-from app.schemas.trace import CallType, SecurityEvent
+from cognitive.skills.study.knowledge_retriever import knowledge_engine, KnowledgeAsset
+from schemas.trace import CallType, SecurityEvent
 
 # ============================================================
 # C1 Observability Tests

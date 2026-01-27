@@ -5,7 +5,7 @@ Run: python scripts/data_consistency_check.py
 from pathlib import Path
 import json
 
-from app.services.data_quality_service import data_quality_service
+from cognitive.skills.study.data_quality_agent import data_quality_service
 
 
 def main():

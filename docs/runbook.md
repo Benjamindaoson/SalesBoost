@@ -2,8 +2,8 @@
 
 ## Prerequisites
 - Python 3.10+
-- SQLite (Built-in)
-- Redis (Optional, falls back to memory)
+- PostgreSQL 16+ (production)
+- Redis (recommended)
 
 ## Installation
 ```bash
@@ -28,6 +28,20 @@ python -m pytest tests -v
 # Run specific test
 python -m pytest tests/test_ws_turn_loop.py -v
 ```
+
+## Observability
+- Metrics endpoint: `GET /metrics`
+- Health endpoint: `GET /health`
+
+## Required Env Vars (Production)
+- `SECRET_KEY`
+- `ADMIN_PASSWORD_HASH`
+- `DATABASE_URL`
+- `REDIS_URL`
+
+## Release & Rollback (Docker)
+1. **Blue/Green**: deploy a new stack with a different project name (e.g., `salesboost-green`) and switch traffic at the load balancer.
+2. **Rollback**: switch traffic back to the previous stack, then decommission the new stack.
 
 ## API Usage
 

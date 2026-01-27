@@ -4,11 +4,11 @@ from datetime import datetime
 import pytest
 from sqlalchemy import select
 
-from app.core.database import async_session_factory
-from app.models.config_models import Course, ScenarioConfig, CustomerPersona
-from app.models.runtime_models import Session
-from app.models.adoption_models import StrategyDecision
-from app.agents.coordination.orchestrator import SessionOrchestrator
+from core.database import async_session_factory
+from models.config_models import Course, ScenarioConfig, CustomerPersona
+from models.runtime_models import Session
+from models.adoption_models import StrategyDecision
+from cognitive.skills.coordination.orchestrator import SessionOrchestrator
 
 
 COURSE_ID = "course-credit-card-001"

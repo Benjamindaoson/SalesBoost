@@ -14,7 +14,7 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 
-from app.agents.v3.react_reasoning_engine import (
+from cognitive.skills.v3.react_reasoning_engine import (
     ReActReasoningEngine,
     ReActConfig,
     ReActResult,
@@ -26,7 +26,7 @@ from app.agents.v3.react_reasoning_engine import (
     ReflectionOutput,
     convert_react_to_turn_plan,
 )
-from app.schemas.fsm import FSMState, SalesStage
+from schemas.fsm import FSMState, SalesStage
 
 
 # ============================================================

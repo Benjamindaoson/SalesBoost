@@ -3,16 +3,16 @@ API Middleware Collection - API中间件集合
 包含认证、限流、监控、日志等中间件
 """
 
-import time
 import logging
+import time
 from typing import Callable
-from fastapi import Request, Response, HTTPException, status
-from starlette.middleware.base import BaseHTTPMiddleware
+
+from fastapi import HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import RequestResponseEndpoint
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse
 
-from app.core.config import get_settings
+from core.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -105,7 +105,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         # 记录请求信息
         logger.info(
-            f"Request started",
+            "Request started",
             extra={
                 "method": request.method,
                 "url": str(request.url),
@@ -119,7 +119,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         # 记录响应信息
         process_time = time.time() - start_time
         logger.info(
-            f"Request completed",
+            "Request completed",
             extra={
                 "method": request.method,
                 "url": str(request.url),

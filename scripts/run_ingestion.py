@@ -26,7 +26,7 @@ import docx
 from pypdf import PdfReader
 
 import hashlib
-from app.services.ingestion.semantic_chunker import SemanticChunker
+from cognitive.tools.connectors.ingestion.semantic_chunker import SemanticChunker
 
 # Simple Document Class
 class Document:
@@ -35,10 +35,10 @@ class Document:
         self.metadata = metadata or {}
 
 # 服务
-from app.services.knowledge_service import KnowledgeService
-from app.services.advanced_rag.graph_rag import GraphRAGService
-from app.services.model_gateway.gateway import ModelGateway
-from app.core.config import get_settings
+from cognitive.skills.study.knowledge_service import KnowledgeService
+from cognitive.skills.study.advanced_rag.graph_rag import GraphRAGService
+from cognitive.infra.gateway.model_gateway import ModelGateway
+from core.config import get_settings
 
 # 配置日志
 logging.basicConfig(

@@ -5,12 +5,12 @@ import asyncio
 
 import pytest
 
-from app.agents.coordination.v3_orchestrator import V3Orchestrator
-from app.agents.v3.session_director_v3 import SessionDirectorV3
+from app.engine.coordinator.workflow_coordinator import SalesOrchestrator
+from app.agents.coordination.session_director_v3 import SessionDirectorV3
 from app.models.config_models import CustomerPersona
 from app.schemas.fsm import FSMState, SalesStage
-from app.services.model_gateway import AgentType, BudgetManager, LatencyMode, ModelGateway, RoutingContext
-from app.services.model_gateway.router import ModelRouter
+from app.infra.gateway.model_gateway import AgentType, BudgetManager, LatencyMode, ModelGateway, RoutingContext
+from app.infra.gateway.model_gateway.router import ModelRouter
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def v3_orchestrator(mock_persona):
     budget_manager = BudgetManager()
     model_gateway = ModelGateway(budget_manager=budget_manager)
     session_director = SessionDirectorV3(model_gateway, budget_manager)
-    orchestrator = V3Orchestrator(
+    orchestrator = SalesOrchestrator(
         model_gateway=model_gateway,
         budget_manager=budget_manager,
         session_director=session_director,

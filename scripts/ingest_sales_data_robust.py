@@ -82,7 +82,7 @@ class RobustSalesDataIngester:
         """延迟初始化服务"""
         if self.knowledge_service is None:
             try:
-                from app.services.knowledge_service import KnowledgeService
+                from cognitive.skills.study.knowledge_service import KnowledgeService
                 self.knowledge_service = KnowledgeService(org_id=self.org_id)
                 logger.info("KnowledgeService initialized")
             except Exception as e:
@@ -91,7 +91,7 @@ class RobustSalesDataIngester:
         
         if self.graph_rag_service is None:
             try:
-                from app.services.graph_rag_service import GraphRAGService
+                from cognitive.skills.study.graph_rag_service import GraphRAGService
                 self.graph_rag_service = GraphRAGService(org_id=self.org_id)
                 logger.info("GraphRAGService initialized")
             except Exception as e:
@@ -100,7 +100,7 @@ class RobustSalesDataIngester:
         
         if self.enhanced_parser is None:
             try:
-                from app.services.enhanced_document_parser import EnhancedDocumentParser
+                from cognitive.tools.parsers.enhanced_parser import EnhancedDocumentParser
                 self.enhanced_parser = EnhancedDocumentParser(use_mineru=HAS_MINERU)
                 logger.info("EnhancedDocumentParser initialized")
             except Exception as e:

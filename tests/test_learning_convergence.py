@@ -1,9 +1,9 @@
 import pytest
 import pytest_asyncio
 from unittest.mock import MagicMock, AsyncMock
-from app.services.curriculum_planner import CurriculumPlanner
-from app.models.profile_models import UserStrategyProfile
-from app.models.adoption_models import AdoptionRecord
+from cognitive.skills.evaluate.curriculum_planner import CurriculumPlanner
+from models.profile_models import UserStrategyProfile
+from models.adoption_models import AdoptionRecord
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
 
