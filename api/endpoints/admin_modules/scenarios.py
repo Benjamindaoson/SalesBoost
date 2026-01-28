@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.auth_schemas import UserSchema as User
-from api.auth_utils import get_current_user
+from api.deps import get_current_user
 from core.database import get_db_session
 from models.config_models import ScenarioConfig
 

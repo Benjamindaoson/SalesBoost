@@ -55,7 +55,25 @@ class ExecutionTracer:
             trace.end_time = time.time()
             trace.error = error
             duration = (trace.end_time - trace.start_time) * 1000
+            
             logger.info(f"Completed trace: {trace_id} in {duration:.2f}ms")
-            self._completed_traces[trace_id] = trace
+            
+            # Persist to JSONL file (Simulating DB write for durability)
+            self._persist_trace(trace)
+
+    def _persist_trace(self, trace: Trace):
+        import json
+        from pathlib import Path
+        
+        # Use a local file for audit durability test if DB not ready
+        # In prod this would be: await db.add(TraceModel(**trace.dict()))
+        trace_file = Path("storage/traces.jsonl")
+        trace_file.parent.mkdir(exist_ok=True, parents=True)
+        
+        try:
+            with open(trace_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(trace.dict(), default=str) + "\n")
+        except Exception as e:
+            logger.error(f"Failed to persist trace {trace.trace_id}: {e}")
 
 trace_manager = ExecutionTracer()

@@ -18,7 +18,7 @@ from core.config import get_settings
 from core.database import get_db_session
 from api.deps import require_user
 from api.auth_schemas import UserSchema as User
-from api.auth_utils import get_current_user_from_token
+from api.deps import get_current_user_from_token
 from models.config_models import Course, CustomerPersona, ScenarioConfig
 from models.runtime_models import Message, Session, SessionState
 from schemas.fsm import FSMState, SalesStage

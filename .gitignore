@@ -42,7 +42,8 @@ Thumbs.db
 *.log
 logs/
 
-# AI / Agent runtime artifacts
+# AI / Agent runtime artifacts  
+storage/
 chroma.sqlite3
 chroma.sqlite
 *.sqlite3

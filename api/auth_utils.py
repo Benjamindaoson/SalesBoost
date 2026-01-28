@@ -53,18 +53,45 @@ async def get_current_user_from_token(token: str, db: AsyncSession) -> UserSchem
     except JWTError:
         raise credentials_exception
 
+    # Always validate against DB for production security
     if user_id:
         result = await db.execute(select(DBUser).where(DBUser.id == user_id))
         db_user = result.scalar_one_or_none()
-        if db_user:
-            if not db_user.is_active:
+        
+        if not db_user:
+            # Token valid but user deleted/not found
+            raise credentials_exception
+            
+        if not db_user.is_active:
                 raise HTTPException(status_code=400, detail="Inactive user")
-            return UserSchema(
-                id=db_user.id,
-                username=db_user.username,
-                email=db_user.email,
-                role=db_user.role,
-                tenant_id=db_user.tenant_id,
-            )
+                
+        return UserSchema(
+            id=db_user.id,
+            username=db_user.username,
+            email=db_user.email,
+            role=db_user.role,
+            tenant_id=db_user.tenant_id,
+        )
+    
+    # If we got here with just username but no user_id (old tokens?), also force DB check
+    # or reject if policy demands. For now, we reject if no DB match found above when user_id expected.
+    # But if the logic falls through (e.g. legacy token without user_id?), 
+    # we MUST NOT return a schema blind.
+    
+    # Fallback lookup by username if user_id was missing but username present
+    if username:
+        result = await db.execute(select(DBUser).where(DBUser.username == username))
+        db_user = result.scalar_one_or_none()
+        if not db_user:
+            raise credentials_exception
+            
+        return UserSchema(
+            id=db_user.id,
+            username=db_user.username,
+            role=db_user.role,
+            tenant_id=db_user.tenant_id
+        )
 
-    return UserSchema(id=username, username=username, role=role, tenant_id=tenant_id)
+    raise credentials_exception
+
+

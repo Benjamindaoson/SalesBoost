@@ -4,7 +4,7 @@ Admin-specific dependencies.
 from fastapi import Depends, HTTPException, status
 
 from api.auth_schemas import UserSchema as User
-from api.auth_utils import get_current_user
+from api.deps import get_current_user
 
 
 async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
