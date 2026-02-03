@@ -1,0 +1,53 @@
+{
+  "note": "Replace vector size with your embedding dimension (e.g., 1536 or 3072).",
+  "collections": [
+    {
+      "name": "memory_event_summary",
+      "vectors": {"size": 1536, "distance": "Cosine"},
+      "payload_schema": {
+        "tenant_id": {"type": "keyword"},
+        "user_id": {"type": "keyword"},
+        "session_id": {"type": "keyword"},
+        "event_id": {"type": "keyword"},
+        "speaker": {"type": "keyword"},
+        "intent_top1": {"type": "keyword"},
+        "stage": {"type": "keyword"},
+        "objection_type": {"type": "keyword"},
+        "entities": {"type": "keyword"},
+        "compliance_flags": {"type": "keyword"},
+        "created_at": {"type": "integer"}
+      }
+    },
+    {
+      "name": "memory_knowledge",
+      "vectors": {"size": 1536, "distance": "Cosine"},
+      "payload_schema": {
+        "tenant_id": {"type": "keyword"},
+        "knowledge_id": {"type": "keyword"},
+        "domain": {"type": "keyword"},
+        "product_id": {"type": "keyword"},
+        "version": {"type": "keyword"},
+        "effective_from": {"type": "keyword"},
+        "effective_to": {"type": "keyword"},
+        "is_enabled": {"type": "bool"},
+        "source_ref": {"type": "keyword"}
+      }
+    },
+    {
+      "name": "memory_strategy_unit",
+      "vectors": {"size": 1536, "distance": "Cosine"},
+      "payload_schema": {
+        "tenant_id": {"type": "keyword"},
+        "strategy_id": {"type": "keyword"},
+        "type": {"type": "keyword"},
+        "trigger_intent": {"type": "keyword"},
+        "trigger_stage": {"type": "keyword"},
+        "trigger_objection_type": {"type": "keyword"},
+        "trigger_level": {"type": "keyword"},
+        "adoption_rate": {"type": "float"},
+        "progress_rate": {"type": "float"},
+        "risk_rate": {"type": "float"}
+      }
+    }
+  ]
+}

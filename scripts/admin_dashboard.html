@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalesBoost Admin Review Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #9ca3af;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+
+        .connection-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #d97706;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .reviews-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .reviews-panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .review-card {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .review-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .review-card.high-risk {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .review-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .risk-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .risk-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .risk-low {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .review-content {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .review-issues {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .review-issues h4 {
+            color: #991b1b;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .review-issues ul {
+            margin-left: 20px;
+            color: #7f1d1d;
+        }
+
+        .review-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        .logs-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .logs-panel h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .log-entry {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .log-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .log-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .log-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .log-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .timestamp {
+            color: #6b7280;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🛡️ SalesBoost Admin Review Dashboard</h1>
+            <p>Human-in-the-Loop Compliance Review Interface</p>
+            <div class="status-bar">
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Disconnected</span>
+                </div>
+                <div class="status-indicator">
+                    <span>⏱️ Pending Reviews: <strong id="pendingCount">0</strong></span>
+                </div>
+                <div class="status-indicator">
+                    <span>✅ Approved: <strong id="approvedCount">0</strong></span>
+                </div>
+                <div class="status-indicator">
+                    <span>❌ Rejected: <strong id="rejectedCount">0</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Panel -->
+        <div class="connection-panel">
+            <div class="input-group">
+                <input type="text" id="wsUrl" placeholder="WebSocket URL" value="ws://localhost:8000/admin/ws/review">
+                <input type="text" id="adminId" placeholder="Admin ID" value="admin_001">
+                <button class="btn btn-primary" id="connectBtn" onclick="connect()">Connect</button>
+                <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" style="display:none;">Disconnect</button>
+            </div>
+        </div>
+
+        <!-- Reviews Panel -->
+        <div class="reviews-panel">
+            <h2>📋 Pending Reviews</h2>
+            <div id="reviewsContainer">
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h3>No Pending Reviews</h3>
+                    <p>Connect to the server to see pending compliance reviews</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Logs -->
+        <div class="logs-panel">
+            <h3>📝 Activity Log</h3>
+            <div id="logsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let pendingReviews = new Map();
+        let stats = { approved: 0, rejected: 0, modified: 0 };
+
+        function log(message, type = 'info') {
+            const logsContainer = document.getElementById('logsContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
+
+            logsContainer.insertBefore(entry, logsContainer.firstChild);
+
+            // Keep only last 50 entries
+            while (logsContainer.children.length > 50) {
+                logsContainer.removeChild(logsContainer.lastChild);
+            }
+        }
+
+        function updateStatus(connected) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+
+            if (connected) {
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Connected';
+                connectBtn.style.display = 'none';
+                disconnectBtn.style.display = 'inline-block';
+            } else {
+                statusDot.classList.remove('connected');
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'Disconnected';
+                connectBtn.style.display = 'inline-block';
+                disconnectBtn.style.display = 'none';
+            }
+        }
+
+        function updateCounts() {
+            document.getElementById('pendingCount').textContent = pendingReviews.size;
+            document.getElementById('approvedCount').textContent = stats.approved;
+            document.getElementById('rejectedCount').textContent = stats.rejected;
+        }
+
+        function connect() {
+            const wsUrl = document.getElementById('wsUrl').value;
+            const adminId = document.getElementById('adminId').value;
+
+            if (!adminId) {
+                alert('Please enter Admin ID');
+                return;
+            }
+
+            const fullUrl = `${wsUrl}?admin_id=${adminId}`;
+            log(`Connecting to ${fullUrl}...`, 'info');
+
+            ws = new WebSocket(fullUrl);
+
+            ws.onopen = () => {
+                updateStatus(true);
+                log('✅ Connected to SalesBoost Admin Review WebSocket', 'success');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                } catch (e) {
+                    log(`❌ Error parsing message: ${e.message}`, 'error');
+                }
+            };
+
+            ws.onerror = (error) => {
+                log(`❌ WebSocket error: ${error.message || 'Connection failed'}`, 'error');
+            };
+
+            ws.onclose = () => {
+                updateStatus(false);
+                log('⚠️ Disconnected from server', 'warning');
+                ws = null;
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                updateStatus(false);
+                log('Manually disconnected', 'info');
+            }
+        }
+
+        function handleMessage(data) {
+            switch (data.type) {
+                case 'pending_reviews':
+                    log(`📥 Received ${data.reviews.length} pending review(s)`, 'info');
+                    data.reviews.forEach(review => {
+                        pendingReviews.set(review.session_id, review);
+                    });
+                    renderReviews();
+                    break;
+
+                case 'new_review':
+                    log(`🆕 New review request: ${data.review.session_id}`, 'warning');
+                    pendingReviews.set(data.review.session_id, data.review);
+                    renderReviews();
+                    break;
+
+                case 'review_completed':
+                    log(`✅ Review completed: ${data.session_id} - ${data.decision}`, 'success');
+                    pendingReviews.delete(data.session_id);
+                    renderReviews();
+                    break;
+
+                case 'error':
+                    log(`❌ Error: ${data.message}`, 'error');
+                    break;
+
+                default:
+                    log(`📨 Unknown message type: ${data.type}`, 'info');
+            }
+        }
+
+        function renderReviews() {
+            const container = document.getElementById('reviewsContainer');
+
+            if (pendingReviews.size === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3>All Clear!</h3>
+                        <p>No pending reviews at the moment</p>
+                    </div>
+                `;
+                updateCounts();
+                return;
+            }
+
+            container.innerHTML = '';
+
+            Array.from(pendingReviews.values()).forEach(review => {
+                const card = createReviewCard(review);
+                container.appendChild(card);
+            });
+
+            updateCounts();
+        }
+
+        function createReviewCard(review) {
+            const card = document.createElement('div');
+            card.className = `review-card ${review.risk_score > 0.8 ? 'high-risk' : ''}`;
+
+            const riskLevel = review.risk_score > 0.8 ? 'high' : (review.risk_score > 0.6 ? 'medium' : 'low');
+            const riskLabel = review.risk_score > 0.8 ? 'HIGH RISK' : (review.risk_score > 0.6 ? 'MEDIUM' : 'LOW');
+
+            card.innerHTML = `
+                <div class="review-header">
+                    <div class="review-meta">
+                        <span><strong>Session:</strong> ${review.session_id}</span>
+                        <span><strong>Turn:</strong> ${review.turn_number || 'N/A'}</span>
+                    </div>
+                    <span class="risk-badge risk-${riskLevel}">⚠️ ${riskLabel} (${(review.risk_score * 100).toFixed(0)}%)</span>
+                </div>
+
+                <div class="review-content">
+                    ${review.content || 'No content available'}
+                </div>
+
+                ${review.issues && review.issues.length > 0 ? `
+                    <div class="review-issues">
+                        <h4>🚨 Compliance Issues Detected:</h4>
+                        <ul>
+                            ${review.issues.map(issue => `<li>${issue}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+
+                <div class="review-actions">
+                    <button class="btn btn-success" onclick="approveReview('${review.session_id}')">
+                        ✅ Approve
+                    </button>
+                    <button class="btn btn-danger" onclick="rejectReview('${review.session_id}')">
+                        ❌ Reject
+                    </button>
+                    <button class="btn btn-warning" onclick="modifyReview('${review.session_id}')">
+                        ✏️ Modify & Approve
+                    </button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function sendDecision(sessionId, decision, modifiedContent = null) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Not connected to server');
+                return;
+            }
+
+            const message = {
+                type: 'decision',
+                session_id: sessionId,
+                decision: decision,
+                modified_content: modifiedContent,
+                admin_id: document.getElementById('adminId').value
+            };
+
+            ws.send(JSON.stringify(message));
+        }
+
+        function approveReview(sessionId) {
+            sendDecision(sessionId, 'APPROVE');
+            stats.approved++;
+            log(`✅ Approved review: ${sessionId}`, 'success');
+        }
+
+        function rejectReview(sessionId) {
+            const reason = prompt('Rejection reason (optional):');
+            sendDecision(sessionId, 'REJECT', reason);
+            stats.rejected++;
+            log(`❌ Rejected review: ${sessionId}`, 'error');
+        }
+
+        function modifyReview(sessionId) {
+            const review = pendingReviews.get(sessionId);
+            if (!review) return;
+
+            const modifiedContent = prompt('Enter modified content:', review.content);
+            if (modifiedContent && modifiedContent !== review.content) {
+                sendDecision(sessionId, 'MODIFY', modifiedContent);
+                stats.modified++;
+                log(`✏️ Modified & approved review: ${sessionId}`, 'warning');
+            }
+        }
+
+        // Auto-connect on page load (optional)
+        // window.onload = () => connect();
+
+        // Log initial message
+        log('🚀 Admin Dashboard initialized', 'info');
+    </script>
+</body>
+</html>

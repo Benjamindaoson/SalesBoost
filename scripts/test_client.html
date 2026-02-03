@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalesBoost WebSocket 测试客户端</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 20px; color: #00d9ff; }
+        .config-panel {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .config-panel label { font-size: 12px; color: #888; }
+        .config-panel input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: #0f0f23;
+            color: #fff;
+            font-size: 14px;
+        }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-connect { background: #00d9ff; color: #000; }
+        .btn-connect:hover { background: #00b8d9; }
+        .btn-disconnect { background: #ff4757; color: #fff; }
+        .btn-send { background: #2ed573; color: #000; }
+        .btn-send:hover { background: #26c066; }
+        .btn-clear { background: #666; color: #fff; }
+        .status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+        }
+        .status.connected { background: #2ed573; color: #000; }
+        .status.disconnected { background: #ff4757; }
+        .main-area { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+        .chat-area { background: #16213e; border-radius: 8px; padding: 15px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>🚀 SalesBoost WebSocket 测试客户端</h1>
+    <div class="config-panel">
+        <div>
+            <label>Course ID</label>
+            <input type="text" id="courseId" value="course-credit-card-001">
+        </div>
+        <div>
+            <label>Scenario ID</label>
+            <input type="text" id="scenarioId" value="scenario-annual-fee-001">
+        </div>
+        <div>
+            <label>Persona ID</label>
+            <input type="text" id="personaId" value="persona-wang-001">
+        </div>
+        <div>
+            <label>User ID</label>
+            <input type="text" id="userId" value="test-user-001">
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-connect" onclick="connect()">🔌 连接</button>
+        <button class="btn-disconnect" onclick="disconnect()">❌ 断开</button>
+        <button class="btn-clear" onclick="clearLog()">🗑️ 清空日志</button>
+        <span id="status" class="status disconnected">未连接</span>
+    </div>
+
+    <div class="main-area">
+        <div class="chat-area">
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="messageInput" placeholder="输入销售话术..." 
+                    style="width: calc(100% - 90px); padding: 12px; border: 1px solid #333; 
+                    border-radius: 6px; background: #0f0f23; color: #fff; font-size: 14px;"
+                    onkeypress="if(event.key==='Enter')sendMessage()">
+                <button class="btn-send" onclick="sendMessage()" style="width: 80px;">发送</button>
+            </div>
+            <div id="logArea" style="height: 500px; overflow-y: auto; background: #0f0f23; 
+                border-radius: 6px; padding: 15px; font-family: monospace; font-size: 13px;">
+            </div>
+        </div>
+        <div class="info-panel" style="background: #16213e; border-radius: 8px; padding: 15px;">
+            <h3 style="margin-bottom: 15px; color: #00d9ff;">📊 会话状态</h3>
+            <div id="stateInfo">
+                <p><strong>阶段:</strong> <span id="currentStage">-</span></p>
+                <p><strong>轮次:</strong> <span id="turnCount">0</span></p>
+                <p><strong>NPC情绪:</strong> <span id="npcMood">-</span></p>
+                <p><strong>最新评分:</strong> <span id="lastScore">-</span></p>
+            </div>
+            <hr style="border-color: #333; margin: 15px 0;">
+            <h3 style="margin-bottom: 15px; color: #00d9ff;">📝 消息类型图例</h3>
+            <p><span style="color: #2ed573;">■</span> NPC 客户回复</p>
+            <p><span style="color: #ffa502;">■</span> COACH 教练建议</p>
+            <p><span style="color: #9b59b6;">■</span> STRATEGY 策略分析</p>
+            <p><span style="color: #e74c3c;">■</span> GUIDANCE 策略指导</p>
+            <p><span style="color: #3498db;">■</span> ADOPTION 采纳检测</p>
+            <p><span style="color: #00d9ff;">■</span> SYSTEM 系统消息</p>
+            <p><span style="color: #ff4757;">■</span> ERROR 错误</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let ws = null;
+const logArea = document.getElementById('logArea');
+
+function getWsUrl() {
+    const courseId = document.getElementById('courseId').value;
+    const scenarioId = document.getElementById('scenarioId').value;
+    const personaId = document.getElementById('personaId').value;
+    const userId = document.getElementById('userId').value;
+    return `ws://localhost:8000/ws/train?course_id=${courseId}&scenario_id=${scenarioId}&persona_id=${personaId}&user_id=${userId}`;
+}
+
+function connect() {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        log('SYSTEM', '已经连接', '#00d9ff');
+        return;
+    }
+    const url = getWsUrl();
+    log('SYSTEM', `正在连接: ${url}`, '#00d9ff');
+    ws = new WebSocket(url);
+    
+    ws.onopen = () => {
+        document.getElementById('status').textContent = '已连接';
+        document.getElementById('status').className = 'status connected';
+        log('SYSTEM', '✅ WebSocket 连接成功', '#2ed573');
+    };
+    
+    ws.onclose = () => {
+        document.getElementById('status').textContent = '未连接';
+        document.getElementById('status').className = 'status disconnected';
+        log('SYSTEM', '❌ WebSocket 连接关闭', '#ff4757');
+    };
+    
+    ws.onerror = (e) => {
+        log('ERROR', `WebSocket 错误: ${e.message || '未知错误'}`, '#ff4757');
+    };
+    
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleMessage(data);
+    };
+}
+</script>
+
+<script>
+function handleMessage(data) {
+    const type = data.type;
+    
+    switch(type) {
+        case 'init':
+            log('SYSTEM', `会话初始化 | Session: ${data.session_id}`, '#00d9ff');
+            log('SYSTEM', `客户: ${data.persona?.name} (${data.persona?.occupation})`, '#00d9ff');
+            log('SYSTEM', `场景: ${data.scenario?.name}`, '#00d9ff');
+            document.getElementById('currentStage').textContent = data.stage;
+            break;
+            
+        case 'turn_result':
+            document.getElementById('turnCount').textContent = data.turn;
+            document.getElementById('currentStage').textContent = data.stage;
+            document.getElementById('npcMood').textContent = (data.npc_mood * 100).toFixed(0) + '%';
+            document.getElementById('lastScore').textContent = data.overall_score?.toFixed(1) || '-';
+            
+            // NPC 回复
+            log('NPC', data.npc_response, '#2ed573');
+            
+            // Coach 建议
+            if (data.coach_suggestion) {
+                log('COACH', `💡 ${data.coach_suggestion}`, '#ffa502');
+                if (data.coach_example) {
+                    log('COACH', `📝 示例: "${data.coach_example}"`, '#ffa502');
+                }
+            }
+            
+            // 【能力闭环】策略分析
+            if (data.strategy_analysis) {
+                const sa = data.strategy_analysis;
+                const optimalIcon = sa.is_optimal ? '✅' : '⚠️';
+                log('STRATEGY', `${optimalIcon} 情境: ${sa.situation_type} | 你的策略: ${sa.strategy_chosen} | 销冠策略: ${sa.golden_strategy}`, '#9b59b6');
+                if (!sa.is_optimal) {
+                    log('STRATEGY', `📈 ${sa.optimality_reason}`, '#9b59b6');
+                }
+            }
+            
+            // 【能力闭环】策略级指导
+            if (data.strategy_guidance) {
+                const sg = data.strategy_guidance;
+                log('GUIDANCE', `🎯 销冠策略: ${sg.golden_strategy}`, '#e74c3c');
+                log('GUIDANCE', `💡 过渡建议: ${sg.transition_suggestion}`, '#e74c3c');
+                log('GUIDANCE', `📝 示例: "${sg.example_utterance}"`, '#e74c3c');
+            }
+            
+            // 【能力闭环】采纳分析
+            if (data.adoption_analysis) {
+                const aa = data.adoption_analysis;
+                const effectiveIcon = aa.is_effective ? '🎉' : '📊';
+                log('ADOPTION', `${effectiveIcon} 建议采纳检测: ${aa.adoption_style} | 有效: ${aa.is_effective} | 效果分: ${aa.effectiveness_score?.toFixed(2)}`, '#3498db');
+                if (aa.skill_delta) {
+                    const deltaStr = Object.entries(aa.skill_delta)
+                        .filter(([k,v]) => v !== 0)
+                        .map(([k,v]) => `${k}: ${v > 0 ? '+' : ''}${v.toFixed(2)}`)
+                        .join(' | ');
+                    if (deltaStr) {
+                        log('ADOPTION', `📈 能力变化: ${deltaStr}`, '#3498db');
+                    }
+                }
+            }
+            
+            // 评分
+            if (data.scores) {
+                const scoreStr = Object.entries(data.scores)
+                    .map(([k,v]) => `${k}: ${v.toFixed(1)}`)
+                    .join(' | ');
+                log('SYSTEM', `📊 评分: ${scoreStr} | 总分: ${data.overall_score?.toFixed(1)}`, '#00d9ff');
+            }
+            
+            // 合规风险
+            if (data.compliance_risks && data.compliance_risks.length > 0) {
+                data.compliance_risks.forEach(r => {
+                    log('ERROR', `⚠️ 合规风险: ${r.type} - ${r.reason}`, '#ff4757');
+                });
+            }
+            break;
+            
+        case 'stage_change':
+            log('SYSTEM', `🎯 阶段变化: ${data.from} → ${data.to}`, '#00d9ff');
+            log('SYSTEM', `原因: ${data.reason}`, '#00d9ff');
+            document.getElementById('currentStage').textContent = data.to;
+            break;
+            
+        case 'session_complete':
+            log('SYSTEM', `🎉 ${data.message}`, '#2ed573');
+            log('SYSTEM', `最终阶段: ${data.final_stage} | 总轮次: ${data.total_turns}`, '#2ed573');
+            break;
+            
+        case 'pong':
+            break;
+            
+        case 'error':
+            log('ERROR', data.message, '#ff4757');
+            break;
+            
+        default:
+            log('SYSTEM', JSON.stringify(data, null, 2), '#888');
+    }
+}
+
+function disconnect() {
+    if (ws) {
+        ws.close();
+        ws = null;
+    }
+}
+
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    if (!message) return;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        log('ERROR', '请先连接 WebSocket', '#ff4757');
+        return;
+    }
+    log('USER', message, '#fff');
+    ws.send(JSON.stringify({ type: 'message', content: message }));
+    input.value = '';
+}
+
+function log(source, message, color) {
+    const time = new Date().toLocaleTimeString();
+    const div = document.createElement('div');
+    div.style.marginBottom = '8px';
+    div.style.borderLeft = `3px solid ${color}`;
+    div.style.paddingLeft = '10px';
+    div.innerHTML = `<span style="color:#666">[${time}]</span> <span style="color:${color};font-weight:bold">[${source}]</span> ${message}`;
+    logArea.appendChild(div);
+    logArea.scrollTop = logArea.scrollHeight;
+}
+
+function clearLog() {
+    logArea.innerHTML = '';
+}
+
+// 心跳
+setInterval(() => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping' }));
+    }
+}, 30000);
+</script>
+</body>
+</html>

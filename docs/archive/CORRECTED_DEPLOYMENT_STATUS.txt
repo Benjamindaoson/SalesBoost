@@ -1,0 +1,266 @@
+======================================================================
+  CORRECTED DEPLOYMENT STATUS - PRODUCTION READINESS
+======================================================================
+Date: 2026-01-30
+Status: CODE COMPLETE - OPERATIONS REQUIRED
+
+CRITICAL CORRECTION
+===================
+
+Previous Report Error:
+  ✗ Listed Celery Worker as "Optional"
+  ✗ Status shown as "degraded (expected)"
+
+Architect Review Findings:
+  ✓ Celery Worker is MANDATORY for async coach functionality
+  ✓ Without worker, tasks accumulate in Redis queue indefinitely
+  ✓ Users will never receive coach suggestions
+  ✓ System status should be "healthy" when all required services run
+
+CORRECTED SERVICE REQUIREMENTS
+===============================
+
+Required Services (All Must Be Running):
+  [OK] Redis (Port 6379)           - RUNNING
+  [OK] FastAPI (Port 8000)         - RUNNING
+  [!]  Celery Worker               - MUST START NOW
+
+Current Status: INCOMPLETE - Celery Worker not running
+
+IMMEDIATE ACTIONS REQUIRED
+==========================
+
+Priority 1 - CRITICAL (Execute Now):
+  [ ] Start Celery Worker
+      Command: celery -A app.tasks.coach_tasks worker --loglevel=info --pool=solo
+      Or use: start_celery_worker.bat
+
+  [ ] Verify worker is processing tasks
+      Command: celery -A app.tasks.coach_tasks inspect active
+
+  [ ] Update health check to require Celery
+      File: main.py, function: health_check()
+
+PRODUCTION READINESS ROADMAP
+=============================
+
+Week 1: Observability & Monitoring
+-----------------------------------
+
+Day 1-2: Grafana Setup
+  [ ] Import dashboard: config/grafana/coordinator_dashboard.json
+  [ ] Configure Prometheus data source
+  [ ] Set up alerting rules
+  [ ] Test all panels
+
+  Key Panels:
+    - Bandit Exploration vs Exploitation ratio
+    - Average reward by arm
+    - Node execution latency (P50, P95, P99)
+    - Coordinator error rate
+    - Celery queue length
+    - Task processing rate
+
+Day 3-4: Alerting Configuration
+  [ ] Celery worker down alert (critical)
+  [ ] Queue backlog alert (warning at >100 tasks)
+  [ ] High error rate alert (warning at >10%)
+  [ ] High latency alert (warning at P95 >2s)
+
+Day 5: Monitoring Validation
+  [ ] Trigger test alerts
+  [ ] Verify alert routing
+  [ ] Document runbook procedures
+
+Week 2: Bandit Cold Start & Load Testing
+-----------------------------------------
+
+Day 1-2: Cold Start Implementation
+  [ ] Integrate BanditColdStartManager
+      File: app/engine/coordinator/bandit_cold_start.py
+
+  [ ] Configure warmup parameters:
+      - warmup_pulls: 1000
+      - default_rewards: {"npc": 0.7, "tools": 0.6, "knowledge": 0.5}
+
+  [ ] Add cold start metrics:
+      - coordinator_bandit_phase{phase="warmup_early|warmup_mid|warmup_late|learned"}
+
+  [ ] Test cold start behavior:
+      - Verify forced exploration in early phase
+      - Verify gradual transition to learned policy
+      - Monitor exploration rate over time
+
+Day 3-4: Load Testing
+  [ ] Install Locust: pip install locust
+
+  [ ] Run baseline test (100 users, 5 min):
+      locust -f locustfile.py --host=http://localhost:8000 \\
+             --users 100 --spawn-rate 10 --run-time 5m --headless
+
+  [ ] Run spike test (0→500 users in 10s):
+      locust -f locustfile.py --host=http://localhost:8000 \\
+             --users 500 --spawn-rate 50 --run-time 2m --headless
+
+  [ ] Run soak test (50 users, 24h):
+      locust -f locustfile.py --host=http://localhost:8000 \\
+             --users 50 --spawn-rate 5 --run-time 24h --headless
+
+Day 5: Bottleneck Analysis
+  [ ] Analyze test results
+  [ ] Identify bottlenecks:
+      - Redis connection pool exhaustion?
+      - DAG validation overhead?
+      - LLM API rate limits?
+
+  [ ] Implement fixes:
+      - Increase Redis pool size if needed
+      - Cache validated workflows
+      - Add request queuing for LLM
+
+Week 3: Production Hardening
+-----------------------------
+
+Day 1-2: Service Management
+  [ ] Set up Supervisor (Linux) or NSSM (Windows)
+  [ ] Configure auto-restart on failure
+  [ ] Set up log rotation
+  [ ] Test service recovery
+
+Day 3: Health Checks
+  [ ] Add liveness probe: /health/live
+  [ ] Add readiness probe: /health/ready
+  [ ] Include Celery worker check in readiness
+
+Day 4: Graceful Shutdown
+  [ ] Implement graceful Celery shutdown
+  [ ] Wait for active tasks to complete (max 30s)
+  [ ] Test shutdown behavior under load
+
+Day 5: Documentation & Training
+  [ ] Document runbook procedures
+  [ ] Create troubleshooting guide
+  [ ] Train operations team
+  [ ] Conduct disaster recovery drill
+
+MONITORING CHECKLIST
+====================
+
+Daily Checks:
+  [ ] Celery queue length < 50
+  [ ] All workers active and healthy
+  [ ] Error rate < 1%
+  [ ] P95 latency < 2s
+  [ ] No critical alerts
+
+Weekly Reviews:
+  [ ] Bandit performance metrics
+      - Is exploration rate decreasing over time?
+      - Are rewards improving?
+      - Any arms consistently underperforming?
+
+  [ ] User feedback trends
+      - Average rating trend
+      - Common complaints in comments
+      - Feedback volume by intent type
+
+  [ ] System capacity
+      - Peak concurrent users
+      - Queue backlog patterns
+      - Resource utilization trends
+
+Monthly Reviews:
+  [ ] Capacity planning
+      - Project growth for next quarter
+      - Identify scaling needs
+
+  [ ] Bandit parameter tuning
+      - Adjust alpha based on performance
+      - Update default arm weights
+      - Consider adding new arms
+
+  [ ] Alert threshold review
+      - Are alerts too noisy?
+      - Are we missing important issues?
+
+  [ ] Disaster recovery drill
+      - Simulate Redis failure
+      - Simulate Celery worker crash
+      - Verify recovery procedures
+
+IMPLEMENTATION STATUS
+=====================
+
+Code Implementation: 100% COMPLETE
+  [OK] 9 new features implemented
+  [OK] 5/5 core algorithm tests passing
+  [OK] All files created and documented
+
+Service Deployment: 66% COMPLETE
+  [OK] Redis running
+  [OK] FastAPI running
+  [!]  Celery Worker NOT running (CRITICAL)
+
+Operational Readiness: 20% COMPLETE
+  [OK] Monitoring code implemented
+  [ ]  Grafana dashboards configured
+  [ ]  Alerting rules set up
+  [ ]  Cold start strategy deployed
+  [ ]  Load testing completed
+  [ ]  Service management configured
+  [ ]  Runbooks documented
+
+ESTIMATED TIMELINE TO PRODUCTION
+=================================
+
+Immediate (Today):
+  - Start Celery Worker: 5 minutes
+  - Verify worker operation: 10 minutes
+  - Update health checks: 15 minutes
+  Total: 30 minutes
+
+Week 1 (Observability):
+  - Grafana setup: 2 days
+  - Alerting configuration: 2 days
+  - Validation: 1 day
+  Total: 5 days
+
+Week 2 (Performance):
+  - Cold start implementation: 2 days
+  - Load testing: 2 days
+  - Bottleneck fixes: 1 day
+  Total: 5 days
+
+Week 3 (Hardening):
+  - Service management: 2 days
+  - Health checks & shutdown: 2 days
+  - Documentation & training: 1 day
+  Total: 5 days
+
+TOTAL TIME TO FULL PRODUCTION READINESS: 3 weeks
+
+CONCLUSION
+==========
+
+The coordinator improvements are CODE COMPLETE but NOT PRODUCTION READY.
+
+Critical Gap:
+  Celery Worker must be started immediately for system to function.
+
+Next Steps:
+  1. START CELERY WORKER NOW (30 minutes)
+  2. Complete observability setup (Week 1)
+  3. Implement cold start & load test (Week 2)
+  4. Harden for production (Week 3)
+
+Remember: "养育" (nurturing) AI systems is an ongoing process.
+The code is done, but the operational work is just beginning.
+
+Files Created for Production Readiness:
+  - start_celery_worker.bat
+  - PRODUCTION_READINESS_GUIDE.md
+  - config/grafana/coordinator_dashboard.json
+  - app/engine/coordinator/bandit_cold_start.py
+  - locustfile.py
+
+All tools are ready. Execute the roadmap to achieve full production readiness.

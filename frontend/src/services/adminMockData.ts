@@ -1,0 +1,197 @@
+import { AdminCourse, AdminTask, TeamAnalysis, AnalysisKPI, KnowledgeItem, KnowledgeStats } from '@/types/admin';
+
+export const mockAdminCourses: AdminCourse[] = [
+  {
+    id: '1',
+    title: '销售技巧进阶课程',
+    description: '深入了解客户心理，掌握高级谈判技巧，提升成交率。',
+    author: '张经理',
+    studentCount: 120,
+    popularity: 450,
+    rating: 4.8,
+    category: '销售技巧',
+    tags: ['谈判', '心理学'],
+    status: 'published',
+  },
+  {
+    id: '2',
+    title: '产品知识全面解析',
+    description: '全方位解析公司核心产品，从技术参数到应用场景。',
+    author: '产品部-李工',
+    studentCount: 85,
+    popularity: 320,
+    rating: 4.6,
+    category: '产品培训',
+    tags: ['产品', '基础'],
+    status: 'published',
+  },
+  {
+    id: '3',
+    title: '客户关系维护实战',
+    description: '如何建立长期的客户信任关系，提升复购率。',
+    author: '王总监',
+    studentCount: 200,
+    popularity: 800,
+    rating: 4.9,
+    category: '客户服务',
+    tags: ['CRM', '服务'],
+    status: 'draft',
+  },
+];
+
+export const mockAdminTasks: AdminTask[] = [
+  {
+    id: '1',
+    name: 'Q3 新品推广演练',
+    students: ['S1', 'S2', 'S3', 'S4'],
+    studentGroup: '销售一部',
+    status: 'in-progress',
+    tags: ['新品', '推广'],
+    creator: '张经理',
+    startDate: '2023-10-01',
+    endDate: '2023-10-15',
+  },
+  {
+    id: '2',
+    name: '新人入职通关考核',
+    students: ['N1', 'N2'],
+    studentGroup: '新人组',
+    status: 'pending',
+    tags: ['考核', '新人'],
+    creator: 'HRBP',
+    startDate: '2023-10-10',
+    endDate: '2023-10-20',
+  },
+  {
+    id: '3',
+    name: '大客户接待流程模拟',
+    students: ['S5', 'S6', 'S7'],
+    studentGroup: 'VIP小组',
+    status: 'completed',
+    tags: ['VIP', '流程'],
+    creator: '王总监',
+    startDate: '2023-09-01',
+    endDate: '2023-09-30',
+  },
+];
+
+export const mockTeamAnalysis: TeamAnalysis[] = [
+  {
+    id: '1',
+    rank: 1,
+    name: '销售一部',
+    memberCount: 15,
+    trainingCount: 120,
+    growthRate: 12.5,
+    score: 92,
+    scoreLabel: '优秀',
+    trend: 'up',
+  },
+  {
+    id: '2',
+    rank: 2,
+    name: '销售二部',
+    memberCount: 12,
+    trainingCount: 98,
+    growthRate: 5.2,
+    score: 88,
+    scoreLabel: '良好',
+    trend: 'stable',
+  },
+  {
+    id: '3',
+    rank: 3,
+    name: '渠道部',
+    memberCount: 8,
+    trainingCount: 45,
+    growthRate: -2.1,
+    score: 75,
+    scoreLabel: '一般',
+    trend: 'down',
+  },
+];
+
+export const mockAnalysisKPI: AnalysisKPI = {
+  teamsCount: 5,
+  oldStudentsCount: 45,
+  averageScore: 85.4,
+  weeklyTrainingCount: 230,
+};
+
+export const mockKnowledgeItems: KnowledgeItem[] = [
+  {
+    id: '1',
+    name: '2023 销售话术手册',
+    itemCount: 50,
+    creator: '内容组',
+    description: '包含最新的开场白、异议处理和成交话术。',
+    permissionGroup: 'public',
+    lastUpdated: '2023-10-01',
+  },
+  {
+    id: '2',
+    name: '竞争对手分析报告',
+    itemCount: 12,
+    creator: '市场部',
+    description: '主要竞品的优劣势对比及应对策略。',
+    permissionGroup: 'performance',
+    lastUpdated: '2023-09-28',
+  },
+  {
+    id: '3',
+    name: '内部管理制度',
+    itemCount: 8,
+    creator: '行政部',
+    description: '考勤、报销及晋升制度说明。',
+    permissionGroup: 'private',
+    lastUpdated: '2023-08-15',
+  },
+];
+
+export const mockKnowledgeStats: KnowledgeStats = {
+  totalCount: 1280,
+  activeUsers: 85,
+  userGrowth: 12,
+  avgUsage: 45,
+  recallRate: 92,
+  recallGrowth: 5,
+};
+
+export const mockAdminUsers = [
+  {
+    id: '1',
+    name: '张三',
+    email: 'zhangsan@example.com',
+    role: 'student',
+    team: '销售一部',
+    created_at: '2023-01-15',
+    avatar_url: '',
+  },
+  {
+    id: '2',
+    name: '李四',
+    email: 'lisi@example.com',
+    role: 'student',
+    team: '销售二部',
+    created_at: '2023-02-20',
+    avatar_url: '',
+  },
+  {
+    id: '3',
+    name: 'Admin User',
+    email: 'admin@example.com',
+    role: 'admin',
+    team: 'Management',
+    created_at: '2023-01-01',
+    avatar_url: '',
+  },
+  {
+    id: '4',
+    name: '王五',
+    email: 'wangwu@example.com',
+    role: 'student',
+    team: '渠道部',
+    created_at: '2023-03-10',
+    avatar_url: '',
+  },
+];

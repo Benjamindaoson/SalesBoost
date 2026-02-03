@@ -1,0 +1,47 @@
+name: SalesBoost CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Pre-download Models
+      run: python scripts/download_models.py
+      
+    - name: Run Tests
+      run: |
+        # Health Check (Unit)
+        pytest tests/test_health.py
+        
+        # Core Logic
+        pytest tests/test_learning_convergence.py
+        pytest tests/test_anti_cheat.py
+        
+        # Integration (Flaky on CI? Mark with xfail if needed in code)
+        pytest tests/test_concurrent_sessions.py
+        
+  docker-build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker Image
+        run: docker build . -t salesboost:latest

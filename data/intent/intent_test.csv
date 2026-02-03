@@ -1,0 +1,57 @@
+text,label
+That's interesting,positive_feedback
+What's included in membership？,benefit_inquiry
+能享受什么服务呢,benefit_inquiry
+不太确定呢,hesitation
+能介绍一下产品吗啊,product_inquiry
+What benefits do I get？,benefit_inquiry
+有没有折扣,price_objection
+太贵了，买不起？,price_objection
+跟竞品比有什么优势？,product_inquiry
+啊哈？,filler
+I need to think about it？,hesitation
+价格能再优惠吗？,price_objection
+交付周期多长啊,time_pressure
+会员有什么权益,benefit_inquiry
+emmm,unclear
+I'm not sure,hesitation
+您好,greeting
+可能不需要啊,soft_rejection
+OK？,filler
+具体怎么用？,product_inquiry
+有哪些特色,product_inquiry
+我很感兴趣呢,positive_feedback
+能介绍一下产品吗,product_inquiry
+您好呢,greeting
+有没有成功案例啊,case_request
+Hi,greeting
+Any success stories？,case_request
+太贵了，买不起啊,price_objection
+好的，我买了？,final_confirmation
+有客户评价吗呢,case_request
+"OK, I'll take it？",final_confirmation
+How soon can you deliver？,time_pressure
+跟竞品比有什么优势,product_inquiry
+"OK, I'll take it",final_confirmation
+这个产品有什么功能啊,product_inquiry
+What benefits do I get,benefit_inquiry
+I don't think it's for me？,soft_rejection
+嗯嗯啊,filler
+This is too expensive？,price_objection
+最快多久能完成,time_pressure
+Can you give me an example？,case_request
+啊哈呢,filler
+能免费试用吗？,negotiation
+I need to think about it,hesitation
+能免费试用吗呢,negotiation
+这个很有吸引力呢,positive_feedback
+购买后有什么保障呢,benefit_inquiry
+那就这样吧,final_confirmation
+让我想想呢,hesitation
+emmm？,unclear
+This is too expensive,price_objection
+Any success stories,case_request
+What makes it different？,product_inquiry
+我很感兴趣啊,positive_feedback
+随便聊聊,unclear
+感觉挺好的啊,positive_feedback

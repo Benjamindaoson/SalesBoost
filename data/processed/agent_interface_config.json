@@ -1,0 +1,41 @@
+{
+  "created_at": "2026-02-01T09:42:35.119795",
+  "retriever_config": {
+    "chroma_path": "storage\\chromadb",
+    "chunks_file": "storage\\processed_data\\semantic_chunks.json",
+    "collection_name": "sales_knowledge"
+  },
+  "agent_interfaces": {
+    "coach_agent": {
+      "query_method": "coach_agent_query",
+      "supported_types": [
+        "champion_case",
+        "training_scenario"
+      ]
+    },
+    "compliance_agent": {
+      "query_method": "compliance_agent_query",
+      "supported_types": [
+        "sales_sop"
+      ]
+    },
+    "practice_agent": {
+      "query_method": "practice_agent_query",
+      "supported_types": [
+        "training_scenario"
+      ]
+    }
+  },
+  "statistics": {
+    "total_chunks": 68,
+    "chunks_by_type": {
+      "champion_case": 64,
+      "training_scenario": 4
+    },
+    "chunks_by_source": {
+      "销售冠军经验总结.docx": 68
+    },
+    "total_characters": 14758,
+    "average_chunk_size": 217.02941176470588
+  }
+}

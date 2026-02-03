@@ -1,0 +1,202 @@
+{
+  "timestamp": "2026-02-01T10:13:07.961053",
+  "total_test_time_seconds": 0.7656841278076172,
+  "test_results": {
+    "synonym_understanding": {
+      "test_name": "Synonym Understanding",
+      "total_cases": 4,
+      "passed": 3,
+      "failed": 1,
+      "accuracy": 75.0,
+      "results": [
+        {
+          "test_case": 1,
+          "query": "太贵了",
+          "description": "Price objection - should retrieve price-related content",
+          "num_results": 5,
+          "top_score": 0.5549145340919495,
+          "query_time_ms": 46.91958427429199,
+          "found_keywords": [
+            "优惠",
+            "价格"
+          ],
+          "relevance_score": 0.4,
+          "semantic_match": false,
+          "passed": true
+        },
+        {
+          "test_case": 2,
+          "query": "我再想想",
+          "description": "Hesitation - should retrieve closing techniques",
+          "num_results": 5,
+          "top_score": 0.4401880204677582,
+          "query_time_ms": 52.91032791137695,
+          "found_keywords": [
+            "考虑"
+          ],
+          "relevance_score": 0.2,
+          "semantic_match": true,
+          "passed": false
+        },
+        {
+          "test_case": 3,
+          "query": "有什么好处",
+          "description": "Benefits inquiry - should retrieve value propositions",
+          "num_results": 5,
+          "top_score": 0.5437414050102234,
+          "query_time_ms": 44.38018798828125,
+          "found_keywords": [
+            "福利",
+            "优惠",
+            "权益"
+          ],
+          "relevance_score": 0.6,
+          "semantic_match": true,
+          "passed": true
+        },
+        {
+          "test_case": 4,
+          "query": "和别的卡比怎么样",
+          "description": "Competitor comparison - should retrieve competitive advantages",
+          "num_results": 5,
+          "top_score": 0.5848249197006226,
+          "query_time_ms": 45.64809799194336,
+          "found_keywords": [
+            "对比",
+            "竞品"
+          ],
+          "relevance_score": 0.5,
+          "semantic_match": true,
+          "passed": true
+        }
+      ]
+    },
+    "sales_scenarios": {
+      "test_name": "Sales Scenario Relevance",
+      "total_cases": 4,
+      "passed": 2,
+      "failed": 2,
+      "accuracy": 50.0,
+      "results": [
+        {
+          "test_case": 1,
+          "query": "年费问题",
+          "description": "Annual fee objection handling",
+          "num_results": 5,
+          "top_score": 0.6452611684799194,
+          "query_time_ms": 38.12432289123535,
+          "result_types": [
+            "training_scenario",
+            "product_info",
+            "product_info",
+            "champion_case",
+            "sales_sop"
+          ],
+          "type_match": true,
+          "found_content": [
+            "年费",
+            "免年费"
+          ],
+          "content_relevance": 0.5,
+          "passed": true
+        },
+        {
+          "test_case": 2,
+          "query": "权益不够用",
+          "description": "Benefits value packaging",
+          "num_results": 5,
+          "top_score": 0.5570200681686401,
+          "query_time_ms": 37.804365158081055,
+          "result_types": [
+            "champion_case",
+            "product_info",
+            "champion_case",
+            "training_scenario",
+            "training_scenario"
+          ],
+          "type_match": true,
+          "found_content": [
+            "价值",
+            "优惠",
+            "权益"
+          ],
+          "content_relevance": 0.75,
+          "passed": true
+        },
+        {
+          "test_case": 3,
+          "query": "客户说要考虑",
+          "description": "Closing hesitant customers",
+          "num_results": 5,
+          "top_score": 0.6642700433731079,
+          "query_time_ms": 46.01860046386719,
+          "result_types": [
+            "champion_case",
+            "champion_case",
+            "champion_case",
+            "training_scenario",
+            "champion_case"
+          ],
+          "type_match": true,
+          "found_content": [],
+          "content_relevance": 0.0,
+          "passed": false
+        },
+        {
+          "test_case": 4,
+          "query": "如何介绍产品",
+          "description": "Product introduction techniques",
+          "num_results": 5,
+          "top_score": 0.48599687218666077,
+          "query_time_ms": 39.5808219909668,
+          "result_types": [
+            "champion_case",
+            "champion_case",
+            "champion_case",
+            "champion_case",
+            "champion_case"
+          ],
+          "type_match": true,
+          "found_content": [
+            "介绍"
+          ],
+          "content_relevance": 0.25,
+          "passed": false
+        }
+      ]
+    },
+    "performance_benchmarks": {
+      "test_name": "Performance Benchmarks",
+      "single_query": {
+        "avg_time_ms": 44.56481337547302,
+        "min_time_ms": 41.61810874938965,
+        "max_time_ms": 49.20649528503418,
+        "requirement_ms": 50,
+        "passed": true
+      },
+      "batch_query": {
+        "total_queries": 8,
+        "total_time_ms": 0.0,
+        "avg_time_per_query_ms": 0.0
+      },
+      "system_stats": {
+        "total_documents": 375,
+        "embedding_dimension": 512,
+        "memory_mb": 0.732421875,
+        "cache_hit_rate": 0.32
+      }
+    }
+  },
+  "overall_metrics": {
+    "total_test_cases": 8,
+    "total_passed": 5,
+    "total_failed": 3,
+    "overall_accuracy": 62.5,
+    "accuracy_requirement": 85,
+    "accuracy_passed": false,
+    "avg_latency_ms": 44.56481337547302,
+    "latency_requirement_ms": 50,
+    "latency_passed": true,
+    "all_requirements_met": false
+  }
+}

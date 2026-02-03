@@ -1,0 +1,56 @@
+__label__positive_feedback That's interesting
+__label__benefit_inquiry What's included in membership？
+__label__benefit_inquiry 能享受什么服务呢
+__label__hesitation 不太确定呢
+__label__product_inquiry 能介绍一下产品吗啊
+__label__benefit_inquiry What benefits do I get？
+__label__price_objection 有没有折扣
+__label__price_objection 太贵了，买不起？
+__label__product_inquiry 跟竞品比有什么优势？
+__label__filler 啊哈？
+__label__hesitation I need to think about it？
+__label__price_objection 价格能再优惠吗？
+__label__time_pressure 交付周期多长啊
+__label__benefit_inquiry 会员有什么权益
+__label__unclear emmm
+__label__hesitation I'm not sure
+__label__greeting 您好
+__label__soft_rejection 可能不需要啊
+__label__filler OK？
+__label__product_inquiry 具体怎么用？
+__label__product_inquiry 有哪些特色
+__label__positive_feedback 我很感兴趣呢
+__label__product_inquiry 能介绍一下产品吗
+__label__greeting 您好呢
+__label__case_request 有没有成功案例啊
+__label__greeting Hi
+__label__case_request Any success stories？
+__label__price_objection 太贵了，买不起啊
+__label__final_confirmation 好的，我买了？
+__label__case_request 有客户评价吗呢
+__label__final_confirmation OK, I'll take it？
+__label__time_pressure How soon can you deliver？
+__label__product_inquiry 跟竞品比有什么优势
+__label__final_confirmation OK, I'll take it
+__label__product_inquiry 这个产品有什么功能啊
+__label__benefit_inquiry What benefits do I get
+__label__soft_rejection I don't think it's for me？
+__label__filler 嗯嗯啊
+__label__price_objection This is too expensive？
+__label__time_pressure 最快多久能完成
+__label__case_request Can you give me an example？
+__label__filler 啊哈呢
+__label__negotiation 能免费试用吗？
+__label__hesitation I need to think about it
+__label__negotiation 能免费试用吗呢
+__label__positive_feedback 这个很有吸引力呢
+__label__benefit_inquiry 购买后有什么保障呢
+__label__final_confirmation 那就这样吧
+__label__hesitation 让我想想呢
+__label__unclear emmm？
+__label__price_objection This is too expensive
+__label__case_request Any success stories
+__label__product_inquiry What makes it different？
+__label__positive_feedback 我很感兴趣啊
+__label__unclear 随便聊聊
+__label__positive_feedback 感觉挺好的啊

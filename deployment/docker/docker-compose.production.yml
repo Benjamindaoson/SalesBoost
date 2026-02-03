@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # SalesBoost 主应用
+  salesboost:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: salesboost-app
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV_STATE=production
+    env_file:
+      - .env.production
+    volumes:
+      - ./storage:/app/storage
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    restart: unless-stopped
+    networks:
+      - salesboost-network
+
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: salesboost-postgres
+    environment:
+      POSTGRES_DB: salesboost
+      POSTGRES_USER: salesboost
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - salesboost-network
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: salesboost-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - salesboost-network
+
+  # Qdrant 向量数据库
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: salesboost-qdrant
+    volumes:
+      - qdrant-data:/qdrant/storage
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    restart: unless-stopped
+    networks:
+      - salesboost-network
+
+  # Prometheus 监控
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: salesboost-prometheus
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - salesboost-network
+
+  # Grafana 可视化
+  grafana:
+    image: grafana/grafana:latest
+    container_name: salesboost-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - salesboost-network
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: salesboost-nginx
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend/dist:/usr/share/nginx/html
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - salesboost
+    restart: unless-stopped
+    networks:
+      - salesboost-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  qdrant-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  salesboost-network:
+    driver: bridge

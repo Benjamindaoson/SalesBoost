@@ -1,0 +1,40 @@
+"""
+Logstash配置
+"""
+http.host: '0.0.0.0'
+http.port: 5044
+
+# 输入配置
+input {
+  beats {
+    port => 5044
+  }
+}
+
+# 过滤器配置
+filter {
+  # 移除Logstash自身的日志
+  if [fields][beat][hostname] == "logstash" ] {
+    drop { }
+  }
+}
+
+# 输出配置
+output {
+  elasticsearch {
+    hosts => ["http://elasticsearch:9200"]
+    index => "logstash-%{[@version][@timestamp}YYYY.MM.dd"
+    }
+}
+
+# 处理管道配置
+pipeline {
+  # 处理输入数据
+  input {
+    beats {
+        add_field => {
+          service => "salesboost"
+        }
+    }
+  }
+}

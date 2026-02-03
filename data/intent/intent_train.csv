@@ -1,0 +1,221 @@
+text,label
+价格是多少,price_inquiry
+还需要犹豫一下啊,hesitation
+为什么不选竞品,competitor_comparison
+不太确定？,hesitation
+那就这样吧啊,final_confirmation
+I don't think it's for me,soft_rejection
+可以加送服务吗,negotiation
+你们有什么优势呢,competitor_comparison
+啊哈,filler
+有没有赠品呢,negotiation
+VIP有哪些好处呢,benefit_inquiry
+Let me consider,hesitation
+Not interested right now？,soft_rejection
+I see？,filler
+Can you throw in something extra,negotiation
+有没有赠品啊,negotiation
+哦啊,filler
+跟竞品比有什么优势啊,product_inquiry
+购买后有什么保障,benefit_inquiry
+你好？,greeting
+How much does it cost？,price_inquiry
+会员有什么权益？,benefit_inquiry
+其他客户怎么说,case_request
+交付周期多长,time_pressure
+I see,filler
+可以，成交,final_confirmation
+我再考虑考虑呢,hesitation
+What's the price,price_inquiry
+有没有折扣？,price_objection
+有没有赠品,negotiation
+Can you give me a discount,price_objection
+Sounds good？,positive_feedback
+The price is too high,price_objection
+让我想想啊,hesitation
+有没有成功案例呢,case_request
+会员有什么权益呢,benefit_inquiry
+暂时不考虑？,soft_rejection
+暂时不考虑呢,soft_rejection
+能不能便宜点啊,price_objection
+Can you explain the product,product_inquiry
+这个产品有什么功能,product_inquiry
+不太确定,hesitation
+What are the features,product_inquiry
+The price is too high？,price_objection
+我再考虑考虑,hesitation
+好的，我买了,final_confirmation
+价格能再优惠吗呢,price_objection
+你们有什么优势？,competitor_comparison
+How soon can you deliver,time_pressure
+How do you compare to competitors,competitor_comparison
+购买后有什么保障啊,benefit_inquiry
+Any free trial,negotiation
+我很急，什么时候能交付呢,time_pressure
+太贵了，买不起呢,price_objection
+我很急，什么时候能交付啊,time_pressure
+有没有折扣啊,price_objection
+哦,filler
+暂时不考虑啊,soft_rejection
+价格是多少呢,price_inquiry
+我很急，什么时候能交付？,time_pressure
+能免费试用吗,negotiation
+听起来不错？,positive_feedback
+费用怎么算呢,price_inquiry
+能不能送点东西呢,negotiation
+价格能再优惠吗,price_objection
+那就这样吧呢,final_confirmation
+你好啊,greeting
+What are the features？,product_inquiry
+What's the timeline,time_pressure
+感觉挺好的？,positive_feedback
+What's included in membership,benefit_inquiry
+和XX比怎么样呢,competitor_comparison
+随便聊聊？,unclear
+VIP有哪些好处？,benefit_inquiry
+价格能再优惠吗啊,price_objection
+Sounds good,positive_feedback
+你们有什么优势啊,competitor_comparison
+听起来不错,positive_feedback
+能享受什么服务啊,benefit_inquiry
+I like it？,positive_feedback
+有哪些特色？,product_inquiry
+有客户评价吗啊,case_request
+Hello,greeting
+收费标准是什么,price_inquiry
+哦？,filler
+I like it,positive_feedback
+有哪些特色呢,product_inquiry
+这个很有吸引力？,positive_feedback
+能不能送点东西？,negotiation
+能举个例子吗,case_request
+价格是多少？,price_inquiry
+哦呢,filler
+VIP有哪些好处啊,benefit_inquiry
+嗯嗯,filler
+让我想想,hesitation
+Not interested right now,soft_rejection
+Any free trial？,negotiation
+随便聊聊呢,unclear
+能举个例子吗？,case_request
+让我想想？,hesitation
+嗯嗯呢,filler
+Can you explain the product？,product_inquiry
+That's interesting？,positive_feedback
+这个价格太贵了啊,price_objection
+我很感兴趣,positive_feedback
+VIP有哪些好处,benefit_inquiry
+和XX比怎么样,competitor_comparison
+你们有什么优势,competitor_comparison
+OK,filler
+这个很有吸引力,positive_feedback
+我再考虑考虑？,hesitation
+可以加送服务吗啊,negotiation
+能举个例子吗呢,case_request
+Let's do it？,final_confirmation
+会员有什么权益啊,benefit_inquiry
+还需要犹豫一下呢,hesitation
+多少钱呢,price_inquiry
+我觉得不太合适,soft_rejection
+为什么不选竞品呢,competitor_comparison
+你好呢,greeting
+不知道说什么啊,unclear
+我觉得不太合适？,soft_rejection
+能不能便宜点？,price_objection
+我再考虑考虑啊,hesitation
+有哪些特色啊,product_inquiry
+其他客户怎么说呢,case_request
+其他客户怎么说？,case_request
+可以加送服务吗呢,negotiation
+具体怎么用呢,product_inquiry
+可以，成交？,final_confirmation
+购买后有什么保障？,benefit_inquiry
+能举个例子吗啊,case_request
+太贵了，买不起,price_objection
+费用怎么算？,price_inquiry
+多少钱啊,price_inquiry
+好的，我买了啊,final_confirmation
+有没有成功案例,case_request
+能介绍一下产品吗？,product_inquiry
+听起来不错呢,positive_feedback
+有没有成功案例？,case_request
+有客户评价吗？,case_request
+收费标准是什么呢,price_inquiry
+我觉得不太合适呢,soft_rejection
+其他客户怎么说啊,case_request
+能不能送点东西,negotiation
+多少钱,price_inquiry
+不知道说什么呢,unclear
+有没有赠品？,negotiation
+交付周期多长？,time_pressure
+这个价格太贵了,price_objection
+你好,greeting
+感觉挺好的,positive_feedback
+不知道说什么？,unclear
+好的，我买了呢,final_confirmation
+这个很有吸引力啊,positive_feedback
+费用怎么算啊,price_inquiry
+跟竞品比有什么优势呢,product_inquiry
+能免费试用吗啊,negotiation
+和XX比怎么样啊,competitor_comparison
+交付周期多长呢,time_pressure
+有没有折扣呢,price_objection
+随便聊聊啊,unclear
+啊哈啊,filler
+多少钱？,price_inquiry
+有客户评价吗,case_request
+能不能便宜点,price_objection
+还需要犹豫一下,hesitation
+价格是多少啊,price_inquiry
+嗯嗯？,filler
+最快多久能完成啊,time_pressure
+那就这样吧？,final_confirmation
+可以，成交啊,final_confirmation
+能不能送点东西啊,negotiation
+具体怎么用,product_inquiry
+I'm not sure？,hesitation
+不太确定啊,hesitation
+不知道说什么,unclear
+可能不需要,soft_rejection
+What makes it different,product_inquiry
+可能不需要呢,soft_rejection
+具体怎么用啊,product_inquiry
+How much does it cost,price_inquiry
+和XX比怎么样？,competitor_comparison
+我很急，什么时候能交付,time_pressure
+收费标准是什么啊,price_inquiry
+还需要犹豫一下？,hesitation
+Can you throw in something extra？,negotiation
+Can you give me a discount？,price_objection
+我觉得不太合适啊,soft_rejection
+Let's do it,final_confirmation
+能享受什么服务？,benefit_inquiry
+收费标准是什么？,price_inquiry
+为什么不选竞品？,competitor_comparison
+Hi？,greeting
+这个产品有什么功能？,product_inquiry
+听起来不错啊,positive_feedback
+可能不需要？,soft_rejection
+您好？,greeting
+最快多久能完成？,time_pressure
+What's the price？,price_inquiry
+可以加送服务吗？,negotiation
+Can you give me an example,case_request
+可以，成交呢,final_confirmation
+这个价格太贵了呢,price_objection
+我很感兴趣？,positive_feedback
+能介绍一下产品吗呢,product_inquiry
+Let me consider？,hesitation
+这个价格太贵了？,price_objection
+暂时不考虑,soft_rejection
+感觉挺好的呢,positive_feedback
+这个产品有什么功能呢,product_inquiry
+最快多久能完成呢,time_pressure
+能享受什么服务,benefit_inquiry
+How do you compare to competitors？,competitor_comparison
+费用怎么算,price_inquiry
+您好啊,greeting
+能不能便宜点呢,price_objection
+What's the timeline？,time_pressure
+为什么不选竞品啊,competitor_comparison
+Hello？,greeting

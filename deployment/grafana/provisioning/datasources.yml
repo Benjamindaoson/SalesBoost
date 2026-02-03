@@ -1,0 +1,104 @@
+apiVersion: 1
+
+datasources:
+  default:
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+
+  jaeger:
+    type: jaeger
+    url: http://jaeger:14268
+
+  elasticsearch:
+    type: elasticsearch
+    url: http://elasticsearch:9200
+
+dashboardProviders:
+  prometheus:
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+
+dashboards:
+  default:
+    api:
+      - salesboost-api-overview
+    overview:
+      - salesboost-system-overview
+    logs:
+      - salesboost-logs
+    traces:
+      - jaeger-overview
+
+  salesboost-api-overview:
+    uid: salesboost-api-overview
+    title: SalesBoost API Overview
+    tags:
+      - salesboost
+    timezone: browser
+    panels:
+      - id: requests
+        title: API Requests
+        type: graph
+        targets:
+          - expr: sum(rate(http_requests_total[5m]))
+        yAxes:
+          - unit: reqps
+            label: Requests/sec
+
+      - id: response-time
+        title: Response Time
+        type: graph
+        targets:
+          - expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+        yAxes:
+          - unit: seconds
+
+      - id: errors
+        title: Error Rate
+        type: graph
+        targets:
+          - expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))
+        yAxes:
+          - unit: short
+            max: 1
+            min: 0
+
+  salesboost-system-overview:
+    uid: salesboost-system-overview
+    title: System Overview
+    tags:
+      - salesboost
+    panels:
+      - id: cpu
+        title: CPU Usage
+        type: graph
+        targets:
+          - expr: rate(process_cpu_seconds_total[5m])
+        yAxes:
+          - unit: percent
+            max: 100
+
+      - id: memory
+        title: Memory Usage
+        type: graph
+        targets:
+          - expr: process_resident_memory_bytes / 1024 / 1024
+        yAxes:
+          - unit: MB
+
+      - id: disk
+        title: Disk Usage
+        type: graph
+        targets:
+          - expr: node_filesystem_free_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}
+        yAxes:
+          - unit: short
+            max: 1
+            min: 0

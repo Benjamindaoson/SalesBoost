@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-02-01T09:45:06.837240",
+  "tests": {
+    "system_initialization": {
+      "status": "PASS",
+      "num_chunks": 68,
+      "embedding_dimension": 512,
+      "memory_mb": 0.1328125
+    },
+    "semantic_search": {
+      "status": "PASS",
+      "num_results": 3,
+      "top_score": 0.5549144148826599,
+      "semantic_match": true
+    },
+    "agent_integration": {
+      "status": "PASS",
+      "coach_results": 5,
+      "compliance_results": 0
+    },
+    "performance_benchmarks": {
+      "status": "FAIL",
+      "avg_query_time_ms": 52.13367938995361,
+      "min_query_time_ms": 47.95479774475098,
+      "max_query_time_ms": 57.40165710449219,
+      "requirement_ms": 50,
+      "passed": false
+    },
+    "production_readiness": {
+      "status": "PASS",
+      "checks_passed": 5,
+      "checks_total": 5,
+      "all_passed": true
+    }
+  },
+  "overall_status": "FAIL",
+  "total_time_seconds": 74.69193911552429,
+  "tests_passed": 4,
+  "tests_total": 5
+}

@@ -1,0 +1,113 @@
+# Environment variables (NEVER commit these!)
+.env
+.env.local
+.env.production
+.env.*.local
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Claude Code
+.claude/
+
+# Storage (runtime data)
+storage/logs/
+storage/cache/
+storage/uploads/
+storage/chromadb/
+
+# Data (keep structure, ignore content)
+data/databases/
+data/processed/books/
+data/raw_sop/
+data/training_data/
+data/governance/
+data/graph_db/
+data/knowledge_db/
+
+# Models (large binary files - NEVER commit)
+models/*.bin
+models/*.pth
+models/*.onnx
+models/*.pkl
+*.bin
+*.pth
+*.onnx
+
+# Large archives
+*.zip
+*.tar.gz
+*.tar
+*.7z
+
+# Cache
+.cache/
+rag_cache/
+tts_cache/
+tts_output/
+voice_output/
+voice_reports/
+
+# Storage (runtime only)
+storage/
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Build artifacts
+*.egg-info/
+build/
+dist/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+nul
+
+# OS files
+Thumbs.db
+.DS_Store

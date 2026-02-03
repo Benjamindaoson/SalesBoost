@@ -1,0 +1,220 @@
+__label__price_inquiry 价格是多少
+__label__hesitation 还需要犹豫一下啊
+__label__competitor_comparison 为什么不选竞品
+__label__hesitation 不太确定？
+__label__final_confirmation 那就这样吧啊
+__label__soft_rejection I don't think it's for me
+__label__negotiation 可以加送服务吗
+__label__competitor_comparison 你们有什么优势呢
+__label__filler 啊哈
+__label__negotiation 有没有赠品呢
+__label__benefit_inquiry VIP有哪些好处呢
+__label__hesitation Let me consider
+__label__soft_rejection Not interested right now？
+__label__filler I see？
+__label__negotiation Can you throw in something extra
+__label__negotiation 有没有赠品啊
+__label__filler 哦啊
+__label__product_inquiry 跟竞品比有什么优势啊
+__label__benefit_inquiry 购买后有什么保障
+__label__greeting 你好？
+__label__price_inquiry How much does it cost？
+__label__benefit_inquiry 会员有什么权益？
+__label__case_request 其他客户怎么说
+__label__time_pressure 交付周期多长
+__label__filler I see
+__label__final_confirmation 可以，成交
+__label__hesitation 我再考虑考虑呢
+__label__price_inquiry What's the price
+__label__price_objection 有没有折扣？
+__label__negotiation 有没有赠品
+__label__price_objection Can you give me a discount
+__label__positive_feedback Sounds good？
+__label__price_objection The price is too high
+__label__hesitation 让我想想啊
+__label__case_request 有没有成功案例呢
+__label__benefit_inquiry 会员有什么权益呢
+__label__soft_rejection 暂时不考虑？
+__label__soft_rejection 暂时不考虑呢
+__label__price_objection 能不能便宜点啊
+__label__product_inquiry Can you explain the product
+__label__product_inquiry 这个产品有什么功能
+__label__hesitation 不太确定
+__label__product_inquiry What are the features
+__label__price_objection The price is too high？
+__label__hesitation 我再考虑考虑
+__label__final_confirmation 好的，我买了
+__label__price_objection 价格能再优惠吗呢
+__label__competitor_comparison 你们有什么优势？
+__label__time_pressure How soon can you deliver
+__label__competitor_comparison How do you compare to competitors
+__label__benefit_inquiry 购买后有什么保障啊
+__label__negotiation Any free trial
+__label__time_pressure 我很急，什么时候能交付呢
+__label__price_objection 太贵了，买不起呢
+__label__time_pressure 我很急，什么时候能交付啊
+__label__price_objection 有没有折扣啊
+__label__filler 哦
+__label__soft_rejection 暂时不考虑啊
+__label__price_inquiry 价格是多少呢
+__label__time_pressure 我很急，什么时候能交付？
+__label__negotiation 能免费试用吗
+__label__positive_feedback 听起来不错？
+__label__price_inquiry 费用怎么算呢
+__label__negotiation 能不能送点东西呢
+__label__price_objection 价格能再优惠吗
+__label__final_confirmation 那就这样吧呢
+__label__greeting 你好啊
+__label__product_inquiry What are the features？
+__label__time_pressure What's the timeline
+__label__positive_feedback 感觉挺好的？
+__label__benefit_inquiry What's included in membership
+__label__competitor_comparison 和XX比怎么样呢
+__label__unclear 随便聊聊？
+__label__benefit_inquiry VIP有哪些好处？
+__label__price_objection 价格能再优惠吗啊
+__label__positive_feedback Sounds good
+__label__competitor_comparison 你们有什么优势啊
+__label__positive_feedback 听起来不错
+__label__benefit_inquiry 能享受什么服务啊
+__label__positive_feedback I like it？
+__label__product_inquiry 有哪些特色？
+__label__case_request 有客户评价吗啊
+__label__greeting Hello
+__label__price_inquiry 收费标准是什么
+__label__filler 哦？
+__label__positive_feedback I like it
+__label__product_inquiry 有哪些特色呢
+__label__positive_feedback 这个很有吸引力？
+__label__negotiation 能不能送点东西？
+__label__case_request 能举个例子吗
+__label__price_inquiry 价格是多少？
+__label__filler 哦呢
+__label__benefit_inquiry VIP有哪些好处啊
+__label__filler 嗯嗯
+__label__hesitation 让我想想
+__label__soft_rejection Not interested right now
+__label__negotiation Any free trial？
+__label__unclear 随便聊聊呢
+__label__case_request 能举个例子吗？
+__label__hesitation 让我想想？
+__label__filler 嗯嗯呢
+__label__product_inquiry Can you explain the product？
+__label__positive_feedback That's interesting？
+__label__price_objection 这个价格太贵了啊
+__label__positive_feedback 我很感兴趣
+__label__benefit_inquiry VIP有哪些好处
+__label__competitor_comparison 和XX比怎么样
+__label__competitor_comparison 你们有什么优势
+__label__filler OK
+__label__positive_feedback 这个很有吸引力
+__label__hesitation 我再考虑考虑？
+__label__negotiation 可以加送服务吗啊
+__label__case_request 能举个例子吗呢
+__label__final_confirmation Let's do it？
+__label__benefit_inquiry 会员有什么权益啊
+__label__hesitation 还需要犹豫一下呢
+__label__price_inquiry 多少钱呢
+__label__soft_rejection 我觉得不太合适
+__label__competitor_comparison 为什么不选竞品呢
+__label__greeting 你好呢
+__label__unclear 不知道说什么啊
+__label__soft_rejection 我觉得不太合适？
+__label__price_objection 能不能便宜点？
+__label__hesitation 我再考虑考虑啊
+__label__product_inquiry 有哪些特色啊
+__label__case_request 其他客户怎么说呢
+__label__case_request 其他客户怎么说？
+__label__negotiation 可以加送服务吗呢
+__label__product_inquiry 具体怎么用呢
+__label__final_confirmation 可以，成交？
+__label__benefit_inquiry 购买后有什么保障？
+__label__case_request 能举个例子吗啊
+__label__price_objection 太贵了，买不起
+__label__price_inquiry 费用怎么算？
+__label__price_inquiry 多少钱啊
+__label__final_confirmation 好的，我买了啊
+__label__case_request 有没有成功案例
+__label__product_inquiry 能介绍一下产品吗？
+__label__positive_feedback 听起来不错呢
+__label__case_request 有没有成功案例？
+__label__case_request 有客户评价吗？
+__label__price_inquiry 收费标准是什么呢
+__label__soft_rejection 我觉得不太合适呢
+__label__case_request 其他客户怎么说啊
+__label__negotiation 能不能送点东西
+__label__price_inquiry 多少钱
+__label__unclear 不知道说什么呢
+__label__negotiation 有没有赠品？
+__label__time_pressure 交付周期多长？
+__label__price_objection 这个价格太贵了
+__label__greeting 你好
+__label__positive_feedback 感觉挺好的
+__label__unclear 不知道说什么？
+__label__final_confirmation 好的，我买了呢
+__label__positive_feedback 这个很有吸引力啊
+__label__price_inquiry 费用怎么算啊
+__label__product_inquiry 跟竞品比有什么优势呢
+__label__negotiation 能免费试用吗啊
+__label__competitor_comparison 和XX比怎么样啊
+__label__time_pressure 交付周期多长呢
+__label__price_objection 有没有折扣呢
+__label__unclear 随便聊聊啊
+__label__filler 啊哈啊
+__label__price_inquiry 多少钱？
+__label__case_request 有客户评价吗
+__label__price_objection 能不能便宜点
+__label__hesitation 还需要犹豫一下
+__label__price_inquiry 价格是多少啊
+__label__filler 嗯嗯？
+__label__time_pressure 最快多久能完成啊
+__label__final_confirmation 那就这样吧？
+__label__final_confirmation 可以，成交啊
+__label__negotiation 能不能送点东西啊
+__label__product_inquiry 具体怎么用
+__label__hesitation I'm not sure？
+__label__hesitation 不太确定啊
+__label__unclear 不知道说什么
+__label__soft_rejection 可能不需要
+__label__product_inquiry What makes it different
+__label__soft_rejection 可能不需要呢
+__label__product_inquiry 具体怎么用啊
+__label__price_inquiry How much does it cost
+__label__competitor_comparison 和XX比怎么样？
+__label__time_pressure 我很急，什么时候能交付
+__label__price_inquiry 收费标准是什么啊
+__label__hesitation 还需要犹豫一下？
+__label__negotiation Can you throw in something extra？
+__label__price_objection Can you give me a discount？
+__label__soft_rejection 我觉得不太合适啊
+__label__final_confirmation Let's do it
+__label__benefit_inquiry 能享受什么服务？
+__label__price_inquiry 收费标准是什么？
+__label__competitor_comparison 为什么不选竞品？
+__label__greeting Hi？
+__label__product_inquiry 这个产品有什么功能？
+__label__positive_feedback 听起来不错啊
+__label__soft_rejection 可能不需要？
+__label__greeting 您好？
+__label__time_pressure 最快多久能完成？
+__label__price_inquiry What's the price？
+__label__negotiation 可以加送服务吗？
+__label__case_request Can you give me an example
+__label__final_confirmation 可以，成交呢
+__label__price_objection 这个价格太贵了呢
+__label__positive_feedback 我很感兴趣？
+__label__product_inquiry 能介绍一下产品吗呢
+__label__hesitation Let me consider？
+__label__price_objection 这个价格太贵了？
+__label__soft_rejection 暂时不考虑
+__label__positive_feedback 感觉挺好的呢
+__label__product_inquiry 这个产品有什么功能呢
+__label__time_pressure 最快多久能完成呢
+__label__benefit_inquiry 能享受什么服务
+__label__competitor_comparison How do you compare to competitors？
+__label__price_inquiry 费用怎么算
+__label__greeting 您好啊
+__label__price_objection 能不能便宜点呢
+__label__time_pressure What's the timeline？
+__label__competitor_comparison 为什么不选竞品啊
+__label__greeting Hello？
