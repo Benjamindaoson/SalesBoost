@@ -1,8 +1,0 @@
-remote: warning: File 销冠能力复制数据库.zip is 69.78 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB        
-remote: error: Trace: edc80e723090b82b60cf318994a45f472a929579ae8451e643c31911dafa5be0        
-remote: error: See https://gh.io/lfs for more information.        
-remote: error: File models/intent_classifier.bin is 763.05 MB; this exceeds GitHub's file size limit of 100.00 MB        
-remote: error: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
-To https://github.com/Benjamindaoson/SalesBoost
- ! [remote rejected] main -> main (pre-receive hook declined)
-error: failed to push some refs to 'https://github.com/Benjamindaoson/SalesBoost'
