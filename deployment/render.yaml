@@ -3,10 +3,16 @@ services:
   - type: web
     name: salesboost-api
     runtime: docker
-    dockerfilePath: ./Dockerfile.production
+    repo: https://github.com/Benjamindaoson/SalesBoost
+    branch: refactor/production-ready
+    dockerfilePath: ./deployment/docker/Dockerfile.production
     envVars:
       - key: ENV_STATE
         value: production
+      - key: DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: INFO
       - key: PORT
         value: 8000
       - key: DATABASE_URL
@@ -14,25 +20,39 @@ services:
           name: salesboost-db
           property: connectionString
       - key: REDIS_URL
-        fromService:
+        fromDatabase:
           name: salesboost-redis
-          type: redis
           property: connectionString
-    healthCheckPath: /health
-
-  # Frontend
-  - type: web
-    name: salesboost-frontend
-    runtime: docker
-    dockerfilePath: ./frontend/Dockerfile
-    envVars:
-      - key: VITE_API_URL
-        value: https://salesboost-api.onrender.com/api/v1
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SILICONFLOW_API_KEY
+        value: sk-snmxtfurdqafrgyeppwefsihzwsqolsashzhhtvwhlkxvjib
+      - key: SILICONFLOW_BASE_URL
+        value: https://api.siliconflow.cn/v1
+      - key: COORDINATOR_ENGINE
+        value: langgraph
+      - key: AGENTIC_V3_ENABLED
+        value: true
+      - key: TOOL_CACHE_ENABLED
+        value: true
+      - key: RAG_HYBRID_ENABLED
+        value: true
+      - key: DB_POOL_SIZE
+        value: 20
+      - key: DB_MAX_OVERFLOW
+        value: 40
+      - key: WORKERS
+        value: 2
+      - key: CORS_ORIGINS
+        value: https://salesboost.vercel.app,http://localhost:5173
+    healthCheckPath: /health/live
+    plan: starter
 
 databases:
   - name: salesboost-db
     databaseName: salesboost
     user: salesboost
+    plan: starter
 
   - name: salesboost-redis
-    type: redis
+    plan: starter
