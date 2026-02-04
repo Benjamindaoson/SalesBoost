@@ -25,7 +25,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -406,7 +406,7 @@ async def main():
 
     # Confirm
     if not args.overwrite:
-        response = input(f"\nProceed with migration? (yes/no): ")
+        response = input("\nProceed with migration? (yes/no): ")
         if response.lower() != "yes":
             logger.info("Migration cancelled")
             return
@@ -440,7 +440,7 @@ async def main():
         )
 
     print("\n✅ Migration complete!")
-    print(f"\nTo use the new collection, update your config:")
+    print("\nTo use the new collection, update your config:")
     print(f"  QDRANT_COLLECTION_NAME={target}")
 
 

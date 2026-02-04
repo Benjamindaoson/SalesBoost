@@ -3,7 +3,6 @@ Consistency checker and data quality scoring.
 Run: python scripts/data_consistency_check.py
 """
 from pathlib import Path
-import json
 
 from cognitive.skills.study.data_quality_agent import data_quality_service
 

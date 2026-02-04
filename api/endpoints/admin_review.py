@@ -4,10 +4,9 @@ Allows administrators to review and approve/reject/modify flagged content.
 """
 import logging
 from typing import Dict, Any
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from datetime import datetime
 
-from api.deps import require_admin_user
 from app.engine.coordinator.human_in_loop_coordinator import HumanReviewDecision
 from app.engine.coordinator.production_coordinator import get_human_review_coordinator
 
@@ -124,13 +123,13 @@ async def admin_review_websocket(
 
             try:
                 if action == "approve":
-                    result = await coordinator.resume_after_review(
+                    await coordinator.resume_after_review(
                         session_id,
                         decision=HumanReviewDecision.APPROVE,
                         admin_id=admin_id,
                     )
                 elif action == "reject":
-                    result = await coordinator.resume_after_review(
+                    await coordinator.resume_after_review(
                         session_id,
                         decision=HumanReviewDecision.REJECT,
                         admin_id=admin_id,
@@ -140,7 +139,7 @@ async def admin_review_websocket(
                     if not modified_content:
                         raise ValueError("modified_content is required")
 
-                    result = await coordinator.resume_after_review(
+                    await coordinator.resume_after_review(
                         session_id,
                         decision=HumanReviewDecision.MODIFY,
                         modified_content=modified_content,

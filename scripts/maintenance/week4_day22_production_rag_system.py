@@ -30,12 +30,10 @@ Week 3:
 
 import time
 import asyncio
-from typing import List, Dict, Optional, Any
-from dataclasses import dataclass, field
+from typing import List, Dict, Optional
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-import hashlib
-import json
 
 # Prometheus metrics
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, REGISTRY
@@ -256,7 +254,7 @@ class SemanticCache:
         self.hits = 0
         self.misses = 0
 
-        print(f"[OK] Semantic Cache initialized")
+        print("[OK] Semantic Cache initialized")
         print(f"  Threshold: {threshold}")
         print(f"  Max Size: {max_size}")
 
@@ -358,7 +356,7 @@ class CircuitBreaker:
         self.success_count = 0
         self.last_failure_time = None
 
-        print(f"[OK] Circuit Breaker initialized")
+        print("[OK] Circuit Breaker initialized")
         print(f"  Failure Threshold: {failure_threshold}")
         print(f"  Timeout: {timeout}s")
 
@@ -386,7 +384,7 @@ class CircuitBreaker:
             result = await func(*args, **kwargs) if asyncio.iscoroutinefunction(func) else func(*args, **kwargs)
             self._on_success()
             return result
-        except Exception as e:
+        except Exception:
             self._on_failure()
             raise
 
@@ -412,20 +410,20 @@ class CircuitBreaker:
     def _transition_to_open(self):
         """转换到打开状态"""
         self.state = CircuitState.OPEN
-        print(f"[CIRCUIT] State: → OPEN")
+        print("[CIRCUIT] State: → OPEN")
 
     def _transition_to_half_open(self):
         """转换到半开状态"""
         self.state = CircuitState.HALF_OPEN
         self.success_count = 0
-        print(f"[CIRCUIT] State: → HALF_OPEN")
+        print("[CIRCUIT] State: → HALF_OPEN")
 
     def _transition_to_closed(self):
         """转换到关闭状态"""
         self.state = CircuitState.CLOSED
         self.failure_count = 0
         self.success_count = 0
-        print(f"[CIRCUIT] State: → CLOSED")
+        print("[CIRCUIT] State: → CLOSED")
 
     def _should_attempt_reset(self) -> bool:
         """是否应该尝试重置"""
@@ -626,11 +624,10 @@ class ProductionRAGSystem:
             RAG结果
         """
         # Step 1: 多查询生成 (如果启用)
-        queries = [query]
         if self.config.enable_multi_query:
             with tracer.start_as_current_span("multi_query_generation"):
                 # 模拟多查询生成
-                queries = [
+                [
                     query,
                     query.replace("？", ""),  # 简化
                     f"关于{query}"  # 扩展
@@ -803,14 +800,14 @@ async def load_test(
     print(f"Total Queries: {num_queries}")
     print(f"Total Time: {total_time:.2f}s")
     print(f"QPS: {qps:.2f}")
-    print(f"\nLatency:")
+    print("\nLatency:")
     print(f"  Average: {avg*1000:.1f}ms")
     print(f"  P50: {p50*1000:.1f}ms")
     print(f"  P95: {p95*1000:.1f}ms")
     print(f"  P99: {p99*1000:.1f}ms")
 
     stats = rag_system.get_stats()
-    print(f"\nSystem Stats:")
+    print("\nSystem Stats:")
     print(f"  Cache Hit Rate: {stats['cache_hit_rate']:.1%}")
     print(f"  Error Rate: {stats['error_rate']:.1%}")
     print(f"{'='*70}\n")

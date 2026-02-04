@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from app.infra.events.bus import bus, EventBus, MemoryEventBus
+from app.infra.events.bus import bus, MemoryEventBus
 from app.infra.events.schemas import EventType, KnowledgeEventPayload, EvaluationEventPayload
 from app.services.knowledge_sync import sync_chroma, sync_bm25
 from app.services.consistency_checker import check_consistency, handle_retry

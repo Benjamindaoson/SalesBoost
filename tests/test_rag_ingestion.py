@@ -1,7 +1,6 @@
 import pytest
 import os
 import shutil
-import asyncio
 from cognitive.skills.study.knowledge_service import KnowledgeService
 
 # Use a temporary directory for ChromaDB in tests
@@ -50,7 +49,7 @@ def test_rag_ingestion_and_retrieval(knowledge_service):
     assert top_result["metadata"]["source"] == "manual"
     
     # 4. Ingest Another (PDF Simulation)
-    doc_id_2 = knowledge_service.add_document(
+    knowledge_service.add_document(
         content="Handling Price Objection: Focus on value, not cost. ROI is key.",
         metadata={"source": "objection_handling.pdf", "type": "strategy"}
     )

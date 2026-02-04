@@ -1,12 +1,11 @@
 import logging
-import json
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 from datetime import datetime
 
 from app.agents.roles.base import BaseAgent
 from app.schemas.blackboard import BlackboardSchema, PendingAction
-from app.infra.gateway.schemas import AgentType, RoutingContext, LatencyMode, ModelCall
+from app.infra.gateway.schemas import AgentType
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +65,7 @@ Output strictly JSON:
         lead_name = blackboard.external_context.participants[0] if blackboard.external_context.participants else "Valued Lead"
         crm_stage = blackboard.external_context.crm_stage_mapped or "New Lead"
         
-        sys_prompt = self.system_prompt_template.format(
+        self.system_prompt_template.format(
             lead_name=lead_name,
             crm_stage=crm_stage,
             last_intent=blackboard.last_intent or "unknown",

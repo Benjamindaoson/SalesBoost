@@ -26,11 +26,10 @@ Usage:
 """
 
 import logging
-import time
 from typing import Any, Callable, Optional, Dict
 from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 import asyncio
 
 try:
@@ -209,7 +208,7 @@ class CircuitBreaker:
 
                 return result
 
-            except Exception as e:
+            except Exception:
                 self.metrics.failure_count += 1
                 self.metrics.total_failures += 1
                 self.metrics.last_failure_time = datetime.utcnow()

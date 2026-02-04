@@ -4,7 +4,6 @@ Controls experimental features and A/B testing variants
 """
 import os
 from enum import Enum
-from typing import Optional
 
 
 class CoordinatorEngine(str, Enum):

@@ -6,7 +6,6 @@ Quick Data Integration Script - Simplified Version
 可以立即运行，不需要复杂的依赖
 """
 
-import sys
 import json
 from pathlib import Path
 from datetime import datetime
@@ -178,16 +177,16 @@ class QuickIntegration:
             f.write("Product Rights Tables\n")
             f.write("="*70 + "\n")
             f.write(f"Chunks Created: {len(product_chunks)}\n")
-            f.write(f"Status: ✅ Ready for Qdrant ingestion\n")
-            f.write(f"File: product_rights_chunks.json\n\n")
+            f.write("Status: ✅ Ready for Qdrant ingestion\n")
+            f.write("File: product_rights_chunks.json\n\n")
 
             f.write("="*70 + "\n")
             f.write("Sales Recordings\n")
             f.write("="*70 + "\n")
             f.write(f"Files Found: {len(recordings_info)}\n")
-            f.write(f"Status: ⏳ Ready for transcription\n")
-            f.write(f"File: sales_recordings_metadata.json\n")
-            f.write(f"Note: 需要配置转录服务\n\n")
+            f.write("Status: ⏳ Ready for transcription\n")
+            f.write("File: sales_recordings_metadata.json\n")
+            f.write("Note: 需要配置转录服务\n\n")
 
             f.write("="*70 + "\n")
             f.write("Next Steps\n")
@@ -212,7 +211,7 @@ class QuickIntegration:
             f.write("# 运行完整集成:\n")
             f.write("python scripts/integrate_cleaned_data.py\n")
 
-        print(f"\n[OK] Reports saved:")
+        print("\n[OK] Reports saved:")
         print(f"  - JSON: {report_file}")
         print(f"  - TXT: {text_report}")
 
@@ -231,7 +230,7 @@ class QuickIntegration:
         recordings_info = self.process_sales_recordings()
 
         # 任务3: 报告
-        report = self.generate_report(product_chunks, recordings_info)
+        self.generate_report(product_chunks, recordings_info)
 
         # 摘要
         print("\n" + "="*70)
@@ -241,10 +240,10 @@ class QuickIntegration:
         print(f"[PENDING] Sales Recordings: {len(recordings_info)} files ready for transcription")
         print(f"\n[OUTPUT] Directory: {self.output_dir}")
         print("\n[DELIVERABLES]")
-        print(f"  - product_rights_chunks.json")
-        print(f"  - sales_recordings_metadata.json")
-        print(f"  - integration_report.json")
-        print(f"  - integration_report.txt")
+        print("  - product_rights_chunks.json")
+        print("  - sales_recordings_metadata.json")
+        print("  - integration_report.json")
+        print("  - integration_report.txt")
         print("\n[NEXT] Review integration_report.txt for next steps")
 
 

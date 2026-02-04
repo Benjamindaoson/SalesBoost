@@ -5,7 +5,6 @@ Stable solution for Windows with good Chinese support
 """
 
 import sys
-import os
 import json
 import re
 from pathlib import Path

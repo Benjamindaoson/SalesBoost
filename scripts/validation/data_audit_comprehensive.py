@@ -11,14 +11,12 @@ Data Asset Comprehensive Audit Script
 5. 数据缺口识别与获取策略
 """
 
-import os
 import json
 import hashlib
 import mimetypes
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
+from typing import Dict, Any
 from datetime import datetime
-import sqlite3
 
 # 数据资产路径配置
 DATA_ASSETS = {

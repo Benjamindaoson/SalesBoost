@@ -14,7 +14,6 @@ Date: 2026-02-01
 """
 
 import sys
-import os
 import json
 import re
 from pathlib import Path
@@ -423,7 +422,7 @@ def main():
 
     if results["total_chunks"] > 0:
         print("\n[SUCCESS] Book processing complete!")
-        print(f"Next step: Run integration script to merge with existing knowledge base")
+        print("Next step: Run integration script to merge with existing knowledge base")
     else:
         print("\n[WARNING] No chunks extracted. Check PDF files and dependencies.")
 

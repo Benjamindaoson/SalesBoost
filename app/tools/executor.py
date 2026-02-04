@@ -10,7 +10,7 @@ from app.tools.tool_cache import ToolCache
 from app.tools.errors import ToolInputError, ToolNotFoundError, ToolPermissionError
 from app.tools.registry import ToolRegistry
 from app.tools.rate_limiter import get_rate_limiter
-from app.tools.reflection import ReflectionAgent, ToolCallCorrection
+from app.tools.reflection import ReflectionAgent
 from app.tools.dependencies import ExecutionContext
 from app.cognitive.tools import run_with_timeout
 from app.cognitive.errors import TimeoutError

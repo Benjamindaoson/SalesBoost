@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict
 
 from fastapi import Request
 from starlette.responses import JSONResponse

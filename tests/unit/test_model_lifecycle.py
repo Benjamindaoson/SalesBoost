@@ -1,4 +1,3 @@
-import pytest
 
 from app.infra.llm.registry import ModelMetadata
 

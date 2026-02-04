@@ -3,8 +3,8 @@ User Feedback API Endpoint
 Collects user satisfaction ratings and feeds them to the Bandit algorithm
 """
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, Field, confloat, conint
-from typing import Optional, Dict, Any
+from pydantic import BaseModel, Field, conint
+from typing import Optional, Dict
 import logging
 
 from app.engine.coordinator.production_coordinator import get_production_coordinator

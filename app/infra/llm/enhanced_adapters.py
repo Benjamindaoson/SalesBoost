@@ -1,7 +1,6 @@
 """
 Enhanced LLM Adapters with Function Calling Support
 """
-import json
 import logging
 from typing import List, Dict, Any, Optional
 from openai import AsyncOpenAI

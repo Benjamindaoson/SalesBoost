@@ -37,9 +37,9 @@ def generate_embeddings_siliconflow(texts: List[str], api_key: str) -> List[List
     base_url = "https://api.siliconflow.cn/v1"
     model = "BAAI/bge-m3"
 
-    print(f"\n[INFO] Using SiliconFlow BGE-M3 for embeddings")
+    print("\n[INFO] Using SiliconFlow BGE-M3 for embeddings")
     print(f"  - Model: {model}")
-    print(f"  - Dimension: 1024")
+    print("  - Dimension: 1024")
     print(f"  - Base URL: {base_url}")
 
     embeddings = []
@@ -125,7 +125,7 @@ def update_qdrant_vectors(
         qdrant_url: Qdrant URL
         collection_name: 集合名称
     """
-    print(f"\n[INFO] Updating vectors in Qdrant")
+    print("\n[INFO] Updating vectors in Qdrant")
     print(f"  - Collection: {collection_name}")
     print(f"  - Total points: {len(chunks)}")
 
@@ -186,7 +186,7 @@ def verify_embeddings(
     collection_name: str = "sales_knowledge"
 ):
     """验证向量是否更新成功"""
-    print(f"\n[INFO] Verifying embeddings...")
+    print("\n[INFO] Verifying embeddings...")
 
     session = requests.Session()
     session.trust_env = False
@@ -201,15 +201,15 @@ def verify_embeddings(
             vectors_count = result.get("vectors_count", 0)
             points_count = result.get("points_count", 0)
 
-            print(f"\n[OK] Collection status:")
+            print("\n[OK] Collection status:")
             print(f"  - Points: {points_count}")
             print(f"  - Vectors: {vectors_count}")
 
             if vectors_count > 0:
-                print(f"\n[SUCCESS] Real embeddings verified!")
+                print("\n[SUCCESS] Real embeddings verified!")
                 return True
             else:
-                print(f"\n[WARN] No vectors found - may still be indexing")
+                print("\n[WARN] No vectors found - may still be indexing")
                 return False
         else:
             print(f"\n[ERROR] Failed to verify: {response.status_code}")
@@ -236,7 +236,7 @@ def main():
         print("\n[FALLBACK] Will use mock embeddings for testing")
         api_key = None
     else:
-        print(f"\n[OK] SiliconFlow API key found")
+        print("\n[OK] SiliconFlow API key found")
 
     # Load chunks
     chunks_file = Path("storage/integrated_data/product_rights_chunks.json")
@@ -255,11 +255,11 @@ def main():
 
     # Generate embeddings
     if api_key:
-        print(f"\n[INFO] Generating real embeddings via SiliconFlow...")
+        print("\n[INFO] Generating real embeddings via SiliconFlow...")
         embeddings = generate_embeddings_siliconflow(texts, api_key)
     else:
-        print(f"\n[WARN] No API key - using mock embeddings")
-        print(f"[WARN] Semantic search will NOT work!")
+        print("\n[WARN] No API key - using mock embeddings")
+        print("[WARN] Semantic search will NOT work!")
         import random
         embeddings = []
         for _ in tqdm(texts, desc="Generating mock embeddings"):

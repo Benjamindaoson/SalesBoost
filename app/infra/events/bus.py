@@ -220,7 +220,7 @@ class RedisEventBus(EventBus):
                 await asyncio.sleep(1)
                 continue
                 
-            streams = {f"stream:{k}": "$" for k in self._subscribers.keys()}
+            {f"stream:{k}": "$" for k in self._subscribers.keys()}
             # First time, use $ to get new messages.
             # We need to maintain last_id for each stream if not using groups.
             # To support "Cloud Native" with persistence, Groups are best.

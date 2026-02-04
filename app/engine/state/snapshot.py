@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, asdict
-from typing import Dict, Optional, Any
+from typing import Optional, Any
 from datetime import datetime
 
 from core.redis import get_redis

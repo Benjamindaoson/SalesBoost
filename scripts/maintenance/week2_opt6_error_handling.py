@@ -11,7 +11,7 @@ Week 2 优化 6: 错误处理和熔断器
 
 import time
 import asyncio
-from typing import Dict, Optional, Callable, Any
+from typing import Dict, Callable, Any
 from dataclasses import dataclass
 from enum import Enum
 import random
@@ -143,7 +143,7 @@ class CircuitBreaker:
         self.last_failure_time = None
         self.half_open_calls = 0
 
-        print(f"[OK] Circuit Breaker initialized")
+        print("[OK] Circuit Breaker initialized")
         print(f"  Failure Threshold: {config.failure_threshold}")
         print(f"  Timeout: {config.timeout}s")
 
@@ -187,7 +187,7 @@ class CircuitBreaker:
             self._on_success()
             return result
 
-        except Exception as e:
+        except Exception:
             self._on_failure()
             raise
 
@@ -220,7 +220,7 @@ class CircuitBreaker:
     def _transition_to_open(self):
         """转换到打开状态"""
         self.state = CircuitState.OPEN
-        print(f"[CIRCUIT] State: CLOSED/HALF_OPEN → OPEN")
+        print("[CIRCUIT] State: CLOSED/HALF_OPEN → OPEN")
         print(f"[CIRCUIT] Circuit breaker OPENED. Timeout: {self.config.timeout}s")
 
     def _transition_to_half_open(self):
@@ -228,8 +228,8 @@ class CircuitBreaker:
         self.state = CircuitState.HALF_OPEN
         self.success_count = 0
         self.half_open_calls = 0
-        print(f"[CIRCUIT] State: OPEN → HALF_OPEN")
-        print(f"[CIRCUIT] Attempting recovery...")
+        print("[CIRCUIT] State: OPEN → HALF_OPEN")
+        print("[CIRCUIT] Attempting recovery...")
 
     def _transition_to_closed(self):
         """转换到关闭状态"""
@@ -237,8 +237,8 @@ class CircuitBreaker:
         self.failure_count = 0
         self.success_count = 0
         self.half_open_calls = 0
-        print(f"[CIRCUIT] State: HALF_OPEN → CLOSED")
-        print(f"[CIRCUIT] Circuit breaker CLOSED. Normal operation resumed.")
+        print("[CIRCUIT] State: HALF_OPEN → CLOSED")
+        print("[CIRCUIT] Circuit breaker CLOSED. Normal operation resumed.")
 
     def _should_attempt_reset(self) -> bool:
         """是否应该尝试重置"""

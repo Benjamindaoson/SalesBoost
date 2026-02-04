@@ -42,7 +42,6 @@ from typing import Any, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
 
-from app.engine.coordinator.state import CoordinatorState, ExecutionMode, create_initial_state
 from app.engine.coordinator.dynamic_workflow import (
     DynamicWorkflowCoordinator,
     get_full_config,

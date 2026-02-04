@@ -214,7 +214,6 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # API configuration
-    import os
     from dotenv import load_dotenv
     load_dotenv()
 

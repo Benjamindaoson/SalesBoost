@@ -5,7 +5,6 @@ Simple Test for State Recovery
 
 import asyncio
 import uuid
-import time
 import sys
 import os
 

@@ -19,8 +19,8 @@ Prometheus监控和Grafana仪表板部署
 """
 
 import yaml
-from typing import Dict, List
-from dataclasses import dataclass, asdict
+from typing import Dict
+from dataclasses import dataclass
 
 
 # ============================================================================

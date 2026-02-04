@@ -1,5 +1,4 @@
 import asyncio
-import os
 import logging
 from dotenv import load_dotenv
 from app.infra.gateway.model_gateway import ModelGateway
@@ -46,7 +45,7 @@ async def verify_siliconflow():
         print(f"❌ Failed: {e}")
 
     # Test 2: Paid Model (GLM-4)
-    print(f"\nTest 2: Calling SiliconFlow with Paid Model (THUDM/glm-4-9b-chat)...")
+    print("\nTest 2: Calling SiliconFlow with Paid Model (THUDM/glm-4-9b-chat)...")
     from app.infra.gateway.schemas import ModelConfig
     call_paid = ModelCall(
         prompt="你好，请介绍一下你自己",

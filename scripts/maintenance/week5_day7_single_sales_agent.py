@@ -15,7 +15,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from dataclasses import dataclass
 
 from app.agents.conversation import (
@@ -25,7 +25,6 @@ from app.agents.conversation import (
     SalesConversationFSM,
     PromptManager,
     UserIntent,
-    IntentRouter,
     ActionRouter
 )
 
@@ -108,7 +107,6 @@ class SingleSalesAgent:
         """
         # 1. 获取会话上下文
         context = self.get_or_create_session(session_id)
-        old_state = context.current_state
 
         # 记录用户消息
         context.history.append({"role": "user", "content": message})

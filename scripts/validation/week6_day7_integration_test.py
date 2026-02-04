@@ -32,7 +32,6 @@ from app.agents.conversation import (
 )
 from app.agents.simulation import (
     CustomerPersonality,
-    UserSimulator,
     ConversationStatus,
     SimulationOrchestrator
 )
@@ -413,7 +412,7 @@ async def run_complete_integration_test():
     print("\n[Step 5] Training effectiveness analysis...")
     stats = dataset["statistics"]
 
-    print(f"\n  Overall Performance:")
+    print("\n  Overall Performance:")
     print(f"    - Completion Rate: {stats['completion_rate']*100:.1f}%")
     print(f"    - Failure Rate: {stats['failure_rate']*100:.1f}%")
     print(f"    - Deadlock Rate: {stats['deadlock_rate']*100:.1f}%")

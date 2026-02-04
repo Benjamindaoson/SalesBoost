@@ -19,7 +19,6 @@ import time
 import asyncio
 from typing import List, Dict, Optional
 from dataclasses import dataclass
-from enum import Enum
 import numpy as np
 
 
@@ -77,7 +76,6 @@ class HybridSearchPipeline:
         self.variant_generator = QueryVariantGenerator()
 
         # 4. BM25检索器
-        from week2_opt4_enhanced_hybrid import EnhancedHybridSearch
         self.bm25_searcher = None  # 需要先加载文档
 
         # 5. 重排序器
@@ -134,7 +132,7 @@ class HybridSearchPipeline:
         profile = self.complexity_analyzer.analyze(query)
         metrics["analysis_time_ms"] = (time.time() - analysis_start) * 1000
 
-        print(f"\n[QUERY ANALYSIS]")
+        print("\n[QUERY ANALYSIS]")
         print(f"  Complexity: {profile.recommended_dimension.name}")
         print(f"  Confidence: {profile.confidence:.2f}")
 
@@ -425,7 +423,7 @@ async def test_hybrid_search_pipeline():
 
             # 显示指标
             metrics = result["metrics"]
-            print(f"\n[METRICS]")
+            print("\n[METRICS]")
             print(f"  Total Time: {metrics['total_time_ms']:.1f}ms")
 
             if "variant_time_ms" in metrics:
@@ -441,7 +439,7 @@ async def test_hybrid_search_pipeline():
 
             # 显示结果
             if result["results"]:
-                print(f"\n[TOP RESULT]")
+                print("\n[TOP RESULT]")
                 top = result["results"][0]
                 if "rerank_score" in top:
                     print(f"  Rerank Score: {top['rerank_score']:.4f}")

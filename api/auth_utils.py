@@ -51,8 +51,8 @@ async def get_current_user_from_token(token: str, db: AsyncSession) -> UserSchem
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         username: str = payload.get("sub")
-        role: str = payload.get("role", "student")
-        tenant_id: str = payload.get("tenant_id")
+        payload.get("role", "student")
+        payload.get("tenant_id")
         user_id: str = payload.get("user_id")
         if username is None:
             raise credentials_exception

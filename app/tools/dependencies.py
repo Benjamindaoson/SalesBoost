@@ -17,9 +17,8 @@ from __future__ import annotations
 
 import inspect
 from contextvars import ContextVar
-from typing import Any, Callable, Dict, Optional, TypeVar, get_type_hints
+from typing import Any, Callable, Dict, Optional, TypeVar
 
-from pydantic import BaseModel
 
 # Context variables for dependency injection
 _current_context: ContextVar[Optional[Dict[str, Any]]] = ContextVar("current_context", default=None)

@@ -10,20 +10,15 @@ Tests for ReAct Reasoning Engine
 - 性能基准
 """
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
 
 from cognitive.skills.v3.react_reasoning_engine import (
     ReActReasoningEngine,
     ReActConfig,
     ReActResult,
     ReActStep,
-    ReActPhase,
     ThoughtOutput,
     ActionOutput,
-    ObservationOutput,
-    ReflectionOutput,
     convert_react_to_turn_plan,
 )
 from schemas.fsm import FSMState, SalesStage

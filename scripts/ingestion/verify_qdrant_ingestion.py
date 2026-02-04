@@ -40,7 +40,7 @@ def verify_collection():
 
             if 'text' in vectors_config:
                 text_config = vectors_config['text']
-                print(f"\n[INFO] Vector Configuration:")
+                print("\n[INFO] Vector Configuration:")
                 print(f"  - Dimension: {text_config.get('size', 'unknown')}")
                 print(f"  - Distance: {text_config.get('distance', 'unknown')}")
 
@@ -50,7 +50,7 @@ def verify_collection():
                 print(f"\n[SUCCESS] Ingestion verified: {points_count} points in collection")
                 return True
             else:
-                print(f"\n[WARN] Collection exists but has no points")
+                print("\n[WARN] Collection exists but has no points")
                 return False
         else:
             print(f"\n[ERROR] Failed to get collection: {response.status_code}")

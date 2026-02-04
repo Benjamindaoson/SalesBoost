@@ -9,7 +9,6 @@ Setup Local Development Environment
 3. 验证环境配置
 """
 
-import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -67,7 +66,7 @@ def setup_sqlite_database():
     conn.close()
 
     print(f"[OK] SQLite database created: {db_path}")
-    print(f"[OK] Tables: products, knowledge_metadata, dialogue_history")
+    print("[OK] Tables: products, knowledge_metadata, dialogue_history")
 
     return str(db_path)
 
@@ -95,14 +94,14 @@ def setup_chromadb():
 
         # 创建或获取collection
         try:
-            collection = client.get_collection("sales_knowledge")
-            print(f"[OK] Existing collection: sales_knowledge")
+            client.get_collection("sales_knowledge")
+            print("[OK] Existing collection: sales_knowledge")
         except:
-            collection = client.create_collection(
+            client.create_collection(
                 name="sales_knowledge",
                 metadata={"description": "销售知识库"}
             )
-            print(f"[OK] Created new collection: sales_knowledge")
+            print("[OK] Created new collection: sales_knowledge")
 
         print(f"[OK] ChromaDB path: {chroma_path}")
         print(f"[OK] Collection count: {len(client.list_collections())}")
@@ -138,7 +137,7 @@ def verify_dependencies():
             missing_packages.append(package)
 
     if missing_packages:
-        print(f"\nMissing packages, please run:")
+        print("\nMissing packages, please run:")
         print(f"pip install {' '.join(missing_packages)}")
         return False
 

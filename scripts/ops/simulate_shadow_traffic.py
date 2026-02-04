@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"
 try:
     from app.infra.gateway.model_gateway import ModelGateway
     from app.infra.gateway.schemas import ModelCall, RoutingContext, AgentType, LatencyMode, ModelConfig
-    from app.infra.llm.adapters import AdapterFactory, OpenAIAdapter, GeminiAdapter
+    from app.infra.llm.adapters import OpenAIAdapter, GeminiAdapter
 except Exception as e:
     print(f"Import Error: {e}")
     traceback.print_exc()
@@ -39,8 +39,6 @@ async def simulate_traffic():
     # But we want to test the *Shadow* logic, so we might want to let it try or mock the network call.
     # Let's mock the 'chat' method of the adapters to just return dummy text + sleep.
     
-    original_chat_openai = OpenAIAdapter.chat
-    original_chat_gemini = GeminiAdapter.chat
     
     async def mock_chat(self, messages, config):
         await asyncio.sleep(random.uniform(0.1, 0.5))
@@ -61,7 +59,6 @@ async def simulate_traffic():
     
     print("Force-enabled Shadow Mode (random=0.0)")
     
-    tasks = []
     for i in range(5):
         context = RoutingContext(
             session_id=f"test-session-{i}",

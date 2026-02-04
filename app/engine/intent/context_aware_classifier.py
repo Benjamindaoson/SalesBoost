@@ -5,7 +5,6 @@ Enhances intent classification by considering conversation history and FSM state
 """
 import logging
 from typing import List, Dict, Any
-from collections import Counter
 
 from app.engine.intent.production_classifier import ProductionIntentClassifier
 from app.engine.intent.schemas import IntentResult

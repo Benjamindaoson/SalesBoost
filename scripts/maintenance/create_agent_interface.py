@@ -12,7 +12,6 @@ Features:
 Updated: 2026-02-01 - Integrated SimpleVectorStore for semantic retrieval
 """
 
-import os
 import sys
 import json
 from pathlib import Path
@@ -223,7 +222,7 @@ class AgentKnowledgeInterface:
 
     def coach_agent_query(self, user_question: str) -> List[Dict[str, Any]]:
         """Query knowledge for coach agent"""
-        print(f"\n=== Coach Agent Query ===")
+        print("\n=== Coach Agent Query ===")
 
         # Search for relevant champion cases and training scenarios
         results = []
@@ -241,7 +240,7 @@ class AgentKnowledgeInterface:
 
     def compliance_agent_query(self, compliance_topic: str) -> List[Dict[str, Any]]:
         """Query knowledge for compliance agent"""
-        print(f"\n=== Compliance Agent Query ===")
+        print("\n=== Compliance Agent Query ===")
 
         # Search for relevant SOP documents
         results = self.retriever.search_by_keyword(compliance_topic, top_k=5, chunk_type="sales_sop")
@@ -251,7 +250,7 @@ class AgentKnowledgeInterface:
 
     def practice_agent_query(self, scenario_type: str) -> List[Dict[str, Any]]:
         """Query knowledge for practice agent"""
-        print(f"\n=== Practice Agent Query ===")
+        print("\n=== Practice Agent Query ===")
 
         # Get training scenarios by objection type
         results = self.retriever.get_training_scenarios(objection_type=scenario_type, limit=5)
@@ -272,11 +271,11 @@ def main():
 
     # 2. Get statistics
     stats = retriever.get_statistics()
-    print(f"\n=== Knowledge Base Statistics ===")
+    print("\n=== Knowledge Base Statistics ===")
     print(f"Total chunks: {stats['total_chunks']}")
     print(f"Total characters: {stats['total_characters']:,}")
     print(f"Average chunk size: {stats['average_chunk_size']:.0f} chars")
-    print(f"\nChunks by type:")
+    print("\nChunks by type:")
     for chunk_type, count in stats['chunks_by_type'].items():
         print(f"  {chunk_type}: {count}")
 
@@ -284,12 +283,12 @@ def main():
     agent_interface = AgentKnowledgeInterface(retriever)
 
     # 4. Test queries
-    print(f"\n=== Test Agent Queries ===")
+    print("\n=== Test Agent Queries ===")
 
     # Test coach agent query
     coach_results = agent_interface.coach_agent_query("如何处理客户的价格异议？")
     if coach_results:
-        print(f"\nCoach Agent Result 1:")
+        print("\nCoach Agent Result 1:")
         print(f"  Type: {coach_results[0]['type']}")
         print(f"  Source: {coach_results[0]['source']}")
         print(f"  Preview: {coach_results[0]['text'][:100]}...")
@@ -297,7 +296,7 @@ def main():
     # Test practice agent query
     practice_results = agent_interface.practice_agent_query("price")
     if practice_results:
-        print(f"\nPractice Agent Result 1:")
+        print("\nPractice Agent Result 1:")
         print(f"  Type: {practice_results[0]['type']}")
         print(f"  Metadata: {practice_results[0]['metadata']}")
         print(f"  Preview: {practice_results[0]['text'][:100]}...")

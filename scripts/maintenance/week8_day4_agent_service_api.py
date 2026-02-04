@@ -21,7 +21,6 @@ from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field
 from fastapi import FastAPI, HTTPException, Depends, status
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -738,7 +737,7 @@ async def demo_agent_api():
     response = client.post("/v1/evaluate", json=eval_request)
     result = response.json()
     print(f"  Overall Score: {result['overall_score']:.1f}/10")
-    print(f"  Dimensions:")
+    print("  Dimensions:")
     for dim in result['dimensions']:
         print(f"    - {dim['name']}: {dim['score']:.1f}/10 - {dim['feedback']}")
     print(f"  Suggestions: {result['suggestions']}")

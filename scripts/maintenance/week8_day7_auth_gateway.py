@@ -23,7 +23,6 @@ from enum import Enum
 from pydantic import BaseModel, Field
 from fastapi import FastAPI, HTTPException, Depends, status, Security, Request
 from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import jwt

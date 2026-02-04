@@ -317,13 +317,13 @@ class SimulationOrchestrator:
             print(f"Average Score: {report.average_score:.1f}/10")
             print(f"Objections: {report.total_objections} (Resolved: {report.objections_resolved})")
             print(f"Buying Signals: {report.buying_signals}")
-            print(f"\nStrengths:")
+            print("\nStrengths:")
             for s in report.strengths:
                 print(f"  - {s}")
-            print(f"\nWeaknesses:")
+            print("\nWeaknesses:")
             for w in report.weaknesses:
                 print(f"  - {w}")
-            print(f"\nRecommendations:")
+            print("\nRecommendations:")
             for r in report.recommendations:
                 print(f"  - {r}")
 
@@ -492,7 +492,7 @@ class SimulationOrchestrator:
         print(f"Average Turns: {avg_turns:.1f}")
 
         # 按人格统计
-        print(f"\nBy Personality:")
+        print("\nBy Personality:")
         personality_stats = {}
         for r in reports:
             p = r.customer_personality
@@ -522,7 +522,6 @@ async def demo_orchestrator():
 
     # 导入必要的组件
     from app.agents.conversation import SalesConversationFSM, PromptManager
-    from app.agents.simulation import UserSimulator
 
     # 创建 Sales Agent（简化版，用于演示）
     class MockSalesAgent:
@@ -590,7 +589,7 @@ async def demo_orchestrator():
 
     # 运行单次仿真
     print("\n[Single Simulation Test]")
-    report = await orchestrator.run_simulation(
+    await orchestrator.run_simulation(
         session_id="demo-001",
         customer_personality=CustomerPersonality.INTERESTED,
         verbose=True

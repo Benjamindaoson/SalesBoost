@@ -13,7 +13,6 @@ Author: Claude Sonnet 4.5
 Date: 2026-02-01
 """
 
-import os
 import sys
 import time
 import requests
@@ -150,7 +149,7 @@ class ProductionMonitor:
         results["metrics"] = metrics
 
         if "error" not in metrics:
-            print(f"  ✓ Metrics retrieved")
+            print("  ✓ Metrics retrieved")
             if "total_requests" in metrics:
                 print(f"  ✓ Total requests: {metrics['total_requests']}")
             if "avg_response_time_ms" in metrics:

@@ -8,12 +8,11 @@ Date: 2026-02-01
 """
 
 import sys
-import os
 import json
 import shutil
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, Any
 import pandas as pd
 from tqdm import tqdm
 
@@ -337,7 +336,7 @@ class DataCleaningPipeline:
             f.write(f"\n音频文件完整性: {sr['cleaned_files']}/{sr['original_files']} ")
             f.write(f"({'[OK] 通过' if sr['cleaned_files'] == sr['original_files'] else '[ERROR] 未通过'})\n")
 
-        print(f"\n[OK] 报告已保存:")
+        print("\n[OK] 报告已保存:")
         print(f"  - JSON: {report_file}")
         print(f"  - TXT: {text_report}")
 
@@ -352,23 +351,23 @@ class DataCleaningPipeline:
         print()
 
         # 1. 清洗产品权益数据
-        product_results = self.clean_product_rights_data()
+        self.clean_product_rights_data()
 
         # 2. 清洗销售录音数据
-        recording_results = self.clean_sales_recordings()
+        self.clean_sales_recordings()
 
         # 3. 生成报告
-        report = self.generate_report()
+        self.generate_report()
 
         # 4. 打印摘要
         print("\n" + "="*70)
         print("数据清洗完成 - Data Cleaning Complete")
         print("="*70)
-        print(f"\n产品权益表格:")
+        print("\n产品权益表格:")
         print(f"  [OK] 处理文件: {self.stats['product_rights']['cleaned_files']}/{self.stats['product_rights']['original_files']}")
         print(f"  [OK] 数据行数: {self.stats['product_rights']['total_rows_after']} (原始: {self.stats['product_rights']['total_rows_before']})")
 
-        print(f"\n销售录音:")
+        print("\n销售录音:")
         print(f"  [OK] 处理文件: {self.stats['sales_recordings']['cleaned_files']}/{self.stats['sales_recordings']['original_files']}")
         print(f"  [OK] 总大小: {self.stats['sales_recordings']['total_size_after_mb']:.2f} MB")
 

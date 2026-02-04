@@ -20,9 +20,8 @@ Usage:
 import logging
 import time
 from typing import Optional, Dict, Any, Callable
-from datetime import datetime, timedelta
 
-from fastapi import Request, Response, HTTPException, status
+from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp

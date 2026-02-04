@@ -12,13 +12,12 @@ SalesBoost RAG Data Ingestion Pipeline
 Usage:
 python scripts/run_ingestion.py --dir "path/to/documents"
 """
-import os
 import argparse
 import asyncio
 import logging
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from tqdm import tqdm
 
 # Custom Loaders to avoid langchain_community dependency issues
@@ -242,7 +241,7 @@ class DataIngestionPipeline:
                 
             data = json.loads(content.strip())
             return data
-        except Exception as e:
+        except Exception:
             # logger.warning(f"Graph extraction failed: {e}")
             return None
 

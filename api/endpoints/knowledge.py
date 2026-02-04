@@ -1,19 +1,10 @@
-import base64
-import json
-import uuid
 import logging
-from datetime import date
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Query, BackgroundTasks
 from pydantic import BaseModel
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import audit_access, require_admin_or_operator
-from api.auth_schemas import UserSchema as User
-from core.database import get_db_session
-from models.memory_service_models import MemoryKnowledge
+from api.deps import audit_access
 from schemas.fsm import SalesStage
 from app.tools.connectors.ingestion.streaming_pipeline import StreamingIngestionPipeline
 from app.infra.search.vector_store import VectorStoreAdapter

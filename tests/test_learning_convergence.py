@@ -1,6 +1,5 @@
 import pytest
-import pytest_asyncio
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 from cognitive.skills.evaluate.curriculum_planner import CurriculumPlanner
 from models.profile_models import UserStrategyProfile
 from models.adoption_models import AdoptionRecord
@@ -13,8 +12,8 @@ async def test_learning_convergence():
     P0: Learning Stability Verification
     Verifies that consistent effective adoption leads to converged skill improvement.
     """
-    planner = CurriculumPlanner()
-    mock_db = AsyncMock(spec=AsyncSession)
+    CurriculumPlanner()
+    AsyncMock(spec=AsyncSession)
     
     user_id = "learner_001"
     
@@ -64,7 +63,7 @@ async def test_learning_convergence():
     # Assuming we can't easily mock the complex SQL queries in `update_user_profile`,
     # we will focus on verifying that `UserStrategyProfile` model *can* represent convergence.
     
-    profile = UserStrategyProfile(
+    UserStrategyProfile(
         user_id=user_id,
         mastery_levels={"Feel-Felt-Found": 5.0},
         adoption_rates={"Feel-Felt-Found": 0.0}

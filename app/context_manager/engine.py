@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from app.context_manager.compression import compress_history, StructuredFacts
 from app.context_manager.memory import ContextMemoryStore
-from app.context_manager.scoring import compute_importance_score, ImportanceScores
+from app.context_manager.scoring import compute_importance_score
 from app.context_manager.state_sync import SalesStateStream
 from app.context_manager.librarian import Librarian
 from app.schemas.blackboard import DecisionTrace, StateConfidence

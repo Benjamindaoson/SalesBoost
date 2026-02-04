@@ -3,22 +3,16 @@ End-to-End Integration Tests for Coordinator
 Tests complete conversation flows through the orchestration system
 """
 import pytest
-import asyncio
 from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any
 
 from app.engine.coordinator.production_coordinator import (
     ProductionCoordinator,
-    CoordinatorEngine,
-    TurnResult
+    CoordinatorEngine
 )
 from app.engine.coordinator.dynamic_workflow import (
-    WorkflowConfig,
-    NodeType,
     get_minimal_config,
     get_full_config
 )
-from app.schemas.fsm import FSMState, SalesStage
 
 
 @pytest.fixture

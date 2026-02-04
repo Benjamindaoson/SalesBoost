@@ -84,9 +84,9 @@ def test_semantic_search():
     print("Testing Semantic Search - LOCAL BGE-M3")
     print("="*70)
 
-    print(f"\n[INFO] Loading BGE-M3 model locally...")
+    print("\n[INFO] Loading BGE-M3 model locally...")
     model = SentenceTransformer('BAAI/bge-m3')
-    print(f"[OK] Model loaded")
+    print("[OK] Model loaded")
 
     # Test queries
     test_queries = [
@@ -118,16 +118,16 @@ def test_semantic_search():
         print('='*70)
 
         # Generate query embedding
-        print(f"\n[INFO] Generating query embedding locally...")
+        print("\n[INFO] Generating query embedding locally...")
         query_vector = generate_query_embedding_local(query_text, model)
         print(f"[OK] Query vector generated (dimension: {len(query_vector)})")
 
         # Search
-        print(f"\n[INFO] Searching Qdrant...")
+        print("\n[INFO] Searching Qdrant...")
         results = search_qdrant(query_vector)
 
         if not results:
-            print(f"[ERROR] No results found")
+            print("[ERROR] No results found")
             continue
 
         print(f"\n[OK] Found {len(results)} results")
@@ -148,11 +148,11 @@ def test_semantic_search():
 
             # Check if result is relevant
             if score > 0.5:
-                print(f"    [OK] High relevance score")
+                print("    [OK] High relevance score")
             elif score > 0.3:
-                print(f"    [WARN] Medium relevance score")
+                print("    [WARN] Medium relevance score")
             else:
-                print(f"    [ERROR] Low relevance score")
+                print("    [ERROR] Low relevance score")
 
     print("\n" + "="*70)
     print("Semantic Search Test Complete")

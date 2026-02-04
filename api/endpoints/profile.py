@@ -78,7 +78,7 @@ async def get_skill_trajectory(
     current_user: User = Depends(require_user),
 ):
     _ensure_user_access(user_id, current_user)
-    limit = days * 5
+    days * 5
 
     query = (
         select(EvaluationLog)

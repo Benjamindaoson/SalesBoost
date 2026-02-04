@@ -8,7 +8,6 @@ import pytest
 import asyncio
 import time
 from statistics import mean, median, stdev
-from typing import List
 
 from httpx import AsyncClient
 from app.main import app
@@ -36,7 +35,7 @@ class TestPerformanceBenchmarks:
             latencies.append(latency)
             assert response.status_code == 200
 
-        print(f"\nHealth Check Latency:")
+        print("\nHealth Check Latency:")
         print(f"  Mean: {mean(latencies):.2f}ms")
         print(f"  Median: {median(latencies):.2f}ms")
         print(f"  Std Dev: {stdev(latencies):.2f}ms")
@@ -71,7 +70,7 @@ class TestPerformanceBenchmarks:
             latencies.append(latency)
             assert response.status_code == 200
 
-        print(f"\nRAG Retrieval Latency:")
+        print("\nRAG Retrieval Latency:")
         print(f"  Mean: {mean(latencies):.2f}ms")
         print(f"  Median: {median(latencies):.2f}ms")
         print(f"  P95: {sorted(latencies)[94]:.2f}ms")
@@ -130,7 +129,7 @@ class TestPerformanceBenchmarks:
         final_memory = process.memory_info().rss / 1024 / 1024  # MB
         memory_increase = final_memory - baseline_memory
 
-        print(f"\nMemory Usage:")
+        print("\nMemory Usage:")
         print(f"  Baseline: {baseline_memory:.2f} MB")
         print(f"  Final: {final_memory:.2f} MB")
         print(f"  Increase: {memory_increase:.2f} MB")
@@ -187,7 +186,7 @@ class TestLoadTesting:
         error_rate = errors / request_count
         avg_latency = mean(latencies) if latencies else 0
 
-        print(f"\nSustained Load Test:")
+        print("\nSustained Load Test:")
         print(f"  Duration: {duration}s")
         print(f"  Total Requests: {request_count}")
         print(f"  Error Rate: {error_rate * 100:.2f}%")

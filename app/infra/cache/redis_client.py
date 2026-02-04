@@ -1,7 +1,6 @@
 import logging
-import asyncio
 import time
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any, List
 from core.redis import get_redis, InMemoryCache
 
 logger = logging.getLogger(__name__)

@@ -4,7 +4,6 @@ SalesBoost Application Configuration
 
 from pathlib import Path
 import os
-from typing import Optional
 
 # Project paths
 PROJECT_ROOT = Path(__file__).parent.parent

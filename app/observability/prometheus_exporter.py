@@ -4,15 +4,13 @@ Exposes intent classification metrics in Prometheus format
 """
 import logging
 from typing import Dict, List, Optional
-from datetime import datetime, timedelta
-from collections import defaultdict
+from datetime import datetime
 from prometheus_client import (
     Counter, Histogram, Gauge, Info,
     CollectorRegistry, generate_latest,
     CONTENT_TYPE_LATEST
 )
 from fastapi import Response
-from app.observability.performance_monitor import performance_monitor
 
 logger = logging.getLogger(__name__)
 

@@ -39,7 +39,7 @@ class ComplianceAgent:
                 stmt = select(MemoryStrategyUnit).where(
                     MemoryStrategyUnit.tenant_id == tenant_id,
                     MemoryStrategyUnit.type == "compliance_replacement",
-                    MemoryStrategyUnit.is_enabled == True
+                    MemoryStrategyUnit.is_enabled
                 )
                 result = await db.execute(stmt)
                 strategies = result.scalars().all()

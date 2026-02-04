@@ -1,7 +1,7 @@
 import re
 import time
 from enum import Enum
-from typing import List, Dict, Tuple
+from typing import Dict
 from dataclasses import dataclass
 from collections import Counter
 
@@ -75,7 +75,7 @@ class FastIntentClassifier:
 
     def _classify_logic(self, prompt: str, start_time: float) -> FastIntentResult:
         prompt = prompt or ""
-        prompt_lower = prompt.lower()
+        prompt.lower()
 
         # 1. Length Heuristic (Extraction/Context Heavy)
         # If prompt is very long, it's likely analysis or extraction

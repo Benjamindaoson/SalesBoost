@@ -1,5 +1,4 @@
 import asyncio
-import os
 import uuid
 
 from app.memory.storage.vector_store import VectorStore

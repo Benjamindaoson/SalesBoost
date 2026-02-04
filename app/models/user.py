@@ -6,7 +6,7 @@ Represents user accounts (students, admins, teachers).
 
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, String, Enum, Boolean, Integer
+from sqlalchemy import Column, String, Enum, Boolean
 from sqlalchemy.orm import relationship
 
 from .base import BaseModel

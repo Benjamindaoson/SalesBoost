@@ -60,7 +60,7 @@ class StreamingRAG:
         start_time = time.time()
 
         # Step 1: 快速检索Top-3 (优先级高)
-        print(f"[INFO] Quick retrieval (Top-3)...")
+        print("[INFO] Quick retrieval (Top-3)...")
         quick_start = time.time()
         quick_results = await self._quick_search(query_vector, limit=3)
         quick_time = time.time() - quick_start
@@ -73,7 +73,7 @@ class StreamingRAG:
         }
 
         # Step 2: 立即开始生成 (不等待完整检索)
-        print(f"[INFO] Starting generation with Top-3...")
+        print("[INFO] Starting generation with Top-3...")
         gen_start = time.time()
 
         # 并行任务: 后台继续检索Top-10
@@ -103,7 +103,7 @@ class StreamingRAG:
 
         # Step 3: 检查后台检索是否完成
         if not full_search_task.done():
-            print(f"[INFO] Waiting for full search...")
+            print("[INFO] Waiting for full search...")
             full_results = await full_search_task
         else:
             full_results = full_search_task.result()
@@ -286,11 +286,10 @@ async def test_streaming_rag():
         )[0].tolist()
 
         # 流式生成
-        print(f"\n[STREAMING OUTPUT]")
+        print("\n[STREAMING OUTPUT]")
         print("-" * 70)
 
         answer_parts = []
-        metrics = {}
 
         async for chunk in rag.stream_answer(query, query_vector):
             if chunk["type"] == "retrieval":
@@ -300,9 +299,8 @@ async def test_streaming_rag():
                 print(f"\n[{stage.upper()} RETRIEVAL] {count} results in {latency:.1f}ms")
 
             elif chunk["type"] == "metrics":
-                metrics = chunk
                 print(f"\n[FIRST TOKEN] {chunk['first_token_ms']:.1f}ms")
-                print(f"[ANSWER] ", end='', flush=True)
+                print("[ANSWER] ", end='', flush=True)
 
             elif chunk["type"] == "token":
                 content = chunk["content"]
@@ -310,7 +308,7 @@ async def test_streaming_rag():
                 print(content, end='', flush=True)
 
             elif chunk["type"] == "complete":
-                print(f"\n\n[COMPLETE]")
+                print("\n\n[COMPLETE]")
                 print(f"  Total Time: {chunk['total_latency_ms']:.1f}ms")
                 print(f"  First Token: {chunk['first_token_ms']:.1f}ms")
                 print(f"  Tokens: {chunk['token_count']}")

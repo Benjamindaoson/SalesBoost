@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, List
+from typing import Optional
 
 from .snapshot import state_snapshot_service
 

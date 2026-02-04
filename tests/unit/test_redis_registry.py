@@ -1,9 +1,7 @@
 import unittest
-import time
 import asyncio
-from unittest.mock import MagicMock, patch, AsyncMock
-from app.infra.llm.registry import ModelRegistry, ModelMetadata
-from app.infra.cache.redis_client import RobustRedisClient
+from unittest.mock import patch, AsyncMock
+from app.infra.llm.registry import ModelRegistry
 from app.infra.llm.fast_intent import FastIntentClassifier, IntentCategory
 
 class TestPersistentRegistry(unittest.IsolatedAsyncioTestCase):

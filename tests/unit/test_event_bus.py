@@ -1,8 +1,7 @@
 import pytest
 import asyncio
-from app.infra.events.bus import bus, MemoryEventBus
-from app.infra.events.schemas import EventType, EventBase, AuditEventPayload
-from pydantic import BaseModel
+from app.infra.events.bus import MemoryEventBus
+from app.infra.events.schemas import EventBase
 
 class MockPayload(EventBase):
     data: str

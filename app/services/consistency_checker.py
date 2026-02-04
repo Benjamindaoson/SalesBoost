@@ -59,7 +59,6 @@ async def handle_retry(payload: Any):
     
     # Simulate corrected result
     new_score = 4.0 # Lowered score to match "bad"
-    new_comments = payload.comments
     
     # Publish completion again
     new_payload = payload.model_copy()

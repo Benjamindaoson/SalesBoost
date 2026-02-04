@@ -119,7 +119,7 @@ def test_semantic_search():
         print("\n[INFO] Get your API key from: https://siliconflow.cn")
         return
 
-    print(f"\n[OK] SiliconFlow API key found")
+    print("\n[OK] SiliconFlow API key found")
 
     # Test queries
     test_queries = [
@@ -151,21 +151,21 @@ def test_semantic_search():
         print('='*70)
 
         # Generate query embedding
-        print(f"\n[INFO] Generating query embedding...")
+        print("\n[INFO] Generating query embedding...")
         query_vector = generate_query_embedding(query_text, api_key)
 
         if not query_vector:
-            print(f"[ERROR] Failed to generate query embedding")
+            print("[ERROR] Failed to generate query embedding")
             continue
 
         print(f"[OK] Query vector generated (dimension: {len(query_vector)})")
 
         # Search
-        print(f"\n[INFO] Searching Qdrant...")
+        print("\n[INFO] Searching Qdrant...")
         results = search_qdrant(query_vector)
 
         if not results:
-            print(f"[ERROR] No results found")
+            print("[ERROR] No results found")
             continue
 
         print(f"\n[OK] Found {len(results)} results")
@@ -186,11 +186,11 @@ def test_semantic_search():
 
             # Check if result is relevant
             if score > 0.5:
-                print(f"    [OK] High relevance score")
+                print("    [OK] High relevance score")
             elif score > 0.3:
-                print(f"    [WARN] Medium relevance score")
+                print("    [WARN] Medium relevance score")
             else:
-                print(f"    [ERROR] Low relevance score")
+                print("    [ERROR] Low relevance score")
 
     print("\n" + "="*70)
     print("Semantic Search Test Complete")

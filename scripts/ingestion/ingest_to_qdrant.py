@@ -11,7 +11,6 @@ import sys
 import json
 from pathlib import Path
 from typing import List, Dict
-from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -101,7 +100,7 @@ def ingest_to_qdrant_simple(chunks: List[Dict]):
 
         # 验证
         collection_info = client.get_collection(collection_name)
-        print(f"\n[INFO] Collection info:")
+        print("\n[INFO] Collection info:")
         print(f"  - Name: {collection_info.name}")
         print(f"  - Vectors count: {collection_info.vectors_count}")
         print(f"  - Points count: {collection_info.points_count}")

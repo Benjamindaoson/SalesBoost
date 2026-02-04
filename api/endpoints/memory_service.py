@@ -5,9 +5,9 @@ import hashlib
 import json
 import logging
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 import math
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import Text, and_, cast, or_, select

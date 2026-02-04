@@ -126,7 +126,7 @@ async def test_concurrent_sessions(server_process):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    user_ids = [r["user_id"] for r in results]
+    [r["user_id"] for r in results]
     session_ids = [r["session_id"] for r in results]
     
     # Check Session Uniqueness

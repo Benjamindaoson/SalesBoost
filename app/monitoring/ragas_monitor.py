@@ -16,7 +16,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import numpy as np
 
 from app.evaluation.ragas_evaluator import (
     RAGASBatchEvaluator,

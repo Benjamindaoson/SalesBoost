@@ -6,9 +6,8 @@ import json
 import pickle
 import gzip
 import logging
-from typing import Any, Dict, Set, Optional
+from typing import Any, Dict, Set
 from dataclasses import is_dataclass, asdict
-import inspect
 
 logger = logging.getLogger(__name__)
 

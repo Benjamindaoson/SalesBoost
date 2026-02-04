@@ -1,5 +1,5 @@
-from typing import List, Dict, Any
-from fastapi import APIRouter, HTTPException
+from typing import List, Dict
+from fastapi import APIRouter
 from pydantic import BaseModel
 from app.infra.llm.registry import model_registry
 from app.infra.llm.lifecycle import compute_effective_score, detect_anomalies

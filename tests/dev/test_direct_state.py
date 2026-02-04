@@ -5,8 +5,6 @@ Direct test of state snapshot service without complex imports
 
 import asyncio
 import uuid
-import time
-import json
 
 # Direct import to avoid circular dependencies
 import sys

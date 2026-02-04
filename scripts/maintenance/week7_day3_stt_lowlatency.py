@@ -239,7 +239,7 @@ class FasterWhisperEngine:
                 # 模拟流式延迟
                 await asyncio.sleep(0.1)
 
-            logger.info(f"Stream transcription completed")
+            logger.info("Stream transcription completed")
 
         except Exception as e:
             logger.error(f"Faster Whisper stream error: {e}")
@@ -469,7 +469,7 @@ async def demo_vad_detection():
     print(f"\n[Test Audio] {test_audio}")
 
     try:
-        vad = VADDetector(
+        VADDetector(
             sample_rate=16000,
             frame_duration_ms=30,
             aggressiveness=3
@@ -510,7 +510,7 @@ async def demo_stt_transcription():
         print("\n[Transcribing...]")
         result = await stt.transcribe(str(test_audio), language="zh")
 
-        print(f"\n[Result]")
+        print("\n[Result]")
         print(f"  Text: {result.text}")
         print(f"  Type: {result.type.value}")
         print(f"  Duration: {result.duration:.2f}s")
@@ -518,7 +518,7 @@ async def demo_stt_transcription():
 
         # 延迟统计
         stats = stt.get_latency_stats()
-        print(f"\n[Latency Stats]")
+        print("\n[Latency Stats]")
         print(f"  Backend: {stats['backend']}")
         print(f"  VAD Enabled: {stats['vad_enabled']}")
         print(f"  Expected Latency: {stats['expected_latency_ms']}ms")

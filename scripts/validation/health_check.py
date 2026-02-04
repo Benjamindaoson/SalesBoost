@@ -11,7 +11,7 @@ def check_health():
         response = requests.get("http://localhost:8000/health", timeout=5)
         if response.status_code == 200:
             data = response.json()
-            print(f"✅ 服务健康")
+            print("✅ 服务健康")
             print(f"   状态: {data.get('status')}")
             print(f"   版本: {data.get('version')}")
             print(f"   活跃会话: {data.get('active_sessions')}")
@@ -20,8 +20,8 @@ def check_health():
             print(f"❌ 服务异常: HTTP {response.status_code}")
             return False
     except requests.exceptions.ConnectionError:
-        print(f"❌ 无法连接到服务 (http://localhost:8000)")
-        print(f"   请确保服务已启动: uvicorn app.main:app --reload")
+        print("❌ 无法连接到服务 (http://localhost:8000)")
+        print("   请确保服务已启动: uvicorn app.main:app --reload")
         return False
     except Exception as e:
         print(f"❌ 健康检查失败: {e}")

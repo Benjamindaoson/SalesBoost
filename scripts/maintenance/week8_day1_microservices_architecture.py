@@ -449,14 +449,14 @@ def demo_microservices_architecture():
     overview = architecture.get_architecture_overview()
 
     print(f"\nTotal Services: {overview['total_services']}")
-    print(f"\nServices by Type:")
+    print("\nServices by Type:")
     for service_type, count in overview['services_by_type'].items():
         print(f"  {service_type}: {count}")
 
-    print(f"\nArchitecture Diagram:")
+    print("\nArchitecture Diagram:")
     print(overview['architecture_diagram'])
 
-    print(f"\nRegistered Services:")
+    print("\nRegistered Services:")
     for service in overview['services']:
         print(f"\n  {service['name']}:")
         print(f"    Type: {service['type']}")
@@ -482,7 +482,7 @@ def demo_api_registry():
     print(f"Versions: {', '.join(docs['versions'])}")
     print(f"Services: {', '.join(docs['services'])}")
 
-    print(f"\nEndpoints by Service:")
+    print("\nEndpoints by Service:")
     for service_type in ServiceType:
         endpoints = registry.get_endpoints_by_service(service_type)
         if endpoints:
@@ -519,7 +519,7 @@ def demo_service_communication():
         }
     )
 
-    print(f"\nRequest:")
+    print("\nRequest:")
     print(f"  ID: {request.request_id}")
     print(f"  From: {request.source_service}")
     print(f"  To: {request.target_service}")
@@ -531,7 +531,7 @@ def demo_service_communication():
     import asyncio
     response = asyncio.run(communicator.send_request(request))
 
-    print(f"\nResponse:")
+    print("\nResponse:")
     print(f"  Request ID: {response.request_id}")
     print(f"  Status Code: {response.status_code}")
     print(f"  Data: {response.data}")

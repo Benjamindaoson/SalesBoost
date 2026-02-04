@@ -61,7 +61,7 @@ class FeedbackCollector:
         self.feedback_buffer: List[UserFeedback] = []
         self.buffer_size = 100
 
-        print(f"[OK] Feedback Collector initialized")
+        print("[OK] Feedback Collector initialized")
         print(f"  Storage: {storage_path}")
 
     def collect(
@@ -136,7 +136,7 @@ class FeedbackCollector:
                 f.write(json.dumps(data, ensure_ascii=False) + '\n')
 
         self.feedback_buffer.clear()
-        print(f"[OK] Feedback flushed")
+        print("[OK] Feedback flushed")
 
     def get_stats(self) -> Dict:
         """获取反馈统计"""
@@ -270,7 +270,7 @@ class OnlineLearningScheduler:
         self.min_feedback_count = min_feedback_count
         self.last_update_time = datetime.now()
 
-        print(f"[OK] Online Learning Scheduler initialized")
+        print("[OK] Online Learning Scheduler initialized")
         print(f"  Update Interval: {update_interval}")
         print(f"  Min Feedback Count: {min_feedback_count}")
 
@@ -303,7 +303,7 @@ class OnlineLearningScheduler:
         Returns:
             更新结果
         """
-        print(f"\n[INFO] Updating model with online learning...")
+        print("\n[INFO] Updating model with online learning...")
         print(f"  Positive Pairs: {len(training_data['positive_pairs'])}")
         print(f"  Negative Pairs: {len(training_data['negative_pairs'])}")
 
@@ -318,19 +318,19 @@ class OnlineLearningScheduler:
         start_time = time.time()
 
         # 模拟训练
-        print(f"  [1/5] Loading base model...")
+        print("  [1/5] Loading base model...")
         time.sleep(0.5)
 
-        print(f"  [2/5] Preparing training data...")
+        print("  [2/5] Preparing training data...")
         time.sleep(0.3)
 
-        print(f"  [3/5] LoRA fine-tuning...")
+        print("  [3/5] LoRA fine-tuning...")
         time.sleep(1.0)
 
-        print(f"  [4/5] Saving adapter...")
+        print("  [4/5] Saving adapter...")
         time.sleep(0.2)
 
-        print(f"  [5/5] Deploying new model...")
+        print("  [5/5] Deploying new model...")
         time.sleep(0.3)
 
         training_time = time.time() - start_time
@@ -543,7 +543,7 @@ def test_online_learning_system():
     collector.flush()
 
     stats = collector.get_stats()
-    print(f"\n[FEEDBACK STATS]")
+    print("\n[FEEDBACK STATS]")
     print(f"  Total: {stats['total']}")
     print(f"  By Type: {stats['by_type']}")
     print(f"  Avg Rating: {stats['avg_rating']:.2f}")
@@ -558,7 +558,7 @@ def test_online_learning_system():
     )
 
     should_update = scheduler.should_update(stats['total'])
-    print(f"\n[SCHEDULER]")
+    print("\n[SCHEDULER]")
     print(f"  Should Update: {should_update}")
 
     if should_update:
@@ -584,14 +584,14 @@ def test_online_learning_system():
 
         training_data = data_generator.generate_training_pairs(mock_feedbacks)
 
-        print(f"\n[TRAINING DATA]")
+        print("\n[TRAINING DATA]")
         print(f"  Positive Pairs: {len(training_data['positive_pairs'])}")
         print(f"  Negative Pairs: {len(training_data['negative_pairs'])}")
 
         # 更新模型
         update_result = scheduler.update_model(training_data)
 
-        print(f"\n[UPDATE RESULT]")
+        print("\n[UPDATE RESULT]")
         print(f"  Success: {update_result['success']}")
         print(f"  Training Time: {update_result['training_time_s']:.2f}s")
 
@@ -635,18 +635,18 @@ def test_online_learning_system():
     # 获取结果
     results = ab_test.get_experiment_results("exp_001")
 
-    print(f"\n[EXPERIMENT RESULTS]")
-    print(f"  Control:")
+    print("\n[EXPERIMENT RESULTS]")
+    print("  Control:")
     print(f"    Queries: {results['control']['queries']}")
     print(f"    Satisfaction: {results['control']['satisfaction']:.1%}")
     print(f"    Avg Rating: {results['control']['avg_rating']:.2f}")
 
-    print(f"\n  Treatment:")
+    print("\n  Treatment:")
     print(f"    Queries: {results['treatment']['queries']}")
     print(f"    Satisfaction: {results['treatment']['satisfaction']:.1%}")
     print(f"    Avg Rating: {results['treatment']['avg_rating']:.2f}")
 
-    print(f"\n  Improvement:")
+    print("\n  Improvement:")
     print(f"    Satisfaction: {results['improvement']['satisfaction']:+.1f}%")
     print(f"    Rating: {results['improvement']['rating']:+.2f}")
 

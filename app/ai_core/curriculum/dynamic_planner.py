@@ -19,8 +19,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional
+from datetime import datetime
+from typing import List, Dict
 from statistics import mean, stdev
 
 logger = logging.getLogger(__name__)

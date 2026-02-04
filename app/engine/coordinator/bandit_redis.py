@@ -1,6 +1,6 @@
 import random
 import uuid
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable
 
 try:
     import redis  # type: ignore

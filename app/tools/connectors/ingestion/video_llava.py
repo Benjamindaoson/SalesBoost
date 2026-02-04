@@ -11,7 +11,6 @@ Video-LLaVA 是一个强大的视频理解模型，支持：
 from __future__ import annotations
 
 import base64
-import io
 import logging
 import tempfile
 from pathlib import Path

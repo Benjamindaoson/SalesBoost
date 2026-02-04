@@ -153,9 +153,11 @@ export function use_enhanced_websocket(options: EnhancedWebSocketOptions = {}) {
   const process_message_queue = useCallback(() => {
     if (message_queue_ref.current.length > 0 && state.is_connected) {
       const message = message_queue_ref.current.shift();
-      send_message_with_ack(message.data, false);
+      if (message) {
+        send_message_with_ack(message.data, false);
+      }
     }
-  }, [state.is_connected]);
+  }, [state.is_connected, send_message_with_ack]);
 
   // 心跳检测
   const start_heartbeat = useCallback(() => {

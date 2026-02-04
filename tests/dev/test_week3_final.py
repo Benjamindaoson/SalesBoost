@@ -5,7 +5,6 @@ Simple Test for Week 3-4 Implementation
 """
 
 import asyncio
-import time
 import sys
 import os
 

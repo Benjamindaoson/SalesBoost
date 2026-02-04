@@ -17,12 +17,11 @@ Date: 2026-02-01
 Priority: P0
 """
 
-import os
 import sys
 import time
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import Dict, Any
 from datetime import datetime
 import logging
 
@@ -312,7 +311,7 @@ class SemanticQualityValidator:
 
         # Test batch queries
         start_time = time.time()
-        batch_results = self.store.batch_search(test_queries, top_k=5, min_score=0.3)
+        self.store.batch_search(test_queries, top_k=5, min_score=0.3)
         batch_time = (time.time() - start_time) * 1000
         avg_batch_time = batch_time / len(test_queries)
 
@@ -345,19 +344,19 @@ class SemanticQualityValidator:
             }
         }
 
-        logger.info(f"\n[Single Query Performance]")
+        logger.info("\n[Single Query Performance]")
         logger.info(f"  Average: {avg_query_time:.2f}ms")
         logger.info(f"  Min: {min_query_time:.2f}ms")
         logger.info(f"  Max: {max_query_time:.2f}ms")
         logger.info(f"  Requirement: <{latency_requirement}ms")
         logger.info(f"  Status: {'PASS' if latency_passed else 'FAIL'}")
 
-        logger.info(f"\n[Batch Query Performance]")
+        logger.info("\n[Batch Query Performance]")
         logger.info(f"  Total queries: {len(test_queries)}")
         logger.info(f"  Total time: {batch_time:.2f}ms")
         logger.info(f"  Avg per query: {avg_batch_time:.2f}ms")
 
-        logger.info(f"\n[System Statistics]")
+        logger.info("\n[System Statistics]")
         logger.info(f"  Documents: {stats['total_documents']}")
         logger.info(f"  Embedding dim: {stats['embedding_dimension']}")
         logger.info(f"  Memory: {stats['memory_mb']:.2f} MB")
@@ -421,19 +420,19 @@ class SemanticQualityValidator:
         logger.info("\n" + "="*70)
         logger.info("FINAL SUMMARY")
         logger.info("="*70)
-        logger.info(f"\nTest Results:")
+        logger.info("\nTest Results:")
         logger.info(f"  Synonym Understanding: {test1_results['passed']}/{test1_results['total_cases']} ({test1_results['accuracy']:.1f}%)")
         logger.info(f"  Sales Scenarios: {test2_results['passed']}/{test2_results['total_cases']} ({test2_results['accuracy']:.1f}%)")
         logger.info(f"  Performance: {'PASS' if latency_passed else 'FAIL'}")
 
-        logger.info(f"\nOverall Metrics:")
+        logger.info("\nOverall Metrics:")
         logger.info(f"  Total test cases: {total_cases}")
         logger.info(f"  Passed: {total_passed}")
         logger.info(f"  Failed: {total_cases - total_passed}")
         logger.info(f"  Overall accuracy: {overall_accuracy:.1f}%")
         logger.info(f"  Avg latency: {test3_results['single_query']['avg_time_ms']:.2f}ms")
 
-        logger.info(f"\nRequirements:")
+        logger.info("\nRequirements:")
         logger.info(f"  Accuracy >={accuracy_requirement}%: {'✓ PASS' if accuracy_passed else '✗ FAIL'}")
         logger.info(f"  Latency <{latency_requirement}ms: {'✓ PASS' if latency_passed else '✗ FAIL'}")
 

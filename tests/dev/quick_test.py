@@ -31,8 +31,6 @@ except Exception as e:
 print("\n[2/4] Testing ProductionCoordinator...")
 try:
     from app.engine.coordinator.production_coordinator import (
-        ProductionCoordinator,
-        get_production_coordinator,
         CoordinatorEngine
     )
     print("✅ ProductionCoordinator imported successfully")
@@ -44,7 +42,6 @@ except Exception as e:
 print("\n[3/4] Testing CoordinatorState...")
 try:
     from app.engine.coordinator.state import (
-        CoordinatorState,
         create_initial_state,
         CURRENT_STATE_VERSION
     )

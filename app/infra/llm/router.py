@@ -1,10 +1,9 @@
 import logging
 import random
-from typing import List, Dict, Optional
+from typing import List, Optional
 from app.infra.gateway.schemas import ModelConfig, RoutingContext, AgentType, LatencyMode
 from app.infra.llm.interfaces import RoutingStrategy
 from app.infra.llm.registry import model_registry, ModelMetadata
-from app.infra.llm.fast_intent import fast_intent_classifier, IntentCategory
 
 logger = logging.getLogger(__name__)
 

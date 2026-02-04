@@ -94,7 +94,7 @@ async def test_loop_prevention():
         # Test 1: Normal execution
         print("\n1. Testing normal execution...")
         session_id = "normal_test"
-        exec_id = detector.start_execution(session_id, max_depth=5, max_time=10)
+        detector.start_execution(session_id, max_depth=5, max_time=10)
 
         for i in range(3):
             can_continue = detector.increment_depth(session_id, f"step_{i}")
@@ -112,7 +112,7 @@ async def test_loop_prevention():
         # Test 2: Depth limit
         print("\n2. Testing depth limit...")
         session_id = "depth_limit_test"
-        exec_id = detector.start_execution(session_id, max_depth=3, max_time=30)
+        detector.start_execution(session_id, max_depth=3, max_time=30)
 
         for i in range(5):
             can_continue = detector.increment_depth(session_id, f"step_{i}")
@@ -130,7 +130,7 @@ async def test_loop_prevention():
         # Test 3: Time limit
         print("\n3. Testing time limit...")
         session_id = "time_limit_test"
-        exec_id = detector.start_execution(session_id, max_depth=50, max_time=2)
+        detector.start_execution(session_id, max_depth=50, max_time=2)
 
         # Wait to trigger time limit
         await asyncio.sleep(3)

@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from typing import List
 from app.infra.search.vector_store import HybridSearchEngine, VectorStore, SearchResult
 
@@ -24,7 +23,6 @@ async def test_rrf_fusion():
     vec_store = MockVectorStore([doc_a, doc_b, doc_c])
     kw_store = MockVectorStore([doc_b, doc_a]) # B is first here
     
-    k = 1 # Small k to make math easy
     # Score A: 1/(1+1) + 1/(1+2) = 0.5 + 0.33 = 0.833
     # Score B: 1/(1+2) + 1/(1+1) = 0.33 + 0.5 = 0.833
     # Wait, rank starts at 0 or 1?

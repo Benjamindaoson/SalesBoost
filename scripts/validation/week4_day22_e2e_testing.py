@@ -21,9 +21,8 @@ Week 4 Day 22-24: End-to-End Testing & Performance Tuning
 import time
 import asyncio
 import random
-from typing import List, Dict, Optional
+from typing import List, Dict
 from dataclasses import dataclass
-from datetime import datetime
 import statistics
 
 
@@ -195,7 +194,7 @@ class TestRunner:
             config: 测试配置
         """
         self.config = config
-        print(f"[OK] Test Runner initialized")
+        print("[OK] Test Runner initialized")
         print(f"  Performance: {config.performance_queries} queries @ {config.performance_concurrency} concurrent")
         print(f"  Stress: {config.stress_queries} queries @ {config.stress_concurrency} concurrent")
 
@@ -278,7 +277,6 @@ class TestRunner:
         """测试混合检索"""
         print("[TEST] Hybrid Search (BM25 + Dense)")
 
-        query = "百夫长卡高尔夫权益"
 
         # BM25检索
         await asyncio.sleep(0.02)
@@ -302,13 +300,11 @@ class TestRunner:
         print("[TEST] Adaptive Reranking")
 
         # 简单查询 - 10个候选
-        query1 = "年费"
         candidates1 = 10
         await asyncio.sleep(0.01)
         print(f"  Simple Query: {candidates1} candidates → 5 results (10ms)")
 
         # 复杂查询 - 20个候选
-        query2 = "详细对比百夫长卡和白金卡"
         candidates2 = 20
         await asyncio.sleep(0.02)
         print(f"  Complex Query: {candidates2} candidates → 5 results (20ms)")
@@ -334,7 +330,7 @@ class TestRunner:
 
         # 并行检索
         await asyncio.sleep(0.05)
-        print(f"  Parallel Retrieval: 3 queries → +25% recall")
+        print("  Parallel Retrieval: 3 queries → +25% recall")
 
         return True
 
@@ -343,7 +339,7 @@ class TestRunner:
         print("[TEST] Circuit Breaker")
 
         # 正常状态
-        print(f"  State: CLOSED (normal)")
+        print("  State: CLOSED (normal)")
 
         # 模拟5次失败
         for i in range(5):
@@ -351,15 +347,15 @@ class TestRunner:
             print(f"  Failure {i+1}/5")
 
         # 熔断器打开
-        print(f"  State: OPEN (circuit breaker triggered)")
+        print("  State: OPEN (circuit breaker triggered)")
 
         # 等待恢复
         await asyncio.sleep(0.1)
-        print(f"  State: HALF_OPEN (attempting recovery)")
+        print("  State: HALF_OPEN (attempting recovery)")
 
         # 成功恢复
         await asyncio.sleep(0.01)
-        print(f"  State: CLOSED (recovered)")
+        print("  State: CLOSED (recovered)")
 
         return True
 
@@ -437,7 +433,7 @@ class TestRunner:
             latency = time.time() - query_start
             metrics.latencies.append(latency)
 
-        except Exception as e:
+        except Exception:
             metrics.failed_queries += 1
 
     def _print_performance_results(self, metrics: PerformanceMetrics):
@@ -446,14 +442,14 @@ class TestRunner:
         print("Performance Test Results")
         print(f"{'='*70}")
 
-        print(f"\nThroughput:")
+        print("\nThroughput:")
         print(f"  Total Queries: {metrics.total_queries}")
         print(f"  Total Time: {metrics.total_time_seconds:.2f}s")
         print(f"  QPS: {metrics.qps:.2f}")
         target_qps_status = "✅" if metrics.qps >= self.config.target_qps else "❌"
         print(f"  Target QPS: {self.config.target_qps} {target_qps_status}")
 
-        print(f"\nLatency:")
+        print("\nLatency:")
         print(f"  Average: {metrics.avg_latency_ms:.1f}ms")
         print(f"  P50: {metrics.p50_latency_ms:.1f}ms")
         print(f"  P95: {metrics.p95_latency_ms:.1f}ms")
@@ -461,17 +457,17 @@ class TestRunner:
         p99_status = "✅" if metrics.p99_latency_ms <= self.config.target_p99_latency_ms else "❌"
         print(f"  Target P99: {self.config.target_p99_latency_ms}ms {p99_status}")
 
-        print(f"\nReliability:")
+        print("\nReliability:")
         print(f"  Success Rate: {metrics.success_rate:.2%}")
         print(f"  Failed Queries: {metrics.failed_queries}")
         availability_status = "✅" if metrics.success_rate >= self.config.target_availability else "❌"
         print(f"  Target Availability: {self.config.target_availability:.2%} {availability_status}")
 
-        print(f"\nCache:")
+        print("\nCache:")
         print(f"  Cache Hits: {metrics.cache_hits}")
         print(f"  Cache Hit Rate: {metrics.cache_hit_rate:.1%}")
 
-        print(f"\nCost:")
+        print("\nCost:")
         print(f"  Total Cost: ¥{metrics.total_cost_cny:.4f}")
         print(f"  Cost per 1K queries: ¥{metrics.cost_per_1k_queries:.4f}")
         cost_status = "✅" if metrics.cost_per_1k_queries <= self.config.target_cost_per_1k else "❌"
@@ -562,7 +558,7 @@ class TestRunner:
         print("[TEST] Network Failure Recovery")
 
         # 模拟网络故障
-        print(f"  Injecting network failure...")
+        print("  Injecting network failure...")
         await asyncio.sleep(0.1)
 
         # 重试机制
@@ -570,7 +566,7 @@ class TestRunner:
             print(f"  Retry {i+1}/3...")
             await asyncio.sleep(0.05)
 
-        print(f"  ✅ Recovered after 3 retries")
+        print("  ✅ Recovered after 3 retries")
         return True
 
     async def _test_llm_timeout(self) -> bool:
@@ -578,11 +574,11 @@ class TestRunner:
         print("[TEST] LLM Timeout Handling")
 
         # 模拟超时
-        print(f"  LLM request timeout (5s)...")
+        print("  LLM request timeout (5s)...")
         await asyncio.sleep(0.1)
 
         # 降级策略
-        print(f"  ✅ Fallback to retrieval-only response")
+        print("  ✅ Fallback to retrieval-only response")
         return True
 
     async def _test_vector_db_failure(self) -> bool:
@@ -590,15 +586,15 @@ class TestRunner:
         print("[TEST] Vector DB Failure")
 
         # 模拟故障
-        print(f"  Vector DB connection failed...")
+        print("  Vector DB connection failed...")
         await asyncio.sleep(0.1)
 
         # 熔断器
-        print(f"  Circuit breaker OPEN")
+        print("  Circuit breaker OPEN")
         await asyncio.sleep(0.1)
 
         # 恢复
-        print(f"  ✅ Circuit breaker CLOSED after recovery")
+        print("  ✅ Circuit breaker CLOSED after recovery")
         return True
 
     async def _test_cache_failure(self) -> bool:
@@ -606,11 +602,11 @@ class TestRunner:
         print("[TEST] Cache Failure")
 
         # 模拟缓存故障
-        print(f"  Cache service unavailable...")
+        print("  Cache service unavailable...")
         await asyncio.sleep(0.1)
 
         # 降级到无缓存模式
-        print(f"  ✅ Degraded to no-cache mode (slower but functional)")
+        print("  ✅ Degraded to no-cache mode (slower but functional)")
         return True
 
 
@@ -649,12 +645,12 @@ async def run_full_test_suite():
     print("="*70)
 
     print(f"\n✅ Functional Tests: {'ALL PASSED' if all(functional_results.values()) else 'SOME FAILED'}")
-    print(f"✅ Performance Tests:")
+    print("✅ Performance Tests:")
     print(f"   - QPS: {performance_metrics.qps:.2f} (target: {config.target_qps})")
     print(f"   - P99 Latency: {performance_metrics.p99_latency_ms:.1f}ms (target: {config.target_p99_latency_ms}ms)")
     print(f"   - Availability: {performance_metrics.success_rate:.2%} (target: {config.target_availability:.2%})")
     print(f"   - Cost: ¥{performance_metrics.cost_per_1k_queries:.4f}/1K (target: ¥{config.target_cost_per_1k})")
-    print(f"✅ Stress Tests:")
+    print("✅ Stress Tests:")
     print(f"   - QPS: {stress_metrics.qps:.2f}")
     print(f"   - Success Rate: {stress_metrics.success_rate:.2%}")
     print(f"✅ Fault Injection Tests: {'ALL PASSED' if all(fault_results.values()) else 'SOME FAILED'}")

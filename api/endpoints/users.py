@@ -18,7 +18,6 @@ from api.auth_schemas import UserSchema as CurrentUser
 from api.auth_utils import hash_password
 from app.models.user import User, UserRole
 from app.models.session import Session
-from app.models.evaluation import Evaluation
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

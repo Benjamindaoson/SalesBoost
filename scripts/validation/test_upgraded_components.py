@@ -60,7 +60,7 @@ async def test_intent_classification():
         fsm_state
     )
 
-    print(f"  User message: '这个价格还是太高了'")
+    print("  User message: '这个价格还是太高了'")
     print(f"  History context: {len(history)} previous messages with repeated price mentions")
     print(f"  Detected intent: {result.intent}")
     print(f"  Confidence: {result.confidence:.2f}")
@@ -113,7 +113,7 @@ async def test_ab_testing():
     user1_variant_b = ab_manager._assign_variant("user_123")
     user1_variant_c = ab_manager._assign_variant("user_123")
 
-    print(f"  Consistency test for user_123:")
+    print("  Consistency test for user_123:")
     print(f"    Try 1: Variant {user1_variant_a}")
     print(f"    Try 2: Variant {user1_variant_b}")
     print(f"    Try 3: Variant {user1_variant_c}")
@@ -129,7 +129,7 @@ async def test_ab_testing():
         variant = ab_manager._assign_variant(f"user_{i}")
         variants[variant] = variants.get(variant, 0) + 1
 
-    print(f"\n  Traffic distribution (50/50 split):")
+    print("\n  Traffic distribution (50/50 split):")
     print(f"    Variant A: {variants.get('A', 0)}%")
     print(f"    Variant B: {variants.get('B', 0)}%")
 
@@ -180,7 +180,7 @@ async def test_price_calculator():
         "total": float(total)
     }
 
-    print(f"  Items: VIP Member (1000 x 1) + Training (500 x 2)")
+    print("  Items: VIP Member (1000 x 1) + Training (500 x 2)")
     print(f"  Subtotal: {result['subtotal']}")
     print(f"  Discount (20%): -{result['discount_amount']}")
     print(f"  After discount: {result['subtotal_after_discount']}")

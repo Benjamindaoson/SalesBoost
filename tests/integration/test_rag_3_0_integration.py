@@ -10,8 +10,6 @@
 6. RAGAS 评估
 """
 import pytest
-import asyncio
-from pathlib import Path
 
 
 class TestSmartRouting:

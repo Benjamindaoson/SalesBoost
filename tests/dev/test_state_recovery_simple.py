@@ -4,10 +4,7 @@ Test script for State Recovery System
 """
 
 import asyncio
-import json
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, Any
 
 # Add project root to path
 import sys

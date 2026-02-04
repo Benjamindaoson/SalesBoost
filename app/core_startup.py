@@ -1,7 +1,6 @@
 """Centralized startup bootstrap for core services with health reporting."""
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import Dict
 
@@ -161,7 +160,6 @@ async def _init_metrics() -> None:
 
 async def _init_memory_persistence() -> None:
     try:
-        from app.services.memory_persistence_service import memory_persistence_service
         logger.info("Memory persistence service initialized successfully")
     except Exception as e:
         logger.warning(f"Memory persistence service initialization failed: {e}")

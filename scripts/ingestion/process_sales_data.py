@@ -10,13 +10,10 @@ Process Sales Data
 4. 处理销售冠军经验 → 提取种子案例
 """
 
-import os
 import sys
 import json
 import sqlite3
-import hashlib
 from pathlib import Path
-from typing import List, Dict, Any
 from datetime import datetime
 
 # 添加项目根目录到路径
@@ -233,7 +230,7 @@ def main():
     print("\n" + "="*70)
     print("[OK] 数据处理完成！")
     print("="*70)
-    print(f"\n处理统计:")
+    print("\n处理统计:")
     print(f"  Excel文件: {report['files_processed']['excel']}")
     print(f"  PDF文件: {report['files_processed']['pdf']}")
     print(f"  Word文件: {report['files_processed']['docx']}")

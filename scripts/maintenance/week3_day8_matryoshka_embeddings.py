@@ -16,7 +16,7 @@ Week 3 Day 8-10: Matryoshka Embeddings Implementation
 
 import time
 import numpy as np
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
 import requests
@@ -123,7 +123,7 @@ class MatryoshkaEmbedding:
         from sentence_transformers import SentenceTransformer
         print(f"[INFO] Loading model: {model_name}")
         self.model = SentenceTransformer(model_name)
-        print(f"[OK] Model loaded")
+        print("[OK] Model loaded")
 
     def encode(
         self,
@@ -214,7 +214,7 @@ class AdaptiveDimensionRetriever:
         self.session = requests.Session()
         self.session.trust_env = False
 
-        print(f"[OK] Adaptive Dimension Retriever initialized")
+        print("[OK] Adaptive Dimension Retriever initialized")
 
     def search(
         self,
@@ -434,7 +434,7 @@ def test_matryoshka_embeddings():
         profile = result["profile"]
         metrics = result["metrics"]
 
-        print(f"\n[PROFILE]")
+        print("\n[PROFILE]")
         print(f"  Dimension: {profile['dimension']}")
         print(f"  Level: {profile['dimension_level']}")
         print(f"  Confidence: {profile['confidence']:.2f}")
@@ -442,7 +442,7 @@ def test_matryoshka_embeddings():
         print(f"  Has Keywords: {profile['has_keywords']}")
         print(f"  Has Complex Intent: {profile['has_complex_intent']}")
 
-        print(f"\n[METRICS]")
+        print("\n[METRICS]")
         print(f"  Total Time: {metrics['total_time_ms']:.1f}ms")
         print(f"  - Analysis: {metrics['analysis_time_ms']:.1f}ms")
         print(f"  - Encoding: {metrics['encoding_time_ms']:.1f}ms")
@@ -450,7 +450,7 @@ def test_matryoshka_embeddings():
         print(f"  Results: {metrics['result_count']}")
 
         if result["results"]:
-            print(f"\n[TOP RESULT]")
+            print("\n[TOP RESULT]")
             top = result["results"][0]
             print(f"  Score: {top['score']:.4f}")
             print(f"  Text: {top['text'][:100]}...")

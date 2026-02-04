@@ -186,7 +186,7 @@ export default function AdminDashboard() {
                   <XAxis dataKey="date" tickFormatter={(value) => format(new Date(value), "MM-dd")} />
                   <YAxis />
                   <Tooltip
-                    formatter={(value: number | string) => formatCurrency(Number(value))}
+                    formatter={(value: any) => formatCurrency(Number(value))}
                     labelFormatter={(label) => format(new Date(label), "MMM dd")}
                   />
                   <Bar dataKey="cost_usd" fill="#0f172a" radius={[4, 4, 0, 0]} />

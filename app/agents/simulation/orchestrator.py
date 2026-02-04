@@ -7,7 +7,6 @@ Phase 3B Week 6 Day 5-6 交付物
 """
 
 import logging
-import asyncio
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
@@ -254,13 +253,13 @@ class SimulationOrchestrator:
             print(f"Average Score: {report.average_score:.1f}/10")
             print(f"Objections: {report.total_objections} (Resolved: {report.objections_resolved})")
             print(f"Buying Signals: {report.buying_signals}")
-            print(f"\nStrengths:")
+            print("\nStrengths:")
             for s in report.strengths:
                 print(f"  - {s}")
-            print(f"\nWeaknesses:")
+            print("\nWeaknesses:")
             for w in report.weaknesses:
                 print(f"  - {w}")
-            print(f"\nRecommendations:")
+            print("\nRecommendations:")
             for r in report.recommendations:
                 print(f"  - {r}")
 
@@ -410,7 +409,7 @@ class SimulationOrchestrator:
         print(f"\nAverage Score: {avg_score:.1f}/10")
         print(f"Average Turns: {avg_turns:.1f}")
 
-        print(f"\nBy Personality:")
+        print("\nBy Personality:")
         personality_stats = {}
         for r in reports:
             p = r.customer_personality

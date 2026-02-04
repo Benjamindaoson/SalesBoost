@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 import json
 
 from app.infra.gateway.model_gateway import ModelGateway

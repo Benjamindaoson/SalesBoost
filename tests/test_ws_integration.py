@@ -1,9 +1,7 @@
 import pytest
-import asyncio
 import subprocess
 import time
 import os
-import signal
 import sys
 import websockets
 import json

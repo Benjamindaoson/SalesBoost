@@ -49,7 +49,7 @@ class TestToolExecutionPerformance:
         p50_latency = median(latencies)
         p95_latency = sorted(latencies)[int(len(latencies) * 0.95)]
 
-        print(f"\nSingle Tool Execution Latency:")
+        print("\nSingle Tool Execution Latency:")
         print(f"  Average: {avg_latency:.2f}ms")
         print(f"  P50: {p50_latency:.2f}ms")
         print(f"  P95: {p95_latency:.2f}ms")
@@ -95,7 +95,7 @@ class TestToolExecutionPerformance:
         else:
             speedup = 1.0
 
-        print(f"\nParallel Execution Performance:")
+        print("\nParallel Execution Performance:")
         print(f"  Sequential: {sequential_time:.3f}s")
         print(f"  Parallel: {parallel_time:.3f}s")
         print(f"  Speedup: {speedup:.2f}x")
@@ -129,13 +129,13 @@ class TestToolExecutionPerformance:
         )
         hit_time = (time.time() - start_hit) * 1000
 
-        print(f"\nCache Performance:")
+        print("\nCache Performance:")
         print(f"  Cache Miss: {miss_time:.2f}ms")
         print(f"  Cache Hit: {hit_time:.2f}ms")
         if hit_time > 0:
             print(f"  Speedup: {miss_time / hit_time:.2f}x")
         else:
-            print(f"  Speedup: N/A (hit time too fast to measure)")
+            print("  Speedup: N/A (hit time too fast to measure)")
 
         assert result1["ok"] is True
         assert result2["ok"] is True
@@ -187,7 +187,7 @@ class TestToolExecutionPerformance:
             success_count = sum(1 for r in results if isinstance(r, dict) and r.get("ok"))
             throughput = total_calls / total_time
 
-            print(f"\nConcurrent Load Test:")
+            print("\nConcurrent Load Test:")
             print(f"  Total Calls: {total_calls}")
             print(f"  Successful: {success_count}")
             print(f"  Total Time: {total_time:.2f}s")
@@ -225,14 +225,14 @@ class TestCachePerformance:
         latencies = []
         for i in range(100):
             start = time.time()
-            result = await cache.get("test_tool", {"query": f"test query {i}"})
+            await cache.get("test_tool", {"query": f"test query {i}"})
             latency = (time.time() - start) * 1000
             latencies.append(latency)
 
         avg_latency = mean(latencies)
         p95_latency = sorted(latencies)[95]
 
-        print(f"\nCache Lookup Performance:")
+        print("\nCache Lookup Performance:")
         print(f"  Average: {avg_latency:.3f}ms")
         print(f"  P95: {p95_latency:.3f}ms")
 
@@ -256,7 +256,7 @@ class TestCachePerformance:
         stats = cache.get_statistics()
         stats_time = (time.time() - start) * 1000
 
-        print(f"\nCache Statistics Performance:")
+        print("\nCache Statistics Performance:")
         print(f"  Calculation Time: {stats_time:.2f}ms")
         print(f"  Cache Size: {stats['size']}")
 
@@ -286,7 +286,7 @@ class TestRateLimiterPerformance:
         avg_latency = mean(latencies)
         p95_latency = sorted(latencies)[950]
 
-        print(f"\nRate Limit Check Performance:")
+        print("\nRate Limit Check Performance:")
         print(f"  Average: {avg_latency:.3f}ms")
         print(f"  P95: {p95_latency:.3f}ms")
 
@@ -320,7 +320,7 @@ class TestMemoryUsage:
         final_size = sys.getsizeof(cache._entries)
         memory_per_entry = (final_size - initial_size) / 1000
 
-        print(f"\nCache Memory Usage:")
+        print("\nCache Memory Usage:")
         print(f"  Initial: {initial_size / 1024:.2f} KB")
         print(f"  Final: {final_size / 1024:.2f} KB")
         print(f"  Per Entry: {memory_per_entry:.2f} bytes")

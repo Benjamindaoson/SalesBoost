@@ -17,7 +17,6 @@ Week 3 Day 13-14: Product Quantization
 import time
 from typing import List, Dict, Optional
 import requests
-import json
 
 
 class ProductQuantizationManager:
@@ -97,7 +96,7 @@ class ProductQuantizationManager:
             )
 
             if response.status_code in [200, 201]:
-                print(f"[OK] PQ collection created successfully")
+                print("[OK] PQ collection created successfully")
                 return True
             else:
                 print(f"[ERROR] Failed to create collection: {response.status_code}")
@@ -220,7 +219,7 @@ class ProductQuantizationManager:
         Returns:
             对比结果
         """
-        print(f"\n[INFO] Comparing collections")
+        print("\n[INFO] Comparing collections")
 
         results = {
             "original": [],
@@ -361,7 +360,7 @@ def test_product_quantization():
 
     migration_stats = pq_manager.migrate_to_pq(batch_size=100)
 
-    print(f"\n[MIGRATION COMPLETE]")
+    print("\n[MIGRATION COMPLETE]")
     print(f"  Total Points: {migration_stats['total_points']}")
     print(f"  Total Batches: {migration_stats['total_batches']}")
     print(f"  Migration Time: {migration_stats['migration_time_s']:.2f}s")
@@ -415,7 +414,7 @@ def test_product_quantization():
     print("-" * 80)
     print(f"{'Average':<40} {avg_orig_time:<15.1f} {avg_pq_time:<15.1f} {avg_speedup:<10.2f}x")
 
-    print(f"\n[ACCURACY]")
+    print("\n[ACCURACY]")
     print(f"  Original Avg Score: {avg_orig_score:.4f}")
     print(f"  PQ Avg Score: {avg_pq_score:.4f}")
     print(f"  Difference: {score_diff:+.2f}%")
@@ -438,11 +437,11 @@ def test_product_quantization():
         pq_storage_mb = (pq_points * 128) / (1024 * 1024)
         storage_reduction = ((original_storage_mb - pq_storage_mb) / original_storage_mb * 100) if original_storage_mb > 0 else 0
 
-        print(f"  Original Collection:")
+        print("  Original Collection:")
         print(f"    Points: {original_points}")
         print(f"    Estimated Storage: {original_storage_mb:.2f} MB")
 
-        print(f"\n  PQ Collection:")
+        print("\n  PQ Collection:")
         print(f"    Points: {pq_points}")
         print(f"    Estimated Storage: {pq_storage_mb:.2f} MB")
 

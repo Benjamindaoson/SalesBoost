@@ -18,9 +18,8 @@ import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field, validator
-from fastapi import FastAPI, HTTPException, Query, Depends, status
-from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 
 # 添加项目根目录到 Python 路径
@@ -606,7 +605,7 @@ async def demo_rag_api():
     result = response.json()
     print(f"  Query: {result['query']}")
     print(f"  Results: {result['total_results']}")
-    print(f"  Filters: category=methodology")
+    print("  Filters: category=methodology")
     for i, doc in enumerate(result['results'], 1):
         print(f"    [{i}] {doc['metadata']['category']} - {doc['content'][:50]}...")
 

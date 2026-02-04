@@ -15,9 +15,7 @@ def test_cost_control():
     print("Testing cost control system...")
     try:
         from cognitive.infra.gateway.cost_control import (
-            cost_optimized_caller,
             ModelCostCalculator,
-            SmartModelRouter,
             BudgetManager,
         )
 
@@ -52,22 +50,21 @@ def test_middleware():
             SecurityHeadersMiddleware,
             LoggingMiddleware,
             RequestSizeMiddleware,
-            setup_middleware,
         )
 
         print("Middleware system import successful")
 
         # Test middleware instantiation
-        rate_limit = RateLimitMiddleware(None, calls=100, period=60)
+        RateLimitMiddleware(None, calls=100, period=60)
         print("Rate limiting middleware instantiation successful")
 
-        security_headers = SecurityHeadersMiddleware(None)
+        SecurityHeadersMiddleware(None)
         print("Security headers middleware instantiation successful")
 
-        logging_mw = LoggingMiddleware(None)
+        LoggingMiddleware(None)
         print("Logging middleware instantiation successful")
 
-        size_limit = RequestSizeMiddleware(None, max_size=10 * 1024 * 1024)
+        RequestSizeMiddleware(None, max_size=10 * 1024 * 1024)
         print("Request size limiting middleware instantiation successful")
 
         return True

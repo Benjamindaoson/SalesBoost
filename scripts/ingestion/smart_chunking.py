@@ -10,7 +10,6 @@ Features:
 4. Metadata enrichment
 """
 
-import os
 import sys
 import json
 import re
@@ -37,7 +36,7 @@ class SmartChunker:
 
     def chunk_champion_cases(self, cases_file: Path) -> List[Dict[str, Any]]:
         """Chunk champion sales cases with semantic boundaries"""
-        print(f"\n=== Chunking Champion Cases ===")
+        print("\n=== Chunking Champion Cases ===")
 
         with open(cases_file, 'r', encoding='utf-8') as f:
             cases = json.load(f)
@@ -133,7 +132,7 @@ class SmartChunker:
 
     def chunk_generated_scenarios(self, scenarios_file: Path) -> List[Dict[str, Any]]:
         """Chunk generated training scenarios"""
-        print(f"\n=== Chunking Generated Scenarios ===")
+        print("\n=== Chunking Generated Scenarios ===")
 
         with open(scenarios_file, 'r', encoding='utf-8') as f:
             scenarios = json.load(f)
@@ -168,7 +167,7 @@ Scenario: {scenario['scenario']}"""
 
     def chunk_pdf_content(self, pdf_chunks_file: Path) -> List[Dict[str, Any]]:
         """Chunk PDF content with semantic boundaries"""
-        print(f"\n=== Chunking PDF Content ===")
+        print("\n=== Chunking PDF Content ===")
 
         with open(pdf_chunks_file, 'r', encoding='utf-8') as f:
             pdf_chunks = json.load(f)
@@ -248,7 +247,7 @@ Scenario: {scenario['scenario']}"""
         total_chars = sum(c['char_count'] for c in chunks)
         avg_chars = total_chars / len(chunks) if chunks else 0
 
-        print(f"\nChunk Statistics:")
+        print("\nChunk Statistics:")
         print(f"  Total chunks: {len(chunks)}")
         print(f"  Total characters: {total_chars:,}")
         print(f"  Average chunk size: {avg_chars:.0f} chars")

@@ -7,7 +7,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"
 
 from app.schemas.blackboard import BlackboardSchema, SalesStageEstimate, CustomerPsychology, StateConfidence, ExternalContext
 from app.agents.autonomous.sdr_agent import SDRAgent
-from datetime import datetime
 
 async def run_demo():
     print("🚀 Starting AI SDR Demo: Transforming Simulator to Employee...\n")

@@ -365,9 +365,9 @@ def test_redis_cache():
         cached = cache.get(cache_key)
 
         if cached:
-            print(f"  [CACHE HIT] Retrieved from cache")
+            print("  [CACHE HIT] Retrieved from cache")
         else:
-            print(f"  [CACHE MISS] Not in cache")
+            print("  [CACHE MISS] Not in cache")
 
             # 模拟生成结果
             result = {
@@ -378,7 +378,7 @@ def test_redis_cache():
 
             # 写入缓存
             cache.set(cache_key, result)
-            print(f"  [CACHED] Stored in cache")
+            print("  [CACHED] Stored in cache")
 
     # 显示统计
     print("\n" + "="*70)
@@ -439,7 +439,7 @@ def benchmark_cache_performance():
 
     print("\n[TEST 2] Second query (cache hit)")
     start = time.time()
-    cached_result = cache.get(cache_key)
+    cache.get(cache_key)
     second_query_time = (time.time() - start) * 1000
     print(f"  Time: {second_query_time:.1f}ms")
 

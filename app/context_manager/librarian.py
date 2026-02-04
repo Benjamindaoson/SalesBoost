@@ -1,7 +1,6 @@
 import logging
 import json
 from datetime import datetime
-from typing import Optional, Dict, Any
 
 from app.schemas.blackboard import (
     BlackboardSchema, 

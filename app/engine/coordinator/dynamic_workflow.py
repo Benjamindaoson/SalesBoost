@@ -525,7 +525,7 @@ class DynamicWorkflowCoordinator:
         def router(state: CoordinatorState) -> str:
             """根据状态决定下一个节点"""
             # 默认路由逻辑（可根据需求扩展）
-            intent = state.get("intent", "")
+            state.get("intent", "")
 
             if from_node == "intent":
                 route_choice = state.get("route_choice")

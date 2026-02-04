@@ -201,7 +201,7 @@ class CachedLLMClient:
         """更新缓存统计"""
         self.cache_stats["total_requests"] += 1
 
-        usage = response_data.get("usage", {})
+        response_data.get("usage", {})
 
         # 如果使用了缓存，估算节省的tokens
         if used_cache:

@@ -59,7 +59,7 @@ async def list_scenarios(
     db: AsyncSession = Depends(get_db_session),
 ):
     """获取场景列表"""
-    query = select(ScenarioConfig).where(ScenarioConfig.is_active == True)
+    query = select(ScenarioConfig).where(ScenarioConfig.is_active)
     
     if course_id:
         query = query.where(ScenarioConfig.course_id == course_id)

@@ -6,8 +6,7 @@ Standalone test of state snapshot core functionality
 import asyncio
 import uuid
 import time
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import Dict, Any, Optional, List
 import logging
 

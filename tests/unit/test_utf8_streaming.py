@@ -3,7 +3,6 @@ Unit tests for UTF-8 streaming safety.
 Tests byte-aware buffering to prevent Chinese character truncation.
 """
 import pytest
-import asyncio
 from typing import AsyncGenerator
 
 

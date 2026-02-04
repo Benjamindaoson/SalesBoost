@@ -317,7 +317,7 @@ def load_documents_from_qdrant(
     collection_name: str = "sales_knowledge"
 ) -> List[Dict]:
     """从Qdrant加载所有文档用于BM25索引"""
-    print(f"[INFO] Loading documents from Qdrant...")
+    print("[INFO] Loading documents from Qdrant...")
 
     session = requests.Session()
     session.trust_env = False
@@ -430,14 +430,14 @@ def test_hybrid_search():
         )
 
         # 显示结果
-        print(f"\n[METRICS]")
+        print("\n[METRICS]")
         metrics = result['metrics']
         print(f"  Total Time: {metrics['total_time_ms']:.1f}ms")
         print(f"  - BM25: {metrics['bm25_time_ms']:.1f}ms ({metrics['bm25_count']} results)")
         print(f"  - Dense: {metrics['dense_time_ms']:.1f}ms ({metrics['dense_count']} results)")
         print(f"  - Fusion: {metrics['fusion_time_ms']:.1f}ms ({metrics['fused_count']} results)")
 
-        print(f"\n[RESULTS]")
+        print("\n[RESULTS]")
         for j, doc in enumerate(result['results'], 1):
             print(f"\n  Result {j}:")
             print(f"    RRF Score: {doc['rrf_score']:.6f}")

@@ -194,30 +194,11 @@ class KnowledgeService {
   }
 
   /**
-   * List knowledge entries
-   */
-  async listKnowledge(): Promise<KnowledgeEntry[]> {
-    return this.getStorage();
-  }
-
-  /**
    * Delete a knowledge entry
    */
   async deleteKnowledge(id: string): Promise<void> {
     const entries = this.getStorage();
     this.setStorage(entries.filter(e => e.id !== id));
-  }
-
-  /**
-   * Get knowledge base statistics
-   */
-  async getStats(): Promise<KnowledgeStats> {
-    const entries = this.getStorage();
-    return {
-      total_documents: entries.length,
-      total_chars: entries.reduce((acc, curr) => acc + curr.content.length, 0),
-      recent_uploads: [] // Simplified for now
-    };
   }
 
   /**
@@ -259,9 +240,8 @@ class KnowledgeService {
   initDefaults() {
     if (this.getStorage().length === 0) {
       this.uploadText(
-        "Sales Boost FAQ", 
         "Q: What is SalesBoost? A: SalesBoost is an AI-powered training platform.\nQ: How do I reset my password? A: Contact admin support.",
-        { stage: 'onboarding' }
+        { title: "Sales Boost FAQ", stage: 'onboarding' }
       );
     }
   }

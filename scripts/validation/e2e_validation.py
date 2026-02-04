@@ -22,12 +22,11 @@ Date: 2026-02-01
 Priority: P0
 """
 
-import os
 import sys
 import time
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Dict, Any
 from datetime import datetime
 import logging
 
@@ -232,7 +231,7 @@ class EndToEndValidator:
             query_times = []
             for query in test_queries:
                 start_time = time.time()
-                results = self.vector_store.search(query, top_k=5, min_score=0.3)
+                self.vector_store.search(query, top_k=5, min_score=0.3)
                 query_time = (time.time() - start_time) * 1000
                 query_times.append(query_time)
 
@@ -293,7 +292,7 @@ class EndToEndValidator:
         # Check 2: Vector store can be initialized
         try:
             from scripts.fix_semantic_search import SimpleVectorStore
-            store = SimpleVectorStore()
+            SimpleVectorStore()
             logger.info("[OK] Vector store can be initialized")
             checks.append(True)
         except Exception as e:
@@ -303,7 +302,7 @@ class EndToEndValidator:
         # Check 3: Agent interface can be initialized
         try:
             from scripts.create_agent_interface import KnowledgeRetriever
-            retriever = KnowledgeRetriever()
+            KnowledgeRetriever()
             logger.info("[OK] Agent interface can be initialized")
             checks.append(True)
         except Exception as e:

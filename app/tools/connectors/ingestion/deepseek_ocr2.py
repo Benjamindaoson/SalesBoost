@@ -15,12 +15,10 @@ DeepSeek-OCR-2 是 2026 年最先进的 OCR 系统，支持：
 from __future__ import annotations
 
 import base64
-import io
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import httpx
-from PIL import Image
 
 logger = logging.getLogger(__name__)
 

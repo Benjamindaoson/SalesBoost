@@ -1,14 +1,30 @@
 version: '3.8'
 
 services:
-  # SalesBoost 主应用
+  # Nginx Gateway (Frontend + SSL + Proxy)
+  gateway:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.nginx
+    container_name: salesboost-gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certs:/etc/nginx/ssl
+      - certbot-etc:/etc/letsencrypt
+    depends_on:
+      - salesboost
+    restart: unless-stopped
+    networks:
+      - salesboost-network
+
+  # SalesBoost Backend Application
   salesboost:
     build:
-      context: .
-      dockerfile: Dockerfile.production
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.production
     container_name: salesboost-app
-    ports:
-      - "8000:8000"
     environment:
       - ENV_STATE=production
     env_file:
@@ -20,6 +36,22 @@ services:
       - postgres
       - redis
       - qdrant
+    restart: unless-stopped
+    networks:
+      - salesboost-network
+
+  # Celery Worker for AI Tasks
+  worker:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.production
+    container_name: salesboost-worker
+    command: celery -A app.tasks.store worker --loglevel=info
+    env_file:
+      - .env.production
+    depends_on:
+      - redis
+      - postgres
     restart: unless-stopped
     networks:
       - salesboost-network
@@ -101,19 +133,14 @@ services:
     networks:
       - salesboost-network
 
-  # Nginx 反向代理
-  nginx:
-    image: nginx:alpine
-    container_name: salesboost-nginx
+  # Certbot for SSL
+  certbot:
+    image: certbot/certbot
+    container_name: salesboost-certbot
     volumes:
-      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./frontend/dist:/usr/share/nginx/html
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - salesboost
-    restart: unless-stopped
+      - certbot-etc:/etc/letsencrypt
+      - certs:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done'"
     networks:
       - salesboost-network
 
@@ -123,6 +150,8 @@ volumes:
   qdrant-data:
   prometheus-data:
   grafana-data:
+  certs:
+  certbot-etc:
 
 networks:
   salesboost-network:

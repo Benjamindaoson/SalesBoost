@@ -5,7 +5,6 @@ Unit Tests for New Tools (P1.1)
 Tests for CRM Integration, SMS Outreach, and Competitor Analysis tools.
 """
 import pytest
-from unittest.mock import AsyncMock, Mock, patch
 
 from app.tools.crm_integration import CRMIntegrationTool
 from app.tools.outreach.sms_tool import SMSOutreachTool

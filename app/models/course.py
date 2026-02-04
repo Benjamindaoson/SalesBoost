@@ -6,7 +6,7 @@ Represents training courses.
 
 from enum import Enum as PyEnum
 
-from sqlalchemy import Column, String, Text, Enum, Integer, Float
+from sqlalchemy import Column, String, Text, Enum, Integer
 from sqlalchemy.orm import relationship
 
 from .base import BaseModel

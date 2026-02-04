@@ -1,7 +1,7 @@
 
 import pytest
 import asyncio
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock
 from cognitive.skills.v3.npc_generator_v3 import NPCGeneratorV3
 from cognitive.infra.gateway.model_gateway import ModelGateway
 from cognitive.infra.gateway.model_gateway.budget import BudgetManager

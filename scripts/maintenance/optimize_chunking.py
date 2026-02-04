@@ -19,7 +19,6 @@ Date: 2026-02-01
 Priority: P0
 """
 
-import os
 import sys
 import json
 from pathlib import Path
@@ -68,7 +67,7 @@ class OptimizedChunker:
         self.chunk_overlap = chunk_overlap
         self.min_chunk_size = min_chunk_size
 
-        logger.info(f"Initialized OptimizedChunker:")
+        logger.info("Initialized OptimizedChunker:")
         logger.info(f"  chunk_size: {chunk_size}")
         logger.info(f"  chunk_overlap: {chunk_overlap}")
         logger.info(f"  min_chunk_size: {min_chunk_size}")
@@ -294,7 +293,7 @@ def optimize_chunks(input_file: Path, output_file: Path):
     optimized_count = len(all_optimized_chunks)
     improvement = optimized_count - original_count
 
-    logger.info(f"\nChunk Count:")
+    logger.info("\nChunk Count:")
     logger.info(f"  Original: {original_count}")
     logger.info(f"  Optimized: {optimized_count}")
     logger.info(f"  Improvement: {improvement:+d} ({improvement/original_count*100:+.1f}%)")
@@ -303,7 +302,7 @@ def optimize_chunks(input_file: Path, output_file: Path):
     original_avg = sum(c['char_count'] for c in existing_chunks) / len(existing_chunks)
     optimized_avg = sum(c['char_count'] for c in all_optimized_chunks) / len(all_optimized_chunks)
 
-    logger.info(f"\nAverage Chunk Size:")
+    logger.info("\nAverage Chunk Size:")
     logger.info(f"  Original: {original_avg:.0f} chars")
     logger.info(f"  Optimized: {optimized_avg:.0f} chars")
     logger.info(f"  Reduction: {original_avg - optimized_avg:.0f} chars ({(original_avg - optimized_avg)/original_avg*100:.1f}%)")
@@ -314,7 +313,7 @@ def optimize_chunks(input_file: Path, output_file: Path):
         chunk_type = chunk['type']
         type_counts[chunk_type] = type_counts.get(chunk_type, 0) + 1
 
-    logger.info(f"\nChunks by Type:")
+    logger.info("\nChunks by Type:")
     for chunk_type, count in sorted(type_counts.items()):
         logger.info(f"  {chunk_type}: {count}")
 

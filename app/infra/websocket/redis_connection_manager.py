@@ -30,7 +30,7 @@ import logging
 import time
 import uuid
 from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fastapi import WebSocket
 import redis.asyncio as aioredis
@@ -132,7 +132,7 @@ class RedisConnectionManager:
         if self.redis:
             await self.redis.close()
 
-        logger.info(f"[RedisConnectionManager] Shutdown complete")
+        logger.info("[RedisConnectionManager] Shutdown complete")
 
     async def connect(
         self,

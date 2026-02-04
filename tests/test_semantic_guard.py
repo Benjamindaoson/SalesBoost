@@ -1,8 +1,7 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from app.security.runtime_guard import RuntimeGuard, SecurityAction
 from cognitive.infra.gateway.model_gateway import ModelGateway, AgentType
-from schemas.trace import SecurityEvent
 
 @pytest.mark.asyncio
 async def test_runtime_guard_regex_block():

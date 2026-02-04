@@ -15,7 +15,7 @@ import logging
 from typing import Optional
 from functools import lru_cache
 
-from core.config import Settings, get_settings
+from core.config import Settings
 from core.secrets_manager import get_secrets_manager
 
 logger = logging.getLogger(__name__)

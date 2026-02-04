@@ -8,7 +8,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.agents.ask.coach_agent import SalesCoachAgent
 from app.observability.metrics.alerting import alert_manager
-from core.exceptions import AgentError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

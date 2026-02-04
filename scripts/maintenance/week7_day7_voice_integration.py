@@ -399,13 +399,13 @@ class PerformanceReporter:
         print("=" * 80)
 
         overall = report["overall_stats"]
-        print(f"\nOverall Statistics:")
+        print("\nOverall Statistics:")
         print(f"  Total Simulations: {overall['total_simulations']}")
         print(f"  Total Turns: {overall['total_turns']}")
         print(f"  Total Interruptions: {overall['total_interruptions']}")
         print(f"  Average Turns per Simulation: {overall['average_turns_per_simulation']:.1f}")
 
-        print(f"\nSimulation Results:")
+        print("\nSimulation Results:")
         for i, sim in enumerate(report["simulations"], 1):
             print(f"\n  Simulation {i} ({sim['scenario']}):")
             print(f"    Turns: {sim['total_turns']}")

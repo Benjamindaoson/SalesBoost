@@ -14,7 +14,6 @@ Author: Claude Sonnet 4.5
 Date: 2026-02-01
 """
 
-import os
 import sys
 import json
 from pathlib import Path
@@ -171,7 +170,7 @@ class EnhancedDataProcessor:
         # Process new SOP cases with smart chunking
         from scripts.smart_chunking import SmartChunker
 
-        chunker = SmartChunker(
+        SmartChunker(
             chunk_size=300,  # Smaller for better granularity
             chunk_overlap=30,
             min_chunk_size=80
@@ -264,7 +263,7 @@ class EnhancedDataProcessor:
         # Merge all chunks
         all_chunks = existing_chunks + new_chunks
 
-        logger.info(f"\n[Summary]")
+        logger.info("\n[Summary]")
         logger.info(f"  Existing chunks: {len(existing_chunks)}")
         logger.info(f"  New SOP chunks: {len(new_chunks) - product_chunks_added}")
         logger.info(f"  New product chunks: {product_chunks_added}")
@@ -303,7 +302,7 @@ def main():
         chunk_type = chunk['type']
         type_counts[chunk_type] = type_counts.get(chunk_type, 0) + 1
 
-    logger.info(f"\nChunk Statistics:")
+    logger.info("\nChunk Statistics:")
     logger.info(f"  Total chunks: {len(all_chunks)}")
     for chunk_type, count in sorted(type_counts.items()):
         logger.info(f"  {chunk_type}: {count}")

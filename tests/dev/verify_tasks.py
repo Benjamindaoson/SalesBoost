@@ -1,6 +1,5 @@
 import sys
 import os
-import random
 import asyncio
 
 # Add project root to path

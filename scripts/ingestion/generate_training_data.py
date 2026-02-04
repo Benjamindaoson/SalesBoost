@@ -12,9 +12,8 @@ Generate Training Data with DeepSeek-V3
 import os
 import sys
 import json
-import time
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict
 from datetime import datetime
 
 # 添加项目根目录到路径
@@ -104,8 +103,6 @@ class DeepSeekDataGenerator:
     def _generate_mock_data(self, seed_case: Dict, count: int) -> List[Dict]:
         """生成模拟数据（用于演示）"""
 
-        objection_types = ["price", "feature", "competitor", "timing"]
-        effectiveness_levels = ["high", "medium", "low"]
 
         scenarios = []
 
@@ -162,7 +159,7 @@ class DeepSeekDataGenerator:
             "diversity": 0.75   # 多样性
         }
 
-        print(f"\n质量评估:")
+        print("\n质量评估:")
         print(f"  相关性: {quality_scores['relevance']:.2f}")
         print(f"  连贯性: {quality_scores['coherence']:.2f}")
         print(f"  多样性: {quality_scores['diversity']:.2f}")
@@ -238,7 +235,7 @@ def main():
         print("\n" + "="*70)
         print("[OK] 数据生成完成！")
         print("="*70)
-        print(f"\n统计:")
+        print("\n统计:")
         print(f"  生成场景数: {len(all_scenarios)}")
         print(f"  Token使用: {generator.total_tokens}")
         print(f"  预估成本: ${generator.total_cost:.4f}")

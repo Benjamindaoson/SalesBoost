@@ -85,7 +85,7 @@ class BGEM3Embedder:
             device=device
         )
 
-        logger.info(f"[BGEM3Embedder] Model loaded successfully")
+        logger.info("[BGEM3Embedder] Model loaded successfully")
 
     def embed(
         self,

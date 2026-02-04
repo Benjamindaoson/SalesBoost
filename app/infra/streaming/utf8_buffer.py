@@ -3,7 +3,6 @@ UTF-8 streaming utilities for safe character handling.
 Prevents character truncation at chunk boundaries.
 """
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

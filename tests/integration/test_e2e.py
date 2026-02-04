@@ -26,7 +26,7 @@ def event_loop():
 @pytest.fixture(scope="session")
 async def test_db():
     """Create test database."""
-    settings = get_unified_settings()
+    get_unified_settings()
 
     # Use in-memory SQLite for tests
     engine = create_async_engine(

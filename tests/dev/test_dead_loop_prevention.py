@@ -5,7 +5,6 @@ Test Dead Loop Prevention System
 """
 
 import asyncio
-import time
 import sys
 import os
 

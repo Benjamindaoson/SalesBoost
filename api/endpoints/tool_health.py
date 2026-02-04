@@ -1,7 +1,7 @@
 """
 Tool Health Check API Endpoint
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from typing import Dict
 
 from app.tools.registry import build_default_registry

@@ -4,7 +4,7 @@ Tests bidirectional ping/pong, timeout detection, and state snapshot creation.
 """
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock
 from app.infra.websocket.heartbeat_manager import HeartbeatManager, HeartbeatConfig
 
 
@@ -142,7 +142,7 @@ async def test_multiple_sessions_independent_monitoring():
     
     # Verify independent state
     health1 = manager.get_session_health(session1)
-    health2 = manager.get_session_health(session2)
+    manager.get_session_health(session2)
     
     assert health1.missed_pongs == 0
     # session2 hasn't received pong yet, but hasn't timed out either

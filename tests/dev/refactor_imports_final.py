@@ -62,7 +62,6 @@ mapping = {
     r'app\.services\.memory\.local_storage': 'app.memory.storage.backends.memory.local_storage',
     r'app\.services\.memory\.sqlite_storage': 'app.memory.storage.backends.memory.sqlite_storage',
     r'app\.agents\.practice\.coach_agent': 'app.agents.ask.coach_agent',
-    r'app\.agents\.practice\.coach_generator': 'app.agents.ask.coach_generator',
 }
 
 def refactor_file(file_path):

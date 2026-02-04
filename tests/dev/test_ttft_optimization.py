@@ -20,7 +20,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from app.engine.coordinator.workflow_coordinator import WorkflowCoordinator
-from app.infra.gateway.model_gateway import ModelGateway
 from app.schemas.fsm import FSMState, SalesStage
 
 
@@ -86,7 +85,7 @@ async def test_sync_mode():
 
         ttft_ms = (time.time() - start_time) * 1000
 
-        print(f"\n✅ Turn Completed")
+        print("\n✅ Turn Completed")
         print(f"   TTFT: {ttft_ms:.0f}ms")
         print(f"   NPC Response: {result.npc_reply.response}")
         print(f"   Coach Advice: {result.coach_advice if result.coach_advice else 'None'}")
@@ -139,7 +138,7 @@ async def test_async_mode():
 
         ttft_ms = (time.time() - start_time) * 1000
 
-        print(f"\n✅ NPC Response Returned (TTFT)")
+        print("\n✅ NPC Response Returned (TTFT)")
         print(f"   TTFT: {ttft_ms:.0f}ms")
         print(f"   NPC Response: {result.npc_reply.response}")
         print(f"   Coach Advice: {result.coach_advice if result.coach_advice else 'None (Will arrive later via WebSocket)'}")
@@ -147,7 +146,7 @@ async def test_async_mode():
 
         # Simulate delayed coach advice generation
         if result.coach_advice is None:
-            print(f"\n⏳ Generating coach advice asynchronously...")
+            print("\n⏳ Generating coach advice asynchronously...")
             coach_start = time.time()
 
             coach_advice = await coordinator.get_coach_advice_async(
@@ -176,8 +175,6 @@ async def test_fallback_advice():
     print("=" * 70)
 
     from app.engine.coordinator.dynamic_workflow import (
-        DynamicWorkflowCoordinator,
-        get_full_config,
         FALLBACK_COACH_ADVICE
     )
 
@@ -197,7 +194,7 @@ async def test_fallback_advice():
 
     print(f"\n🧪 Testing fallback for intent='{test_intent}':")
     print(f"   Advice: {fallback['advice']}")
-    print(f"   Tips:")
+    print("   Tips:")
     for tip in fallback['tips']:
         print(f"      • {tip}")
 
@@ -227,19 +224,19 @@ async def run_all_tests():
 
     if sync_ttft and async_ttft:
         improvement = ((sync_ttft - async_ttft) / sync_ttft) * 100
-        print(f"\n✅ TTFT Optimization:")
+        print("\n✅ TTFT Optimization:")
         print(f"   Baseline (Sync):  {sync_ttft:.0f}ms")
         print(f"   Optimized (Async): {async_ttft:.0f}ms")
         print(f"   Improvement: {improvement:.1f}% (Target: 40%)")
 
         if improvement >= 35:
-            print(f"   Status: ✅ PASSED (Improvement >= 35%)")
+            print("   Status: ✅ PASSED (Improvement >= 35%)")
         else:
-            print(f"   Status: ⚠️  NEEDS REVIEW (Improvement < 35%)")
+            print("   Status: ⚠️  NEEDS REVIEW (Improvement < 35%)")
 
-    print(f"\n✅ Graceful Degradation:")
+    print("\n✅ Graceful Degradation:")
     print(f"   Fallback intents: {len(FALLBACK_COACH_ADVICE)}")
-    print(f"   Status: ✅ PASSED")
+    print("   Status: ✅ PASSED")
 
     print("\n" + "=" * 70)
     print("🎉 Test Suite Completed")

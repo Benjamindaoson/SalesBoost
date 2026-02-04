@@ -11,7 +11,6 @@ Usage:
 
 import asyncio
 import logging
-from typing import Dict, Any
 
 # Configure logging
 logging.basicConfig(
@@ -404,7 +403,7 @@ async def test_rlaif_evaluator():
     )
 
     logger.info(f"Overall score: {evaluation.overall_score:.2f}")
-    logger.info(f"\nDimension scores:")
+    logger.info("\nDimension scores:")
     for score in evaluation.dimension_scores:
         logger.info(f"  {score.dimension.value}: {score.score:.2f}")
         logger.info(f"    Reasoning: {score.reasoning}")
@@ -454,17 +453,17 @@ async def test_rlaif_evaluator():
     # Test compliant response
     compliant_response = "我理解您的顾虑。让我为您详细介绍一下我们的权益..."
     compliant_result = await evaluator.constitutional_checker.check(compliant_response)
-    logger.info(f"Compliant response check:")
+    logger.info("Compliant response check:")
     logger.info(f"  Is compliant: {compliant_result['is_compliant']}")
     logger.info(f"  Risk level: {compliant_result['overall_risk_level']}")
 
     # Test non-compliant response
     non_compliant_response = "您必须今天办理，否则明天就涨价了！"
     non_compliant_result = await evaluator.constitutional_checker.check(non_compliant_response)
-    logger.info(f"\nNon-compliant response check:")
+    logger.info("\nNon-compliant response check:")
     logger.info(f"  Is compliant: {non_compliant_result['is_compliant']}")
     logger.info(f"  Risk level: {non_compliant_result['overall_risk_level']}")
-    logger.info(f"  Violations:")
+    logger.info("  Violations:")
     for violation in non_compliant_result['violations']:
         if violation['violated']:
             logger.info(f"    - {violation['rule']}: {violation['evidence']}")

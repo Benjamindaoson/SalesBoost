@@ -209,7 +209,7 @@ async def get_session_review(
     evals_res = await db.execute(
         select(EvaluationLog).where(EvaluationLog.session_id == session_id).order_by(EvaluationLog.turn_number)
     )
-    evals = evals_res.scalars().all()
+    evals_res.scalars().all()
     
     # 5. Get Matrix Evaluation (PRD)
     matrix_result = session.matrix_eval_result

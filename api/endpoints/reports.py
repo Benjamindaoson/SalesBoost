@@ -13,10 +13,8 @@ from api.auth_schemas import UserSchema as User
 from core.database import get_db_session
 from models.runtime_models import Message, Session
 from schemas.reports import TrainingReport
-from app.agents.evaluate.adoption_tracker import AdoptionTracker
 from app.agents.evaluate.curriculum_planner import CurriculumPlanner
 from app.agents.evaluate.report_generator import ReportService
-from app.agents.evaluate.strategy_analyzer import StrategyAnalyzer
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/reports", tags=["reports"], dependencies=[Depends(audit_access)])

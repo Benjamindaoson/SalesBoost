@@ -5,10 +5,9 @@ Implements knowledge graph-enhanced RAG with entity extraction,
 relation extraction, and graph-based retrieval.
 """
 import logging
-from typing import List, Dict, Any, Optional, Set, Tuple
+from typing import List, Dict, Any, Optional, Set
 from dataclasses import dataclass, field
 from enum import Enum
-import asyncio
 
 logger = logging.getLogger(__name__)
 

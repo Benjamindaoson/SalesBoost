@@ -99,7 +99,12 @@ export default function KnowledgeUploader({ onUploadSuccess }: KnowledgeUploader
         toast.success(result.message || 'File uploaded successfully');
       } else if (uploadMode === 'text') {
         const result = await knowledgeService.uploadText(textContent, metadata);
-        toast.success(result.message || 'Text uploaded successfully');
+        if (result.success) {
+          toast.success(result.message || 'Text uploaded successfully');
+        } else {
+          toast.error('Failed to upload text');
+          return;
+        }
       }
 
       // Reset form

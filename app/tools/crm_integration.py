@@ -4,7 +4,7 @@ CRM Integration Tool
 Provides CRM operations for reading, updating, and creating customer records.
 Simulates integration with CRM systems like Salesforce, HubSpot, etc.
 """
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from pydantic import Field
 from enum import Enum
 

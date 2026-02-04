@@ -8,7 +8,6 @@ Usage:
     python scripts/deploy_knowledge_base.py --env development --skip-data
 """
 
-import os
 import sys
 import argparse
 import subprocess

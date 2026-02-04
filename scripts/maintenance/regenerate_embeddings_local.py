@@ -7,7 +7,6 @@ This script uses sentence-transformers to generate embeddings locally.
 """
 
 import json
-import os
 import requests
 from pathlib import Path
 from typing import List, Dict
@@ -26,14 +25,14 @@ def generate_embeddings_local(texts: List[str]) -> List[List[float]]:
     """
     from sentence_transformers import SentenceTransformer
 
-    print(f"\n[INFO] Loading BGE-M3 model locally...")
-    print(f"  - Model: BAAI/bge-m3")
-    print(f"  - Dimension: 1024")
-    print(f"  - Device: CPU")
+    print("\n[INFO] Loading BGE-M3 model locally...")
+    print("  - Model: BAAI/bge-m3")
+    print("  - Dimension: 1024")
+    print("  - Device: CPU")
 
     # Load model
     model = SentenceTransformer('BAAI/bge-m3')
-    print(f"[OK] Model loaded successfully!")
+    print("[OK] Model loaded successfully!")
 
     # Generate embeddings
     print(f"\n[INFO] Generating embeddings for {len(texts)} texts...")
@@ -70,7 +69,7 @@ def update_qdrant_vectors(
         qdrant_url: Qdrant URL
         collection_name: 集合名称
     """
-    print(f"\n[INFO] Updating vectors in Qdrant")
+    print("\n[INFO] Updating vectors in Qdrant")
     print(f"  - Collection: {collection_name}")
     print(f"  - Total points: {len(chunks)}")
 
@@ -131,7 +130,7 @@ def verify_embeddings(
     collection_name: str = "sales_knowledge"
 ):
     """验证向量是否更新成功"""
-    print(f"\n[INFO] Verifying embeddings...")
+    print("\n[INFO] Verifying embeddings...")
 
     session = requests.Session()
     session.trust_env = False
@@ -146,15 +145,15 @@ def verify_embeddings(
             vectors_count = result.get("vectors_count", 0)
             points_count = result.get("points_count", 0)
 
-            print(f"\n[OK] Collection status:")
+            print("\n[OK] Collection status:")
             print(f"  - Points: {points_count}")
             print(f"  - Vectors: {vectors_count}")
 
             if points_count > 0:
-                print(f"\n[SUCCESS] Real embeddings verified!")
+                print("\n[SUCCESS] Real embeddings verified!")
                 return True
             else:
-                print(f"\n[WARN] No points found")
+                print("\n[WARN] No points found")
                 return False
         else:
             print(f"\n[ERROR] Failed to verify: {response.status_code}")
@@ -187,7 +186,7 @@ def main():
     texts = [chunk.get("text", "") for chunk in chunks]
 
     # Generate embeddings locally
-    print(f"\n[INFO] Generating embeddings locally (no API needed)...")
+    print("\n[INFO] Generating embeddings locally (no API needed)...")
     embeddings = generate_embeddings_local(texts)
 
     # Update Qdrant

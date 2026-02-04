@@ -5,7 +5,7 @@ import re
 import json
 import logging
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Iterable, Optional
 
 from app.context_manager.prompts import SCORING_PROMPT_TEMPLATE
 from app.infra.llm.interfaces import LLMAdapter

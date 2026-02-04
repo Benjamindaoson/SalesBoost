@@ -9,10 +9,9 @@ Week 2 优化 7: 成本感知路由系统
 - 质量保持: >90%
 """
 
-import time
-from typing import Dict, Optional, List
+from typing import Dict, List
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 
 
@@ -194,7 +193,7 @@ class CostAwareRouter:
         self.monthly_cost = 0.0
         self.last_reset_date = datetime.now().date()
 
-        print(f"[OK] Cost-Aware Router initialized")
+        print("[OK] Cost-Aware Router initialized")
         print(f"  Daily Budget: CNY {budget_config.daily_budget:.2f}")
         print(f"  Monthly Budget: CNY {budget_config.monthly_budget:.2f}")
 
@@ -304,7 +303,7 @@ class CostAwareRouter:
         """重置每日成本 (如果需要)"""
         today = datetime.now().date()
         if today > self.last_reset_date:
-            print(f"[INFO] Resetting daily cost (new day)")
+            print("[INFO] Resetting daily cost (new day)")
             self.daily_cost = 0.0
             self.last_reset_date = today
 
@@ -414,7 +413,7 @@ def test_cost_aware_routing():
         # 路由
         decision = router.route(scenario["query"], scenario["context"])
 
-        print(f"\n[DECISION]")
+        print("\n[DECISION]")
         print(f"  Use LLM: {decision['use_llm']}")
         if decision['use_llm']:
             print(f"  Model: {decision['model']}")
@@ -425,7 +424,7 @@ def test_cost_aware_routing():
 
         # 显示预算状态
         stats = router.get_stats()
-        print(f"\n[BUDGET STATUS]")
+        print("\n[BUDGET STATUS]")
         print(f"  Daily: CNY {stats['daily_cost']:.2f}/{stats['daily_budget']:.2f} ({stats['daily_usage']:.1%})")
         print(f"  Remaining: CNY {stats['daily_remaining']:.2f}")
 

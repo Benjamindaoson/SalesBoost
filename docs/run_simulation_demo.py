@@ -6,7 +6,6 @@ Usage:
     python scripts/run_simulation_demo.py
 """
 import asyncio
-import os
 import sys
 import logging
 from pathlib import Path
@@ -274,7 +273,7 @@ def print_simulation_result(result: SimulationResult):
             print(f"   💭 Reasoning: {step.action.reasoning}")
         print(f"   📊 Confidence: {step.action.confidence:.2f}")
         
-        print(f"\n👤 Customer Response:")
+        print("\n👤 Customer Response:")
         print(f"   {step.observation.customer_response}")
         print(f"   😊 Mood: {step.observation.customer_mood:.2f}")
         print(f"   💡 Interest: {step.observation.customer_interest:.2f}")

@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional
 
 from pydantic import BaseModel
 

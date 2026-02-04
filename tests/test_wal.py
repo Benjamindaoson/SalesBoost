@@ -2,7 +2,7 @@
 import pytest
 import asyncio
 from cognitive.brain.state.write_ahead_log import wal_manager
-from core.redis import InMemoryCache, get_redis
+from core.redis import InMemoryCache
 
 @pytest.mark.asyncio
 async def test_wal_operations():

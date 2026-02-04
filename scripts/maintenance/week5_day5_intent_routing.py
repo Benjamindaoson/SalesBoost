@@ -14,9 +14,8 @@ Phase 3B Week 5 Day 5-6: Intent Recognition & Dynamic RAG Routing
 
 import logging
 from enum import Enum
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
-import re
 
 logger = logging.getLogger(__name__)
 

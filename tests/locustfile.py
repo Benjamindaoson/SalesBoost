@@ -15,7 +15,6 @@ Usage:
     locust -f locustfile.py --host=http://localhost:8000 --web-host=0.0.0.0 --web-port=8089
 """
 
-import json
 import random
 import time
 from locust import HttpUser, task, between, events

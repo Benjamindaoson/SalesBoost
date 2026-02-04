@@ -1,7 +1,7 @@
 import logging
 import json
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List
 
 from app.infra.gateway.model_gateway import ModelGateway
 from app.infra.gateway.schemas import ModelCall, RoutingContext
@@ -10,8 +10,6 @@ from schemas.reports import (
     RadarChartData,
     SessionSummary,
     TrainingReport,
-    StagePerformance,
-    TurnDetail,
     StrategyComparison
 )
 

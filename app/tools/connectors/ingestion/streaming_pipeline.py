@@ -4,7 +4,6 @@ from __future__ import annotations
 import codecs
 import logging
 import uuid
-from typing import Optional
 
 from app.infra.search.vector_store import VectorStore
 from app.tools.connectors.ingestion.small_to_big_chunker import SmallToBigChunker

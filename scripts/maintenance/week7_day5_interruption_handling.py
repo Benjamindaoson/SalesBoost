@@ -17,15 +17,13 @@ import asyncio
 import time
 from enum import Enum
 from typing import Dict, Optional, Any, List, Callable
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
 
 # 添加项目根目录到 Python 路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from app.agents.conversation import SalesState
 
 logger = logging.getLogger(__name__)
 
@@ -450,7 +448,7 @@ async def demo_interruption_handling():
     print(f"  Interruption Rate: {stats['interruption_rate']*100:.1f}%")
 
     interruption_stats = stats['interruption_stats']
-    print(f"\n  Interruption Details:")
+    print("\n  Interruption Details:")
     print(f"    Total: {interruption_stats['total_interruptions']}")
     print(f"    Agent Interrupted: {interruption_stats['agent_interrupted']}")
     print(f"    User Interrupted: {interruption_stats['user_interrupted']}")
@@ -540,7 +538,7 @@ async def demo_multiple_interruptions():
     print(f"  Interruption Rate: {stats['interruption_rate']*100:.1f}%")
 
     interruption_stats = stats['interruption_stats']
-    print(f"\n  Interruption Details:")
+    print("\n  Interruption Details:")
     print(f"    Total: {interruption_stats['total_interruptions']}")
     print(f"    Agent Interrupted: {interruption_stats['agent_interrupted']}")
     print(f"    Recovery Attempts: {interruption_stats['recovery_attempts']}")

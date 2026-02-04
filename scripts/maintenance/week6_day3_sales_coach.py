@@ -18,7 +18,7 @@ import logging
 import sys
 import os
 from enum import Enum
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 
 # 添加项目根目录到 Python 路径
@@ -653,7 +653,7 @@ def demo_sales_coach():
         print(f"\nCustomer: {case['customer']}")
 
         # 测试好的响应
-        print(f"\n[Good Response]")
+        print("\n[Good Response]")
         print(f"Sales: {case['sales_good']}")
 
         feedback = coach.evaluate_response(
@@ -662,11 +662,11 @@ def demo_sales_coach():
             current_stage=case['stage']
         )
 
-        print(f"\nCoach Feedback:")
+        print("\nCoach Feedback:")
         print(f"  Overall Score: {feedback.overall_score:.1f}/10")
         print(f"  Stage Alignment: {feedback.stage_alignment}")
         print(f"  Technique Used: {feedback.technique_used}")
-        print(f"  Dimension Scores:")
+        print("  Dimension Scores:")
         for dim, score in feedback.dimension_scores.items():
             print(f"    - {dim}: {score:.1f}/10")
         print(f"  Critique: {feedback.critique}")
@@ -675,7 +675,7 @@ def demo_sales_coach():
         print(f"  Weaknesses: {', '.join(feedback.weaknesses)}")
 
         # 测试坏的响应
-        print(f"\n[Bad Response]")
+        print("\n[Bad Response]")
         print(f"Sales: {case['sales_bad']}")
 
         feedback = coach.evaluate_response(
@@ -684,7 +684,7 @@ def demo_sales_coach():
             current_stage=case['stage']
         )
 
-        print(f"\nCoach Feedback:")
+        print("\nCoach Feedback:")
         print(f"  Overall Score: {feedback.overall_score:.1f}/10")
         print(f"  Stage Alignment: {feedback.stage_alignment}")
         print(f"  Technique Used: {feedback.technique_used}")

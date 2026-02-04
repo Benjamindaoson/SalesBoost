@@ -1,9 +1,8 @@
 """
 A/B Testing Framework for Intent Classifiers and Coordinators
 """
-import random
 import hashlib
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from dataclasses import dataclass, asdict
 import json
 

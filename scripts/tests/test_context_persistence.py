@@ -73,7 +73,7 @@ async def test_persistence():
         
         # Simulate a turn
         logger.info("Processing turn...")
-        result = await engine.process_turn(
+        await engine.process_turn(
             session_id=session_id,
             user_id=user_id,
             tenant_id=tenant_id,

@@ -14,13 +14,11 @@ Architecture:
 import logging
 import json
 from typing import List, Dict, Any, Optional, Set, Tuple
-from dataclasses import dataclass, field
-from enum import Enum
-import asyncio
+from dataclasses import dataclass
 
 from app.infra.search.graph_rag import (
-    Entity, Relation, Triple, Subgraph, KnowledgeGraph,
-    EntityType, RelationType, GraphRAGResult
+    Entity, Relation, Subgraph, KnowledgeGraph,
+    EntityType, RelationType
 )
 
 logger = logging.getLogger(__name__)

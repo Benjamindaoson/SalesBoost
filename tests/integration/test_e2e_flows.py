@@ -19,8 +19,7 @@ Requirements:
 import asyncio
 import json
 import logging
-from typing import AsyncGenerator, Dict, Any
-from datetime import datetime
+from typing import AsyncGenerator
 
 import pytest
 import httpx
@@ -29,7 +28,7 @@ from testcontainers.redis import RedisContainer
 from testcontainers.core.container import DockerContainer
 
 from core.config import Settings
-from core.database import init_db, get_db_session
+from core.database import init_db
 from main import app
 
 logger = logging.getLogger(__name__)
@@ -459,7 +458,7 @@ async def test_e2e_tool_execution_parallel():
 
     # Execute multiple tools in parallel
     import time
-    start_time = time.time()
+    time.time()
 
     # This will be implemented in Phase 3.4
     # For now, just verify executor exists
@@ -545,7 +544,7 @@ async def test_performance_concurrent_connections(http_client: httpx.AsyncClient
     avg_latency = sum(latencies) / len(latencies)
     max_latency = max(latencies)
 
-    logger.info(f"Concurrent connections test:")
+    logger.info("Concurrent connections test:")
     logger.info(f"  Total time: {total_time:.2f}s")
     logger.info(f"  Avg latency: {avg_latency:.2f}s")
     logger.info(f"  Max latency: {max_latency:.2f}s")

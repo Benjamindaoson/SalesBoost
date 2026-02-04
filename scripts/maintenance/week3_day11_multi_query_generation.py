@@ -18,7 +18,6 @@ import time
 import asyncio
 from typing import List, Dict, Optional
 from dataclasses import dataclass
-import numpy as np
 import requests
 
 
@@ -443,7 +442,7 @@ async def test_multi_query_rag():
 
         # 显示指标
         metrics = result["metrics"]
-        print(f"\n[METRICS]")
+        print("\n[METRICS]")
         print(f"  Total Time: {metrics['total_time_ms']:.1f}ms")
         print(f"  - Variant Generation: {metrics['variant_time_ms']:.1f}ms")
         print(f"  - Encoding: {metrics['encoding_time_ms']:.1f}ms")
@@ -454,7 +453,7 @@ async def test_multi_query_rag():
 
         # 显示结果
         if result["results"]:
-            print(f"\n[TOP RESULTS]")
+            print("\n[TOP RESULTS]")
             for j, doc in enumerate(result["results"][:3], 1):
                 print(f"\n  Result {j}:")
                 print(f"    RRF Score: {doc['rrf_score']:.6f}")

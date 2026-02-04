@@ -2,7 +2,6 @@
 Human-in-the-Loop Coordinator
 Extends LangGraph coordinator with interrupt mechanism for human review
 """
-import asyncio
 import logging
 import time
 from typing import Dict, Any, Optional

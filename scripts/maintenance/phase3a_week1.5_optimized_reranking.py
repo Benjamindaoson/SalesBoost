@@ -268,7 +268,7 @@ def benchmark_comparison():
         speedup = original_metrics['rerank_time_ms'] / optimized_metrics['rerank_time_ms']
         score_diff = optimized_result['results'][0]['rerank_score'] - original_result['results'][0]['rerank_score']
 
-        print(f"\n[IMPROVEMENT]")
+        print("\n[IMPROVEMENT]")
         print(f"  Speed: {speedup:.1f}x faster")
         print(f"  Score Diff: {score_diff:+.4f}")
 
@@ -297,8 +297,8 @@ def benchmark_comparison():
     print("[INFO] Key improvements:")
     print(f"  - Reranking speed: {avg_speedup:.1f}x faster")
     print(f"  - Accuracy: {'Maintained' if abs(avg_score_diff) < 0.5 else 'Slightly changed'}")
-    print(f"  - Candidates: 50 → 15 (70% reduction)")
-    print(f"  - Model: 12 layers → 2 layers (6x smaller)")
+    print("  - Candidates: 50 → 15 (70% reduction)")
+    print("  - Model: 12 layers → 2 layers (6x smaller)")
 
 
 def test_optimized_reranking():
@@ -345,7 +345,7 @@ def test_optimized_reranking():
         )
 
         # 显示结果
-        print(f"\n[METRICS]")
+        print("\n[METRICS]")
         metrics = result['metrics']
         print(f"  Total Time: {metrics['total_time_ms']:.1f}ms")
         print(f"  - Vector Search: {metrics['vector_time_ms']:.1f}ms")
@@ -353,7 +353,7 @@ def test_optimized_reranking():
         print(f"  Initial Results: {metrics['initial_count']}")
         print(f"  Final Results: {metrics['final_count']}")
 
-        print(f"\n[RESULTS]")
+        print("\n[RESULTS]")
         for j, doc in enumerate(result['results'], 1):
             print(f"\n  Result {j}:")
             print(f"    Vector Score: {doc['vector_score']:.4f}")

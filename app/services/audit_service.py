@@ -1,7 +1,6 @@
 import logging
 import uuid
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db_session
 from models.saas_models import AuditLog
 from app.infra.events.bus import bus

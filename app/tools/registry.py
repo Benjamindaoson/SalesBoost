@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Optional, Sequence, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 from app.infra.gateway.schemas import AgentType
 from app.tools.base import BaseTool

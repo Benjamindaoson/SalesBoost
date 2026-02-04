@@ -26,7 +26,7 @@ try:
     from pydantic_settings import BaseSettings
     from pydantic import Field, field_validator
 except ImportError:
-    from pydantic import BaseSettings, Field, validator as field_validator
+    from pydantic import BaseSettings
 
 logger = logging.getLogger(__name__)
 

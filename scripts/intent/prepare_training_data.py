@@ -3,7 +3,6 @@
 意图识别训练数据准备脚本
 生成销售场景的意图标注数据集
 """
-import os
 import pandas as pd
 from pathlib import Path
 
@@ -174,11 +173,11 @@ def prepare_datasets():
         for _, row in test_df.iterrows():
             f.write(f"__label__{row['label']} {row['text']}\n")
 
-    print(f"[OK] Data preparation completed!")
+    print("[OK] Data preparation completed!")
     print(f"   Training set: {len(train_df)} samples")
     print(f"   Test set: {len(test_df)} samples")
     print(f"   Intent categories: {df_augmented['label'].nunique()}")
-    print(f"   Category distribution:")
+    print("   Category distribution:")
     print(df_augmented['label'].value_counts())
     print(f"\nFiles saved to: {data_dir.absolute()}")
 

@@ -8,7 +8,6 @@ Date: 2026-02-01
 """
 
 import sys
-import os
 import json
 import re
 from pathlib import Path
@@ -66,7 +65,7 @@ def call_qwen_ocr_api(image_path: Path, api_key: str) -> str:
 
         return completion.choices[0].message.content
 
-    except Exception as e:
+    except Exception:
         return ""
 
 
@@ -242,7 +241,7 @@ def main():
 
             if result["success"]:
                 # Extract chunks
-                print(f"Extracting semantic chunks...")
+                print("Extracting semantic chunks...")
                 chunks = extract_chunks(result["text"], book["type"], book["filename"])
 
                 # Save chunks

@@ -1,6 +1,5 @@
 import pytest
-import pytest_asyncio
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 from cognitive.skills.evaluate.adoption_tracker import AdoptionTracker
 from schemas.agent_outputs import CoachOutput
 from models.adoption_models import AdoptionStyle

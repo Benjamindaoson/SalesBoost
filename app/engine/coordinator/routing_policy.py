@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 from app.engine.coordinator.json_utils import extract_json
 from app.engine.coordinator.routing_fallback import INTENTS_NEED_TOOLS

@@ -10,7 +10,6 @@ Features:
 4. Create metadata index
 """
 
-import os
 import sys
 import json
 from pathlib import Path
@@ -109,7 +108,7 @@ class KnowledgeIndexBuilder:
 
     def load_chunks(self, chunks_file: Path) -> List[Dict[str, Any]]:
         """Load semantic chunks from file"""
-        print(f"\n=== Load Semantic Chunks ===")
+        print("\n=== Load Semantic Chunks ===")
 
         if not chunks_file.exists():
             print(f"[X] Chunks file not found: {chunks_file}")
@@ -123,7 +122,7 @@ class KnowledgeIndexBuilder:
 
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for texts"""
-        print(f"\n=== Generate Embeddings ===")
+        print("\n=== Generate Embeddings ===")
         print(f"[INFO] Processing {len(texts)} texts...")
 
         try:
@@ -142,7 +141,7 @@ class KnowledgeIndexBuilder:
 
     def import_to_chromadb(self, chunks: List[Dict[str, Any]]):
         """Import chunks with embeddings to ChromaDB"""
-        print(f"\n=== Import to ChromaDB ===")
+        print("\n=== Import to ChromaDB ===")
 
         if not chunks:
             print("[WARN] No chunks to import")
@@ -201,7 +200,7 @@ class KnowledgeIndexBuilder:
 
     def verify_index(self):
         """Verify the knowledge base index"""
-        print(f"\n=== Verify Knowledge Base Index ===")
+        print("\n=== Verify Knowledge Base Index ===")
 
         try:
             count = self.collection.count()
@@ -237,7 +236,7 @@ class KnowledgeIndexBuilder:
 
     def generate_index_report(self, chunks: List[Dict[str, Any]]):
         """Generate index statistics report"""
-        print(f"\n=== Generate Index Report ===")
+        print("\n=== Generate Index Report ===")
 
         # Count by type
         type_counts = {}
@@ -269,11 +268,11 @@ class KnowledgeIndexBuilder:
 
         print(f"[OK] Report saved to: {report_file}")
 
-        print(f"\nIndex Statistics:")
+        print("\nIndex Statistics:")
         print(f"  Total chunks: {report['total_chunks']}")
         print(f"  Total characters: {report['total_characters']:,}")
         print(f"  Average chunk size: {report['average_chunk_size']:.0f} chars")
-        print(f"\nChunks by type:")
+        print("\nChunks by type:")
         for chunk_type, count in type_counts.items():
             print(f"  {chunk_type}: {count}")
 

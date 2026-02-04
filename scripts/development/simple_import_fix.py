@@ -3,7 +3,6 @@
 Simple Import Path Fixer for SalesBoost
 """
 
-import os
 import re
 from pathlib import Path
 

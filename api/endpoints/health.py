@@ -8,7 +8,6 @@ Provides comprehensive health checks for:
 """
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
-from typing import Dict, Any
 import asyncio
 import logging
 from datetime import datetime
@@ -83,7 +82,7 @@ async def readiness_check() -> JSONResponse:
     # Check Vector Store (optional, don't fail if not available)
     try:
         from app.services.knowledge_service_qdrant import KnowledgeServiceQdrant
-        service = KnowledgeServiceQdrant()
+        KnowledgeServiceQdrant()
         # Simple health check - don't fail if Qdrant is not configured
         checks["vector_store"] = {"status": "ready", "message": "Available"}
     except Exception as e:

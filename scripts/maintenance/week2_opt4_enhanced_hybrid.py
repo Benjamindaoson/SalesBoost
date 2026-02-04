@@ -14,7 +14,6 @@ from typing import List, Dict
 from rank_bm25 import BM25Okapi
 import jieba
 import requests
-import numpy as np
 
 
 class EnhancedHybridSearch:
@@ -47,7 +46,7 @@ class EnhancedHybridSearch:
         self.bm25_index = None
         self.documents = []
 
-        print(f"[INFO] Enhanced Hybrid Search initialized")
+        print("[INFO] Enhanced Hybrid Search initialized")
         print(f"  BM25 Weight: {bm25_weight}")
         print(f"  Dense Weight: {dense_weight}")
 
@@ -294,7 +293,7 @@ def load_documents_from_qdrant(
     collection_name: str = "sales_knowledge"
 ) -> List[Dict]:
     """从Qdrant加载所有文档"""
-    print(f"[INFO] Loading documents from Qdrant...")
+    print("[INFO] Loading documents from Qdrant...")
 
     session = requests.Session()
     session.trust_env = False
@@ -405,14 +404,14 @@ def test_enhanced_hybrid_search():
 
         # 显示结果
         metrics = result['metrics']
-        print(f"\n[METRICS]")
+        print("\n[METRICS]")
         print(f"  Total Time: {metrics['total_time_ms']:.1f}ms")
         print(f"  - BM25: {metrics['bm25_time_ms']:.1f}ms ({metrics['bm25_count']} results)")
         print(f"  - Dense: {metrics['dense_time_ms']:.1f}ms ({metrics['dense_count']} results)")
         print(f"  - Fusion: {metrics['fusion_time_ms']:.1f}ms ({metrics['fused_count']} results)")
 
         if result['results']:
-            print(f"\n[TOP RESULT]")
+            print("\n[TOP RESULT]")
             top = result['results'][0]
             print(f"  RRF Score: {top['rrf_score']:.6f}")
             print(f"  Sources: {', '.join([s['method'] for s in top['fusion_sources']])}")

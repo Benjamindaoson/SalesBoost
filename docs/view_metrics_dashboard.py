@@ -98,7 +98,7 @@ def display_dashboard(aggregates: Dict, time_window: int) -> None:
         print(f"📈 {component_key}")
         print(f"   Total Requests: {stats['total_requests']:,}")
         print(f"   Success Rate:   {stats['success_rate']*100:.1f}%")
-        print(f"   Latency (avg):")
+        print("   Latency (avg):")
         print(f"     Mean: {stats['avg_latency_mean']:.1f}ms")
         print(f"     P95:  {stats['avg_latency_p95']:.1f}ms")
         print(f"     P99:  {stats['avg_latency_p99']:.1f}ms")

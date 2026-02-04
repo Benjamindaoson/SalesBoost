@@ -20,15 +20,13 @@ Usage:
     markdown = await ocr.process_document("path/to/document.pdf")
 """
 
-import asyncio
 import base64
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, List
 from pathlib import Path
 from enum import Enum
 
 import httpx
-from PIL import Image
 import fitz  # PyMuPDF
 
 logger = logging.getLogger(__name__)

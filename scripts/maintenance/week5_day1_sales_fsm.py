@@ -18,7 +18,6 @@ from enum import Enum
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -547,7 +546,7 @@ def demo_fsm():
 
     # 分析进展
     analysis = fsm.analyze_conversation_progress(context)
-    print(f"\n   Progress Analysis:")
+    print("\n   Progress Analysis:")
     print(f"   - Goal: {analysis['state_goal']}")
     print(f"   - Recommendations: {analysis['recommendations']}")
 
@@ -622,20 +621,20 @@ def demo_fsm():
     print(f"\nSession ID: {summary['session_id']}")
     print(f"Final State: {summary['current_state']}")
     print(f"Total Transitions: {len(summary['transitions'])}")
-    print(f"\nTransition History:")
+    print("\nTransition History:")
     for i, t in enumerate(summary['transitions'], 1):
         print(f"  {i}. {t['from']} -> {t['to']} ({t['trigger']}) [confidence: {t['confidence']:.2f}]")
 
-    print(f"\nDiscovery Metrics:")
+    print("\nDiscovery Metrics:")
     print(f"  - Questions asked: {summary['discovery_questions_asked']}")
     print(f"  - Needs identified: {len(summary['customer_needs'])}")
     print(f"  - Pain points: {len(summary['pain_points'])}")
 
-    print(f"\nObjection Handling:")
+    print("\nObjection Handling:")
     print(f"  - Objections raised: {len(summary['objections_raised'])}")
     print(f"  - Objections resolved: {len(summary['objections_resolved'])}")
 
-    print(f"\nClosing Metrics:")
+    print("\nClosing Metrics:")
     print(f"  - Pitch attempts: {summary['pitch_attempts']}")
     print(f"  - Closing attempts: {summary['closing_attempts']}")
 

@@ -91,7 +91,7 @@ class KnowledgeIntegrator:
         for chunk in chunks:
             # Check required fields
             if not all(k in chunk for k in ["text", "source", "type"]):
-                print(f"[WARN] Skipping invalid chunk (missing fields)")
+                print("[WARN] Skipping invalid chunk (missing fields)")
                 continue
 
             # Check text length

@@ -5,10 +5,9 @@
 """
 import asyncio
 import logging
-import os
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 import uuid
 
 # 添加项目根目录到Python路径
@@ -138,7 +137,7 @@ class RobustSalesDataIngester:
         """摄入产品权益"""
         product_dir = DATA_DIR / "产品权益"
         if not product_dir.exists():
-            logger.warning(f"Product benefits directory not found")
+            logger.warning("Product benefits directory not found")
             return
         
         logger.info("Ingesting product benefits...")
@@ -170,7 +169,7 @@ class RobustSalesDataIngester:
         """摄入SOP和话术"""
         sop_dir = DATA_DIR / "销售成交营销SOP和话术"
         if not sop_dir.exists():
-            logger.warning(f"SOP directory not found")
+            logger.warning("SOP directory not found")
             return
         
         logger.info("Ingesting SOP and scripts...")
@@ -197,7 +196,7 @@ class RobustSalesDataIngester:
         """摄入销售冠军经验"""
         experience_dir = DATA_DIR / "销售冠军成交经验分享"
         if not experience_dir.exists():
-            logger.warning(f"Experience directory not found")
+            logger.warning("Experience directory not found")
             return
         
         logger.info("Ingesting champion experience...")
@@ -460,7 +459,7 @@ async def main():
     ingester = RobustSalesDataIngester(org_id="public")
     
     try:
-        stats = await ingester.ingest_all()
+        await ingester.ingest_all()
         ingester.print_statistics()
     except Exception as e:
         logger.error(f"Data ingestion failed: {e}", exc_info=True)

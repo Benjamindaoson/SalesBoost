@@ -1,7 +1,5 @@
 """Budget manager for cost control and usage tracking."""
 import logging
-from typing import Dict, Optional, Any
-import json
 import time
 
 from core.redis import get_redis

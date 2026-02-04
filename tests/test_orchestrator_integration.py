@@ -2,10 +2,9 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from datetime import datetime
 
 from app.engine.coordinator.workflow_coordinator import SalesOrchestrator
-from app.infra.gateway.model_gateway import ModelGateway, AgentType
+from app.infra.gateway.model_gateway import ModelGateway
 from app.infra.gateway.model_gateway.budget import BudgetManager
 from app.agents.coordination.session_director_v3 import SessionDirectorV3
 from app.models.config_models import CustomerPersona

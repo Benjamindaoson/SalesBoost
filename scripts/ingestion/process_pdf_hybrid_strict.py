@@ -50,7 +50,7 @@ class HybridPDFProcessor:
 
     def try_mineru(self, pdf_path: Path) -> Optional[str]:
         """尝试使用 MinerU 处理 PDF"""
-        print(f"\n[ATTEMPT 1] Trying MinerU (Magic-PDF)...")
+        print("\n[ATTEMPT 1] Trying MinerU (Magic-PDF)...")
 
         try:
             # 方案1: 使用 magic-pdf 命令行
@@ -65,7 +65,7 @@ class HybridPDFProcessor:
             )
 
             if result.returncode != 0:
-                print(f"  [WARN] magic-pdf not installed")
+                print("  [WARN] magic-pdf not installed")
                 return None
 
             print(f"  [OK] magic-pdf found: {result.stdout.strip()}")
@@ -100,10 +100,10 @@ class HybridPDFProcessor:
                 return None
 
         except FileNotFoundError:
-            print(f"  [WARN] magic-pdf command not found")
+            print("  [WARN] magic-pdf command not found")
             return None
         except subprocess.TimeoutExpired:
-            print(f"  [WARN] MinerU timeout (>5 minutes)")
+            print("  [WARN] MinerU timeout (>5 minutes)")
             return None
         except Exception as e:
             print(f"  [WARN] MinerU error: {e}")
@@ -111,10 +111,10 @@ class HybridPDFProcessor:
 
     def try_qwen_ocr(self, pdf_path: Path) -> Optional[str]:
         """尝试使用 Qwen-VL-OCR 处理 PDF"""
-        print(f"\n[ATTEMPT 2] Trying Qwen-VL-OCR (Cloud API)...")
+        print("\n[ATTEMPT 2] Trying Qwen-VL-OCR (Cloud API)...")
 
         if not self.dashscope_api_key:
-            print(f"  [ERROR] DASHSCOPE_API_KEY not configured")
+            print("  [ERROR] DASHSCOPE_API_KEY not configured")
             return None
 
         try:
@@ -140,7 +140,7 @@ class HybridPDFProcessor:
 
             if total_pages > 50:
                 print(f"  [WARN] Too many pages ({total_pages}), this will take too long")
-                print(f"  [INFO] Consider processing first 50 pages only")
+                print("  [INFO] Consider processing first 50 pages only")
 
                 # 询问是否继续
                 response = input("  Continue with Qwen-VL-OCR? (y/n): ")
@@ -220,7 +220,7 @@ class HybridPDFProcessor:
 
                 return full_text
             else:
-                print(f"  [ERROR] No text extracted")
+                print("  [ERROR] No text extracted")
                 return None
 
         except Exception as e:
@@ -231,7 +231,7 @@ class HybridPDFProcessor:
 
     def extract_chunks(self, text: str, book_name: str, book_type: str) -> List[Dict]:
         """从文本中提取知识块"""
-        print(f"\n[INFO] Extracting knowledge chunks...")
+        print("\n[INFO] Extracting knowledge chunks...")
 
         chunks = []
 

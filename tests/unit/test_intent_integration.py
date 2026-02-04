@@ -5,7 +5,7 @@ Tests the full intent classification pipeline with context awareness
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from app.engine.coordinator.workflow_coordinator import WorkflowCoordinator
-from app.schemas.fsm import FSMState, SalesStage
+from app.schemas.fsm import SalesStage
 
 
 class TestIntentIntegration:

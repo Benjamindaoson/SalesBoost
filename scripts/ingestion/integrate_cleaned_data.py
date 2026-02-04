@@ -12,7 +12,7 @@ import os
 import json
 import asyncio
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict
 from datetime import datetime
 import pandas as pd
 from tqdm import tqdm
@@ -21,8 +21,6 @@ from tqdm import tqdm
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.tools.connectors.ingestion.streaming_pipeline import StreamingPipeline
-from app.tools.retriever import EnhancedRetriever
-from core.config import settings
 
 
 class DataIntegrationPipeline:
@@ -126,7 +124,7 @@ class DataIntegrationPipeline:
         print("\n[INFO] Ingesting chunks into Qdrant...")
         try:
             # 使用 StreamingPipeline 导入
-            pipeline = StreamingPipeline()
+            StreamingPipeline()
 
             # 批量处理
             batch_size = 32
@@ -134,7 +132,7 @@ class DataIntegrationPipeline:
                 batch = all_chunks[i:i+batch_size]
 
                 # 准备文档
-                documents = [
+                [
                     {
                         "id": chunk["id"],
                         "text": chunk["text"],
@@ -203,7 +201,7 @@ class DataIntegrationPipeline:
                     self.stats["sales_recordings"]["transcriptions_created"] += 1
                     print(f"  [OK] Transcribed {len(transcription_text)} characters")
                 else:
-                    print(f"  [WARN] No transcription generated")
+                    print("  [WARN] No transcription generated")
 
             except Exception as e:
                 print(f"  [ERROR] Failed to transcribe {mp3_file.name}: {e}")
@@ -314,7 +312,7 @@ class DataIntegrationPipeline:
             # 批量导入
             batch_size = 32
             for i in tqdm(range(0, len(all_chunks), batch_size), desc="Ingesting to Qdrant"):
-                batch = all_chunks[i:i+batch_size]
+                all_chunks[i:i+batch_size]
                 # await pipeline.ingest_batch(batch)
 
             self.stats["sales_recordings"]["vectors_ingested"] = len(all_chunks)
@@ -427,7 +425,7 @@ class DataIntegrationPipeline:
             )
             f.write(f"\nSuccess Rate: {success_rate:.2f}%\n")
 
-        print(f"\n[OK] Reports saved:")
+        print("\n[OK] Reports saved:")
         print(f"  - JSON: {report_file}")
         print(f"  - TXT: {text_report}")
 
@@ -443,27 +441,27 @@ class DataIntegrationPipeline:
         print()
 
         # 任务1: 导入产品权益表格
-        product_chunks = await self.ingest_product_rights()
+        await self.ingest_product_rights()
 
         # 任务2: 转录销售录音
         transcriptions = await self.transcribe_sales_recordings()
 
         # 任务3: 处理转录文本
-        recording_chunks = await self.process_transcriptions_to_chunks(transcriptions)
+        await self.process_transcriptions_to_chunks(transcriptions)
 
         # 生成报告
-        report = await self.generate_integration_report()
+        await self.generate_integration_report()
 
         # 打印摘要
         print("\n" + "="*70)
         print("Data Integration Complete")
         print("="*70)
-        print(f"\nProduct Rights:")
+        print("\nProduct Rights:")
         print(f"  [OK] Files: {self.stats['product_rights']['files_processed']}")
         print(f"  [OK] Chunks: {self.stats['product_rights']['chunks_created']}")
         print(f"  [OK] Vectors: {self.stats['product_rights']['vectors_ingested']}")
 
-        print(f"\nSales Recordings:")
+        print("\nSales Recordings:")
         print(f"  [OK] Files: {self.stats['sales_recordings']['files_processed']}")
         print(f"  [OK] Transcriptions: {self.stats['sales_recordings']['transcriptions_created']}")
         print(f"  [OK] Chunks: {self.stats['sales_recordings']['chunks_created']}")

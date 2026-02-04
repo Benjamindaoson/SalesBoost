@@ -5,8 +5,8 @@ Unit Tests for Tool Metrics
 Tests the ToolMetricsCollector and Prometheus metrics integration.
 """
 import pytest
-from unittest.mock import Mock, patch
-from prometheus_client import CollectorRegistry, REGISTRY
+from unittest.mock import patch
+from prometheus_client import CollectorRegistry
 
 from app.observability.tool_metrics import (
     ToolMetricsCollector,

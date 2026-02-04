@@ -14,14 +14,12 @@ Tools tested:
 """
 import pytest
 from unittest.mock import AsyncMock, Mock, patch
-from decimal import Decimal
 
 from app.tools.retriever import KnowledgeRetrieverTool
 from app.tools.compliance import ComplianceCheckTool
 from app.tools.profile_reader import ProfileReaderTool
 from app.tools.price_calculator import PriceCalculatorTool
 from app.tools.stage_classifier import StageClassifierTool
-from app.tools.errors import ToolInputError, ToolPermissionError
 from app.infra.gateway.schemas import AgentType
 
 

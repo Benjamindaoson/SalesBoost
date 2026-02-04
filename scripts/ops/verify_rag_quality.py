@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from app.tools.retriever import Retriever
-from app.memory.storage.vector_store import VectorStore
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,7 +38,7 @@ async def verify_rag_quality():
     total = len(results)
     accuracy = (passed / total) * 100
     
-    logger.info(f"--- RAG Verification Summary ---")
+    logger.info("--- RAG Verification Summary ---")
     logger.info(f"Total Tests: {total}")
     logger.info(f"Passed: {passed}")
     logger.info(f"Estimated Accuracy: {accuracy:.2f}%")

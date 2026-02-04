@@ -6,7 +6,7 @@ End-to-end tests for tool execution with WebSocket, metrics, and rate limiting.
 """
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 import time
 
 from app.tools.executor import ToolExecutor, RateLimitError

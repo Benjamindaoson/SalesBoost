@@ -9,7 +9,7 @@ Tests cover:
 - Performance benchmarks
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from app.infra.search.vector_store import BGEReranker, SearchResult
 
 
@@ -18,21 +18,21 @@ class TestBGERerankerInitialization:
 
     def test_init_with_default_model(self):
         """Test initialization with default model name."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             reranker = BGEReranker()
             assert reranker.model_name == "BAAI/bge-reranker-base"
             assert reranker.batch_size == 32
 
     def test_init_with_custom_model(self):
         """Test initialization with custom model name."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             reranker = BGEReranker(model_name="BAAI/bge-reranker-large", batch_size=16)
             assert reranker.model_name == "BAAI/bge-reranker-large"
             assert reranker.batch_size == 16
 
     def test_singleton_pattern(self):
         """Test that BGEReranker follows singleton pattern."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             # Reset singleton
             BGEReranker._instance = None
             BGEReranker._model = None
@@ -45,7 +45,7 @@ class TestBGERerankerInitialization:
     def test_model_loading_failure(self):
         """Test graceful handling of model loading failure."""
         with patch('app.infra.search.vector_store.FlagReranker', side_effect=Exception("Model not found")):
-            reranker = BGEReranker()
+            BGEReranker()
             assert BGEReranker._model is None
 
     def test_flag_embedding_not_available(self):
@@ -70,14 +70,14 @@ class TestBGERerankerFunctionality:
 
     def test_rerank_empty_results(self):
         """Test reranking with empty results list."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             reranker = BGEReranker()
             results = reranker.rerank("test query", [])
             assert results == []
 
     def test_rerank_single_result(self):
         """Test reranking with single result."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             mock_model.compute_score.return_value = 0.95
             BGEReranker._model = mock_model
@@ -91,7 +91,7 @@ class TestBGERerankerFunctionality:
 
     def test_rerank_multiple_results(self):
         """Test reranking with multiple results."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             # Simulate BGE scores (higher is better)
             mock_model.compute_score.return_value = [0.9, 0.5, 0.95, 0.3]
@@ -109,7 +109,7 @@ class TestBGERerankerFunctionality:
 
     def test_rerank_with_top_k(self):
         """Test reranking with top_k parameter."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             mock_model.compute_score.return_value = [0.9, 0.5, 0.95, 0.3]
             BGEReranker._model = mock_model
@@ -123,7 +123,7 @@ class TestBGERerankerFunctionality:
 
     def test_rerank_assigns_ranks(self):
         """Test that reranking assigns correct ranks."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             mock_model.compute_score.return_value = [0.9, 0.5, 0.95, 0.3]
             BGEReranker._model = mock_model
@@ -143,7 +143,7 @@ class TestBGERerankerFunctionality:
             SearchResult(id="2", content="Another content", score=0.7, metadata={"source": "doc2"}),
         ]
 
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             mock_model.compute_score.return_value = [0.6, 0.9]
             BGEReranker._model = mock_model
@@ -156,7 +156,7 @@ class TestBGERerankerFunctionality:
 
     def test_rerank_error_handling(self):
         """Test error handling during reranking."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             mock_model.compute_score.side_effect = Exception("Reranking failed")
             BGEReranker._model = mock_model
@@ -169,7 +169,7 @@ class TestBGERerankerFunctionality:
 
     def test_rerank_model_not_loaded(self):
         """Test reranking when model is not loaded."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             BGEReranker._model = None
 
             reranker = BGEReranker()
@@ -184,7 +184,7 @@ class TestBGERerankerPerformance:
 
     def test_batch_processing(self):
         """Test that batch_size parameter is used correctly."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             mock_model.compute_score.return_value = [0.5] * 10
             BGEReranker._model = mock_model
@@ -195,7 +195,7 @@ class TestBGERerankerPerformance:
                 for i in range(10)
             ]
 
-            reranked = reranker.rerank("test query", results)
+            reranker.rerank("test query", results)
 
             # Verify compute_score was called with batch_size parameter
             mock_model.compute_score.assert_called_once()
@@ -204,7 +204,7 @@ class TestBGERerankerPerformance:
 
     def test_large_result_set(self):
         """Test reranking with large result set."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             # Generate scores for 100 results
             mock_model.compute_score.return_value = [0.5 + (i * 0.001) for i in range(100)]
@@ -229,7 +229,7 @@ class TestBGERerankerIntegration:
 
     def test_integration_with_search_result(self):
         """Test integration with SearchResult objects."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             mock_model.compute_score.return_value = [0.9, 0.7]
             BGEReranker._model = mock_model
@@ -259,7 +259,7 @@ class TestBGERerankerIntegration:
 
     def test_query_document_pair_format(self):
         """Test that query-document pairs are formatted correctly."""
-        with patch('app.infra.search.vector_store.FlagReranker') as mock_flag:
+        with patch('app.infra.search.vector_store.FlagReranker'):
             mock_model = MagicMock()
             mock_model.compute_score.return_value = [0.8]
             BGEReranker._model = mock_model

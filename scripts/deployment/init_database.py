@@ -149,8 +149,8 @@ async def init_database():
         await session.commit()
 
         logger.info("Database seeded successfully")
-        logger.info(f"Admin user: admin / admin123")
-        logger.info(f"Demo user: demo / demo123")
+        logger.info("Admin user: admin / admin123")
+        logger.info("Demo user: demo / demo123")
 
     await engine.dispose()
 

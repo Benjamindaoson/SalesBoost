@@ -10,8 +10,7 @@ INT8量化 + 动态候选数 - 延迟降低80%
 """
 
 import time
-import numpy as np
-from typing import List, Dict, Optional
+from typing import List, Dict
 from sentence_transformers import CrossEncoder
 import requests
 
@@ -300,7 +299,7 @@ def test_adaptive_reranking():
 
         # 显示结果
         metrics = result['metrics']
-        print(f"\n[METRICS]")
+        print("\n[METRICS]")
         print(f"  Query Type: {metrics['query_type']}")
         print(f"  Total Time: {metrics['total_time_ms']:.1f}ms")
         print(f"  - Vector: {metrics['vector_time_ms']:.1f}ms")
@@ -308,7 +307,7 @@ def test_adaptive_reranking():
         print(f"  Candidates: {metrics['initial_count']} → {metrics['final_count']}")
 
         if result['results']:
-            print(f"\n[TOP RESULT]")
+            print("\n[TOP RESULT]")
             top = result['results'][0]
             print(f"  Score: {top['rerank_score']:.4f}")
             print(f"  Text: {top['text'][:100]}...")

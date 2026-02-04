@@ -4,11 +4,10 @@ Unit tests for RAG system components.
 Tests BM25 retriever, embedding manager, vector store, and GraphRAG.
 """
 import pytest
-import asyncio
 from typing import List, Dict, Any
 
 # BM25 Retriever Tests
-from app.infra.search.bm25_retriever import BM25Retriever, AsyncBM25Adapter
+from app.infra.search.bm25_retriever import BM25Retriever
 
 
 class TestBM25Retriever:
@@ -108,7 +107,6 @@ class TestBM25Retriever:
 # Embedding Manager Tests
 from app.infra.search.embedding_manager import (
     EmbeddingModelManager,
-    EMBEDDING_MODELS,
     get_embedding_manager
 )
 

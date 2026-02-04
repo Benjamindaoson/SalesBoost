@@ -34,7 +34,7 @@ def create_collection(qdrant_url: str, collection_name: str):
     response = session.get(f"{qdrant_url}/collections/{collection_name}")
 
     if response.status_code == 200:
-        print(f"[INFO] Collection already exists")
+        print("[INFO] Collection already exists")
         return True
 
     # 创建集合（使用命名向量）
@@ -53,7 +53,7 @@ def create_collection(qdrant_url: str, collection_name: str):
     )
 
     if response.status_code in [200, 201]:
-        print(f"[OK] Collection created")
+        print("[OK] Collection created")
         return True
     else:
         print(f"[ERROR] Failed to create collection: {response.text}")
@@ -186,7 +186,7 @@ def ingest_chunks_rest_api(
     response = session.get(f"{qdrant_url}/collections/{collection_name}")
     if response.status_code == 200:
         info = response.json()["result"]
-        print(f"\n[INFO] Collection info:")
+        print("\n[INFO] Collection info:")
         print(f"  - Name: {info['name']}")
         print(f"  - Vectors count: {info.get('vectors_count', 'N/A')}")
         print(f"  - Points count: {info.get('points_count', 'N/A')}")

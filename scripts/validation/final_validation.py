@@ -16,7 +16,6 @@ async def main():
 
     # Test 1: Intent Classifier
     print("\n[1/4] Intent Classification System")
-    from app.engine.intent.production_classifier import ProductionIntentClassifier
     from app.engine.intent.context_aware_classifier import ContextAwareIntentClassifier
 
     classifier = ContextAwareIntentClassifier()

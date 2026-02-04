@@ -11,7 +11,7 @@ Week 2 优化 3: Speculative Decoding推测解码
 
 import time
 import asyncio
-from typing import List, Dict, AsyncGenerator, Optional
+from typing import List, Dict, AsyncGenerator
 from dataclasses import dataclass
 import requests
 
@@ -272,7 +272,7 @@ class SpeculativeDecoder:
         self.target_model = target_model
         self.api_key = api_key
 
-        print(f"[INFO] Speculative Decoder initialized")
+        print("[INFO] Speculative Decoder initialized")
         print(f"  Draft Model: {draft_model}")
         print(f"  Target Model: {target_model}")
 
@@ -308,7 +308,7 @@ class SpeculativeDecoder:
         # 注意: 这是概念实现
         # 实际需要API支持 speculative_decoding 参数
 
-        print(f"\n[INFO] Speculative Decoding (Conceptual)")
+        print("\n[INFO] Speculative Decoding (Conceptual)")
         print(f"  Draft Model: {self.draft_model}")
         print(f"  Target Model: {self.target_model}")
         print(f"  Max Draft Tokens: {max_draft_tokens}")
@@ -321,7 +321,7 @@ class SpeculativeDecoder:
             # Step 1: 小模型推测
             draft_start = time.time()
             # 实际应该调用小模型API
-            draft_tokens = ["token"] * max_draft_tokens
+            ["token"] * max_draft_tokens
             draft_time = time.time() - draft_start
 
             # Step 2: 大模型验证
@@ -398,20 +398,20 @@ async def test_adaptive_routing():
         config = router.route(query)
         complexity = config["complexity"]
 
-        print(f"\n[ROUTING]")
+        print("\n[ROUTING]")
         print(f"  Detected: {complexity.level}")
         print(f"  Confidence: {complexity.confidence:.2f}")
         print(f"  Model: {config['model']}")
         print(f"  Max Tokens: {config['max_tokens']}")
 
         # 模拟生成 (不实际调用API)
-        print(f"\n[GENERATION] (Simulated)")
+        print("\n[GENERATION] (Simulated)")
         if complexity.level == "simple":
-            print(f"  Expected First Token: ~300ms")
+            print("  Expected First Token: ~300ms")
         elif complexity.level == "medium":
-            print(f"  Expected First Token: ~800ms")
+            print("  Expected First Token: ~800ms")
         else:
-            print(f"  Expected First Token: ~2900ms")
+            print("  Expected First Token: ~2900ms")
 
     print("\n" + "="*70)
     print("Adaptive Routing Test Complete")
@@ -441,7 +441,7 @@ async def test_speculative_decoding():
     print(f"[CONTEXT] {len(context)} documents")
 
     # 推测解码
-    print(f"\n[SPECULATIVE DECODING]")
+    print("\n[SPECULATIVE DECODING]")
     async for chunk in decoder.generate_speculative(query, context):
         if chunk["type"] == "first_token":
             print(f"\n  First Token: {chunk['latency_ms']:.1f}ms")

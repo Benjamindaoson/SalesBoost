@@ -16,7 +16,6 @@ import time
 import numpy as np
 from typing import Dict, Optional, List, Tuple
 from dataclasses import dataclass
-from datetime import datetime
 
 
 @dataclass
@@ -176,7 +175,7 @@ class TieredCache:
             )
             self.l2_cache.ping()
             self.l2_enabled = True
-            print(f"[OK] L2 Cache (Redis) connected")
+            print("[OK] L2 Cache (Redis) connected")
         except Exception as e:
             print(f"[WARNING] L2 Cache (Redis) failed: {e}")
             self.l2_enabled = False
@@ -497,7 +496,7 @@ def test_advanced_caching():
             if "similarity" in result:
                 print(f"  Similarity: {result['similarity']:.4f}")
         else:
-            print(f"  [CACHE MISS]")
+            print("  [CACHE MISS]")
             print(f"  Total: {result['total_time_ms']:.1f}ms")
 
     # 显示统计
@@ -509,7 +508,7 @@ def test_advanced_caching():
 
     if "tiered" in stats:
         tiered = stats["tiered"]
-        print(f"\n[TIERED CACHE]")
+        print("\n[TIERED CACHE]")
         print(f"  Total Requests: {tiered['total_requests']}")
         print(f"  L1 Hits: {tiered['l1_hits']} ({tiered['l1_hit_rate']:.1%})")
         print(f"  L2 Hits: {tiered['l2_hits']} ({tiered['l2_hit_rate']:.1%})")
@@ -518,7 +517,7 @@ def test_advanced_caching():
 
     if "semantic" in stats:
         semantic = stats["semantic"]
-        print(f"\n[SEMANTIC CACHE]")
+        print("\n[SEMANTIC CACHE]")
         print(f"  Cache Size: {semantic['cache_size']}")
         print(f"  Total Hits: {semantic['total_hits']}")
         print(f"  Avg Hits/Entry: {semantic['avg_hits_per_entry']:.2f}")

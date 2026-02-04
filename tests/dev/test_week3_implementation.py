@@ -7,7 +7,6 @@ Test Week 3-4 Implementation
 import asyncio
 import sys
 import os
-import time
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -80,7 +79,7 @@ async def test_performance_metrics_system():
     print("=" * 40)
 
     try:
-        from cognitive.observability.metrics.business_metrics import performance_metrics_collector, MetricType
+        from cognitive.observability.metrics.business_metrics import performance_metrics_collector
 
         # Test 1: Metrics recording
         print("\n1. Testing metrics recording...")

@@ -57,7 +57,7 @@ function parseEnv() {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.errors.map((err: z.ZodIssue) => `  - ${err.path.join('.')}: ${err.message}`).join('\n');
+      const missingVars = error.issues.map((err: z.ZodIssue) => `  - ${err.path.join('.')}: ${err.message}`).join('\n');
 
       throw new Error(
         `❌ Invalid environment configuration:\n\n${missingVars}\n\n` +

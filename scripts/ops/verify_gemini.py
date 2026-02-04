@@ -1,5 +1,4 @@
 import asyncio
-import os
 import logging
 from dotenv import load_dotenv
 from app.infra.gateway.model_gateway import ModelGateway

@@ -29,7 +29,7 @@ class NeuralReranker:
         """
         print(f"[INFO] Loading Cross-Encoder: {model_name}")
         self.reranker = CrossEncoder(model_name)
-        print(f"[OK] Reranker loaded")
+        print("[OK] Reranker loaded")
 
     def rerank(
         self,
@@ -202,7 +202,7 @@ def test_reranking():
         )
 
         # 显示结果
-        print(f"\n[METRICS]")
+        print("\n[METRICS]")
         metrics = result['metrics']
         print(f"  Total Time: {metrics['total_time_ms']:.1f}ms")
         print(f"  - Vector Search: {metrics['vector_time_ms']:.1f}ms")
@@ -210,7 +210,7 @@ def test_reranking():
         print(f"  Initial Results: {metrics['initial_count']}")
         print(f"  Final Results: {metrics['final_count']}")
 
-        print(f"\n[RESULTS]")
+        print("\n[RESULTS]")
         for j, doc in enumerate(result['results'], 1):
             print(f"\n  Result {j}:")
             print(f"    Vector Score: {doc['vector_score']:.4f}")

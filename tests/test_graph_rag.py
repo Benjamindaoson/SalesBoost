@@ -4,7 +4,6 @@ GraphRAG 集成测试
 测试知识图谱增强的 RAG 系统的基本功能。
 """
 import pytest
-import asyncio
 from cognitive.skills.study.graph_rag_service import GraphRAGService
 from cognitive.skills.study.graph_rag.graph_schema import EntityType, RelationType
 
@@ -107,10 +106,7 @@ def test_graph_schema():
     """测试图 Schema"""
     from cognitive.skills.study.graph_rag.graph_schema import (
         Entity,
-        EntityType,
         Relation,
-        RelationType,
-        Triple,
     )
     
     # 测试实体创建

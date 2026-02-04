@@ -1,14 +1,8 @@
 import asyncio
 import logging
-import time
 import uuid
-from typing import List, Dict, Any
 
 from app.engine.coordinator.workflow_coordinator import WorkflowCoordinator
-from app.engine.intent.intent_classifier import IntentGateway
-from app.agents.practice.npc_simulator import NPCGenerator
-from app.agents.ask.feedback_agent import MicroFeedbackService
-from app.memory.context.shadow_summarizer import shadow_summarizer
 from app.memory.tracking.followup_tracker import followup_tracker
 from app.observability.tracing.execution_tracer import trace_manager
 from app.infra.gateway.model_gateway import ModelGateway

@@ -11,7 +11,6 @@ Week 2 优化 5: Prometheus监控和可观测性
 
 import time
 from typing import Dict, Optional, List
-from dataclasses import dataclass
 from datetime import datetime
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, REGISTRY
 from opentelemetry import trace
@@ -282,10 +281,10 @@ class FeedbackCollector:
         rating: Optional[int]
     ):
         """低质量告警"""
-        print(f"\n[ALERT] Low Quality Response Detected!")
+        print("\n[ALERT] Low Quality Response Detected!")
         print(f"  Query: {query}")
         print(f"  Rating: {rating}")
-        print(f"  Action: Review and improve")
+        print("  Action: Review and improve")
 
     def get_stats(self) -> Dict:
         """获取反馈统计"""

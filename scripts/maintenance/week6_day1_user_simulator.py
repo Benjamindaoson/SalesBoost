@@ -494,7 +494,7 @@ def demo_user_simulator():
         simulator = UserSimulator(personality=personality)
         profile = simulator.profile
 
-        print(f"\nProfile:")
+        print("\nProfile:")
         print(f"  Name: {profile.name}")
         print(f"  Description: {profile.description}")
         print(f"  Objection Rate: {profile.objection_rate:.0%}")
@@ -502,7 +502,7 @@ def demo_user_simulator():
         print(f"  Buying Threshold: {profile.buying_threshold} turns")
 
         # 模拟5轮对话
-        print(f"\nSimulating 5 turns:")
+        print("\nSimulating 5 turns:")
         sales_messages = [
             "您好！我是XX银行的销售顾问，很高兴为您服务。",
             "我们的白金卡最高额度可达50万，比普通卡高5倍。",
@@ -523,7 +523,7 @@ def demo_user_simulator():
 
         # 统计信息
         stats = simulator.get_stats()
-        print(f"\n  Stats:")
+        print("\n  Stats:")
         print(f"    Turns: {stats['turn_count']}")
         print(f"    Objections: {stats['objections_raised']}")
         print(f"    Interest Level: {stats['interest_level']:.2f}")

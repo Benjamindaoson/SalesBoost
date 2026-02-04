@@ -18,7 +18,7 @@ Week 4 Day 22-24: Performance Tuning Configuration
 """
 
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict
 from enum import Enum
 
 
@@ -178,7 +178,7 @@ class PerformanceOptimizer:
             config: 性能调优配置
         """
         self.config = config
-        print(f"[OK] Performance Optimizer initialized")
+        print("[OK] Performance Optimizer initialized")
         print(f"  Profile: {config.profile.value}")
 
     def get_query_config(self, complexity: str) -> Dict:
@@ -281,25 +281,25 @@ def generate_tuning_report():
         print(f"\n## {name}")
         print(f"{'='*70}")
         print(f"  Profile: {config.profile.value}")
-        print(f"\n  Query Routing:")
+        print("\n  Query Routing:")
         print(f"    Simple: {config.simple_query_dimension}D, {config.simple_query_candidates} candidates, {config.simple_query_timeout_ms}ms timeout")
         print(f"    Medium: {config.medium_query_dimension}D, {config.medium_query_candidates} candidates, {config.medium_query_timeout_ms}ms timeout")
         print(f"    Complex: {config.complex_query_dimension}D, {config.complex_query_candidates} candidates, {config.complex_query_timeout_ms}ms timeout")
-        print(f"\n  Concurrency:")
+        print("\n  Concurrency:")
         print(f"    Max Queries: {config.max_concurrent_queries}")
         print(f"    Max Retrievals: {config.max_concurrent_retrievals}")
         print(f"    Max Generations: {config.max_concurrent_generations}")
-        print(f"\n  Cache:")
+        print("\n  Cache:")
         print(f"    L1 Size: {config.l1_cache_size}")
         print(f"    L2 Size: {config.l2_cache_size}")
         print(f"    L3 Size: {config.l3_cache_size}")
         print(f"    Semantic Threshold: {config.semantic_cache_threshold}")
         print(f"    Cache Warmup: {config.enable_cache_warmup}")
-        print(f"\n  Resource Pools:")
+        print("\n  Resource Pools:")
         print(f"    Qdrant: {config.qdrant_connection_pool_size}")
         print(f"    Redis: {config.redis_connection_pool_size}")
         print(f"    LLM: {config.llm_connection_pool_size}")
-        print(f"\n  Optimizations:")
+        print("\n  Optimizations:")
         print(f"    Batching: {config.enable_batching} (size: {config.batch_size if config.enable_batching else 'N/A'})")
         print(f"    Prefetch: {config.enable_prefetch} (size: {config.prefetch_size if config.enable_prefetch else 'N/A'})")
         print(f"    Compression: {config.enable_compression}")

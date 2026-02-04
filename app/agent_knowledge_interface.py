@@ -14,13 +14,10 @@ Author: Claude Sonnet 4.5
 Date: 2026-02-01
 """
 
-import os
 import sys
-import json
 import sqlite3
 from pathlib import Path
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+from typing import List, Dict, Any
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
