@@ -2,14 +2,15 @@
  * Task Service
  *
  * Handles all task-related API calls.
- * Follows Clean Code principles: single responsibility, clear naming, type safety.
+ * Unifies Admin (CRUD) and Student (Dashboard) functionality.
  */
 
 import { api } from './api';
+import { Task as DashboardTask, Statistics } from '@/types/dashboard';
 
-// ==================== Type Definitions ====================
+// ==================== Type Definitions (Backend) ====================
 
-export interface Task {
+export interface BackendTask {
   id: number;
   course_id: number;
   title: string;
@@ -67,7 +68,7 @@ export interface TaskListParams {
 }
 
 export interface TaskListResponse {
-  items: Task[];
+  items: BackendTask[];
   total: number;
   page: number;
   page_size: number;
@@ -79,82 +80,158 @@ export interface TaskStartResponse {
   message: string;
 }
 
+// API endpoints
+const TASKS_ENDPOINT = '/api/v1/tasks';
+const STATISTICS_ENDPOINT = '/api/v1/statistics';
+
 // ==================== Service Implementation ====================
 
 /**
- * Task Service
- *
- * Provides methods for task management operations.
- * All methods are async and return Promises for consistent error handling.
+ * Map backend task status to frontend status
  */
+function mapTaskStatus(backendStatus: string): 'pending' | 'in-progress' | 'completed' {
+  switch (backendStatus.toLowerCase()) {
+    case 'locked':
+      return 'pending';
+    case 'available':
+      return 'pending';
+    case 'in_progress':
+    case 'active':
+      return 'in-progress';
+    case 'completed':
+      return 'completed';
+    default:
+      return 'pending';
+  }
+}
+
 export const taskService = {
+  // ==================== Student / Dashboard Methods ====================
+
+  /**
+   * Get all tasks for the current user (Mapped for Dashboard)
+   */
+  getTasks: async (): Promise<DashboardTask[]> => {
+    try {
+      const response = await api.get<{ items: any[]; total: number }>(TASKS_ENDPOINT);
+
+      // Transform backend response to frontend Task format
+      return response.items.map((item: any) => ({
+        id: item.id.toString(),
+        courseName: item.title,
+        courseSubtitle: item.description || '',
+        taskInfo: item.instructions || '',
+        taskTag: item.task_type,
+        status: mapTaskStatus(item.status),
+        timeRange: {
+          start: item.created_at,
+          end: item.updated_at
+        },
+        progress: {
+          completed: Math.floor((item.completion_rate || 0) / 100 * (item.points || 100)),
+          total: item.points || 100,
+          bestScore: item.average_score || 0
+        }
+      }));
+    } catch (error) {
+      console.error('[TaskService] Failed to fetch tasks:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get statistics for the current user
+   */
+  getStatistics: async (): Promise<Statistics> => {
+    try {
+      const response = await api.get<Statistics>(STATISTICS_ENDPOINT);
+      return response;
+    } catch (error) {
+      console.error('[TaskService] Failed to fetch statistics:', error);
+      return {
+        totalTasks: 0,
+        inProgress: 0,
+        completed: 0,
+        averageScore: 0,
+        lockedItems: 0
+      };
+    }
+  },
+
+  /**
+   * Get task details by ID (Mapped for Dashboard)
+   */
+  getTaskById: async (taskId: string): Promise<DashboardTask | null> => {
+    try {
+      const response = await api.get<any>(`${TASKS_ENDPOINT}/${taskId}`);
+
+      return {
+        id: response.id.toString(),
+        courseName: response.title,
+        courseSubtitle: response.description || '',
+        taskInfo: response.instructions || '',
+        taskTag: response.task_type,
+        status: mapTaskStatus(response.status),
+        timeRange: {
+          start: response.created_at,
+          end: response.updated_at
+        },
+        progress: {
+          completed: Math.floor((response.completion_rate || 0) / 100 * (response.points || 100)),
+          total: response.points || 100,
+          bestScore: response.average_score || 0
+        }
+      };
+    } catch (error) {
+      console.error('[TaskService] Failed to fetch task:', error);
+      return null;
+    }
+  },
+
+  // ==================== Admin / CRUD Methods ====================
+
   /**
    * Create a new task (Admin only)
-   *
-   * @param data - Task creation data
-   * @returns Promise<Task> - Created task
-   * @throws Error if creation fails
    */
-  createTask: async (data: TaskCreate): Promise<Task> => {
-    return await api.post<Task>('/api/v1/tasks', data);
+  createTask: async (data: TaskCreate): Promise<BackendTask> => {
+    return await api.post<BackendTask>(TASKS_ENDPOINT, data);
   },
 
   /**
-   * List tasks with filtering and pagination
-   *
-   * @param params - Filter and pagination parameters
-   * @returns Promise<TaskListResponse> - Paginated task list
+   * List tasks with filtering and pagination (Raw Backend Data)
    */
   listTasks: async (params?: TaskListParams): Promise<TaskListResponse> => {
-    return await api.get<TaskListResponse>('/api/v1/tasks', { params });
+    return await api.get<TaskListResponse>(TASKS_ENDPOINT, { params });
   },
 
   /**
-   * Get task details by ID
-   *
-   * @param taskId - Task ID
-   * @returns Promise<Task> - Task details with statistics
-   * @throws Error if task not found
+   * Get task details by ID (Raw Backend Data)
    */
-  getTask: async (taskId: number): Promise<Task> => {
-    return await api.get<Task>(`/api/v1/tasks/${taskId}`);
+  getTask: async (taskId: number): Promise<BackendTask> => {
+    return await api.get<BackendTask>(`${TASKS_ENDPOINT}/${taskId}`);
   },
 
   /**
    * Update task (Admin only)
-   *
-   * @param taskId - Task ID
-   * @param data - Update data
-   * @returns Promise<Task> - Updated task
-   * @throws Error if update fails
    */
-  updateTask: async (taskId: number, data: TaskUpdate): Promise<Task> => {
-    return await api.put<Task>(`/api/v1/tasks/${taskId}`, data);
+  updateTask: async (taskId: number, data: TaskUpdate): Promise<BackendTask> => {
+    return await api.put<BackendTask>(`${TASKS_ENDPOINT}/${taskId}`, data);
   },
 
   /**
    * Delete task (Admin only)
-   *
-   * This will also delete all associated sessions.
-   *
-   * @param taskId - Task ID
-   * @returns Promise<void>
-   * @throws Error if deletion fails
    */
   deleteTask: async (taskId: number): Promise<void> => {
-    return await api.delete(`/api/v1/tasks/${taskId}`);
+    return await api.delete(`${TASKS_ENDPOINT}/${taskId}`);
   },
 
   /**
    * Start a task (create a new training session)
-   *
-   * This creates a new session for the user to begin the task.
-   *
-   * @param taskId - Task ID
-   * @returns Promise<TaskStartResponse> - Session information
-   * @throws Error if task is locked or start fails
    */
-  startTask: async (taskId: number): Promise<TaskStartResponse> => {
-    return await api.post<TaskStartResponse>(`/api/v1/tasks/${taskId}/start`);
+  startTask: async (taskId: string | number): Promise<TaskStartResponse> => {
+    return await api.post<TaskStartResponse>(`${TASKS_ENDPOINT}/${taskId}/start`);
   }
 };
+
+// Export standalone functions for backward compatibility with taskService.ts usage
+export const { getTasks, getStatistics, getTaskById, startTask, createTask, updateTask, deleteTask, listTasks, getTask } = taskService;

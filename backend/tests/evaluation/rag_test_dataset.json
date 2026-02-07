@@ -1,0 +1,22 @@
+{
+  "test_cases": [
+    {
+      "id": 1,
+      "category": "product_inquiry",
+      "question": "你们的CRM系统有哪些核心功能？",
+      "ground_truth_answer": "我们的CRM系统包含客户管理、销售漏斗跟踪、自动化营销、数据分析报表、移动端支持等核心功能。",
+      "ground_truth_contexts": [
+        "CRM系统核心功能包括：1. 360度客户视图 2. 销售流程自动化 3. 智能线索评分 4. 实时数据分析"
+      ]
+    },
+    {
+      "id": 2,
+      "category": "product_inquiry",
+      "question": "支持多少用户同时在线使用？",
+      "ground_truth_answer": "我们的系统支持无限用户数，可以轻松扩展到1000+并发用户，保证系统稳定性。",
+      "ground_truth_contexts": [
+        "系统采用云原生架构，支持弹性扩展，可承载1000+并发用户"
+      ]
+    }
+  ]
+}

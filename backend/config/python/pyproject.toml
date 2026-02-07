@@ -1,0 +1,35 @@
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+asyncio_mode = "auto"
+pythonpath = [
+    ".",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "TID"]
+ignore = []
+
+# 禁止在非 Provider 目录导入 OpenAI SDK
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"openai".msg = "禁止直接导入 openai SDK。请使用 app.services.llm_service.UnifiedLLMService 统一入口。"
+"openai.OpenAI".msg = "禁止直接使用 OpenAI 客户端。请使用 app.services.llm_service.get_llm_service()。"
+"openai.AsyncOpenAI".msg = "禁止直接使用 AsyncOpenAI 客户端。请使用 app.services.llm_service.get_llm_service()。"
+
+[tool.ruff.lint.per-file-ignores]
+# 允许 Provider 实现层直接使用 OpenAI SDK
+"app/services/model_gateway/providers/*.py" = ["TID251"]
+# 允许测试文件
+"tests/**/*.py" = ["TID251"]
+
+[tool.black]
+line-length = 120
+target-version = ['py311']

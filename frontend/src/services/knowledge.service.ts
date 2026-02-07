@@ -1,12 +1,13 @@
+
 /**
- * Knowledge Base Management Service (Client-Side RAG Version)
+ * Knowledge Base Service - Real API Integration
  * 
- * Replaces the mock API with a real client-side implementation:
- * - Stores knowledge items in LocalStorage.
- * - Uses DeepSeek V3 (via llm.service) for "Context-Stuffing RAG" search.
+ * Connects to the backend RAG knowledge base endpoints.
  */
 
-import { llmService, ChatMessage } from './llm.service';
+import { api } from './api';
+
+const KNOWLEDGE_ENDPOINT = '/api/v1/knowledge';
 
 export interface KnowledgeMetadata {
   source?: string;
@@ -23,16 +24,6 @@ export interface KnowledgeEntry {
   created_at: string;
 }
 
-export interface KnowledgeStats {
-  total_documents: number;
-  total_chars: number;
-  total_size_bytes: number;
-  vector_count: number;
-  recent_uploads: Array<{ date: string; count: number }>;
-  by_source: Record<string, number>;
-  by_stage: Record<string, number>;
-}
-
 export interface KnowledgeListParams {
   page?: number;
   page_size?: number;
@@ -41,213 +32,104 @@ export interface KnowledgeListParams {
   stage?: string;
 }
 
-export interface UploadProgress {
-  loaded: number;
-  total: number;
-  percentage: number;
-}
+export const knowledgeService = {
+  /**
+   * List knowledge entries with pagination and filtering
+   */
+  async listKnowledge(params: KnowledgeListParams = {}): Promise<{ items: KnowledgeEntry[]; total: number }> {
+    try {
+        // Map frontend params to backend query params
+        const queryParams = {
+            limit: params.page_size || 10,
+            offset: ((params.page || 1) - 1) * (params.page_size || 10),
+        };
+        const response = await api.get<any>(`${KNOWLEDGE_ENDPOINT}/list`, { params: queryParams });
+        
+        // Backend returns: { items: [...], next_offset: ... }
+        const rawItems = response.items || [];
+        
+        const mappedItems = Array.isArray(rawItems) ? rawItems.map((item: any) => ({
+            id: item.id,
+            title: item.payload?.source || item.payload?.title || 'Untitled',
+            content: item.payload?.text || '',
+            metadata: item.payload || {},
+            created_at: new Date().toISOString() // Vector store might not have created_at
+        })) : [];
 
-const STORAGE_KEY = 'salesboost_knowledge_base';
-
-class KnowledgeService {
-  private getStorage(): KnowledgeEntry[] {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  }
-
-  private setStorage(data: KnowledgeEntry[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
+        return {
+            items: mappedItems,
+            total: mappedItems.length // Qdrant scroll doesn't give total easily
+        };
+    } catch (error) {
+        console.error('[KnowledgeService] Failed to fetch knowledge:', error);
+        return { items: [], total: 0 };
+    }
+  },
 
   /**
-   * Upload text content to the local knowledge base
+   * Upload text content
    */
   async uploadText(
     content: string,
     metadata: KnowledgeMetadata = {}
   ): Promise<{ success: boolean; id: string; message: string }> {
-    const entries = this.getStorage();
-    const title = metadata.title || `Text Upload ${new Date().toLocaleTimeString()}`;
-    const newEntry: KnowledgeEntry = {
-      id: Date.now().toString(),
-      title,
-      content,
-      metadata: { ...metadata, source: metadata.source || 'user-upload' },
-      created_at: new Date().toISOString(),
-    };
-    
-    this.setStorage([newEntry, ...entries]);
-    return { success: true, id: newEntry.id, message: 'Text uploaded successfully' };
-  }
-
-  /**
-   * List knowledge entries with pagination and filtering
-   */
-  async listKnowledge(params: KnowledgeListParams = {}): Promise<{ items: KnowledgeEntry[]; total: number }> {
-    let entries = this.getStorage();
-    
-    // Filtering
-    if (params.search) {
-      const search = params.search.toLowerCase();
-      entries = entries.filter(e => 
-        e.title.toLowerCase().includes(search) || 
-        e.content.toLowerCase().includes(search)
-      );
-    }
-    
-    if (params.source) {
-      entries = entries.filter(e => e.metadata.source === params.source);
-    }
-    
-    if (params.stage) {
-      entries = entries.filter(e => e.metadata.stage === params.stage);
-    }
-
-    const total = entries.length;
-    const page = params.page || 1;
-    const pageSize = params.page_size || 10;
-    
-    const items = entries.slice((page - 1) * pageSize, page * pageSize);
-    
-    return { items, total };
-  }
-
-  /**
-   * Get knowledge base statistics
-   */
-  async getStats(): Promise<KnowledgeStats> {
-    const entries = this.getStorage();
-    const stats: KnowledgeStats = {
-      total_documents: entries.length,
-      total_chars: entries.reduce((sum, e) => sum + e.content.length, 0),
-      total_size_bytes: entries.reduce((sum, e) => sum + new Blob([e.content]).size, 0),
-      vector_count: entries.length, // Client-side simulation
-      recent_uploads: [],
-      by_source: {},
-      by_stage: {}
-    };
-
-    // Group by source and stage
-    entries.forEach(e => {
-      const source = e.metadata.source || 'unknown';
-      stats.by_source[source] = (stats.by_source[source] || 0) + 1;
-      
-      const stage = e.metadata.stage || 'general';
-      stats.by_stage[stage] = (stats.by_stage[stage] || 0) + 1;
-    });
-
-    return stats;
-  }
-
-  /**
-   * Upload a file to the knowledge base (Client-side read)
-   */
-  async uploadFile(
-    file: File,
-    metadata: KnowledgeMetadata,
-    onProgress?: (progress: { loaded: number; total: number; percentage: number }) => void
-  ): Promise<{ success: boolean; id: string; message: string }> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = async (e) => {
-        try {
-          const content = e.target?.result as string;
-          const result = await this.uploadText(content, { ...metadata, title: file.name });
-          if (onProgress) onProgress({ loaded: file.size, total: file.size, percentage: 100 });
-          resolve({ ...result, message: 'File uploaded successfully' });
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsText(file);
-    });
-  }
-
-  /**
-   * Validate file before upload
-   */
-  validateFile(file: File): { valid: boolean; error?: string } {
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    const allowedTypes = [
-      'text/plain',
-      'text/markdown',
-      'application/json',
-      'application/pdf', // Note: PDF parsing in browser requires PDF.js, treating as text for now might fail if binary
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
-    ];
-
-    if (file.size > maxSize) {
-      return {
-        valid: false,
-        error: `File size exceeds 10MB limit (${(file.size / 1024 / 1024).toFixed(2)}MB)`,
-      };
-    }
-
-    // Relaxed type check for demo purposes
-    // if (!allowedTypes.includes(file.type)) { ... }
-
-    return { valid: true };
-  }
-
-  /**
-   * Delete a knowledge entry
-   */
-  async deleteKnowledge(id: string): Promise<void> {
-    const entries = this.getStorage();
-    this.setStorage(entries.filter(e => e.id !== id));
-  }
-
-  /**
-   * Search knowledge base using DeepSeek V3 (Real RAG)
-   */
-  async search(query: string): Promise<string> {
-    const entries = this.getStorage();
-    
-    if (entries.length === 0) {
-      return "The knowledge base is empty. Please upload some documents first.";
-    }
-
-    // Context Stuffing: Combine all titles and content
-    // Limit context size to avoid token limits (simple truncation for now)
-    let context = "";
-    for (const entry of entries) {
-      const entryText = `Source: ${entry.title}\nContent: ${entry.content}\n---\n`;
-      if ((context.length + entryText.length) < 50000) { // Safety limit for client-side
-        context += entryText;
-      }
-    }
-
     try {
-      const systemPrompt = llmService.createKnowledgeBasePrompt(context);
-      const messages: ChatMessage[] = [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: query }
-      ];
-
-      const response = await llmService.chatCompletion(messages);
-      return response;
+        const response = await api.post<{ status: string; ids: string[] }>(`${KNOWLEDGE_ENDPOINT}/text`, {
+            content,
+            source: metadata.source || 'admin-upload',
+            stage: metadata.stage || 'general',
+            type: 'text',
+            collection_name: 'sales_knowledge'
+        });
+        return {
+            success: true,
+            id: response.ids[0],
+            message: 'Uploaded successfully'
+        };
     } catch (error) {
-      console.error("RAG Search Failed:", error);
-      return "Sorry, I encountered an error while searching the knowledge base.";
+        console.error('[KnowledgeService] Upload failed:', error);
+        throw error;
     }
-  }
-  
-  // Initialize with some default data if empty
-  initDefaults() {
-    if (this.getStorage().length === 0) {
-      this.uploadText(
-        "Q: What is SalesBoost? A: SalesBoost is an AI-powered training platform.\nQ: How do I reset my password? A: Contact admin support.",
-        { title: "Sales Boost FAQ", stage: 'onboarding' }
-      );
-    }
-  }
-}
+  },
 
-export const knowledgeService = new KnowledgeService();
-// Initialize defaults on load
-knowledgeService.initDefaults();
-export default knowledgeService;
+  /**
+   * Upload file
+   */
+  async uploadFile(file: File): Promise<{ success: boolean; id: string; message: string }> {
+      try {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          // api.post handles FormData correctly if we don't force Content-Type json
+          // But our api client forces application/json in default headers?
+          // Axios usually overrides if data is FormData.
+          // However, our api client sets 'Content-Type': 'application/json' in create().
+          // We need to override it.
+          
+          const response = await api.post<{ status: string; ids: string[] }>(
+              `${KNOWLEDGE_ENDPOINT}/upload`, 
+              formData, 
+              { headers: { 'Content-Type': 'multipart/form-data' } }
+          );
+          
+          return {
+              success: true,
+              id: response.ids[0],
+              message: 'File uploaded successfully'
+          };
+      } catch (error) {
+          console.error('[KnowledgeService] File upload failed:', error);
+          throw error;
+      }
+  },
+
+  async deleteKnowledge(id: string): Promise<boolean> {
+      try {
+          await api.delete(`${KNOWLEDGE_ENDPOINT}/${id}`);
+          return true;
+      } catch (error) {
+          console.error('[KnowledgeService] Delete failed:', error);
+          return false;
+      }
+  }
+};

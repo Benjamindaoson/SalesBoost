@@ -1,0 +1,93 @@
+# MCP Server Configuration for SalesBoost
+
+server:
+  name: salesboost-mcp
+  version: 1.0.0
+  protocol_version: "2024-11-05"
+
+# Capabilities to expose
+capabilities:
+  tools: true
+  resources: true
+  prompts: true
+
+# Tool configuration
+tools:
+  enabled: true
+  source: tool_registry  # Use existing ToolRegistry
+  filter:
+    # Only expose specific tools (empty = all tools)
+    include: []
+    # Exclude specific tools
+    exclude: []
+  # Agent type filter (empty = all agents can access)
+  allowed_agents: []
+
+# Resource configuration
+resources:
+  enabled: true
+
+  # Knowledge base resources
+  knowledge:
+    enabled: true
+    uri_pattern: "salesboost://knowledge/{topic}"
+    description: "Query the sales knowledge base"
+
+  # User profile resources
+  profiles:
+    enabled: true
+    uri_pattern: "salesboost://profile/{user_id}"
+    description: "Get user profile information"
+
+  # CRM resources
+  crm:
+    enabled: false  # Disabled by default for security
+    uri_pattern: "salesboost://crm/{resource_type}"
+    description: "Access CRM data"
+
+# Prompt configuration
+prompts:
+  enabled: true
+
+  # Built-in prompts
+  builtin:
+    - objection_handling
+    - discovery_questions
+    - value_proposition
+    - closing_technique
+
+  # Custom prompt directory (optional)
+  custom_directory: null
+
+# Transport configuration
+transport:
+  type: stdio  # stdio, http, or websocket
+
+  # HTTP transport (if type=http)
+  http:
+    host: 0.0.0.0
+    port: 8100
+
+  # WebSocket transport (if type=websocket)
+  websocket:
+    host: 0.0.0.0
+    port: 8101
+
+# Logging
+logging:
+  level: INFO
+  format: json
+  file: logs/mcp_server.log
+
+# Security
+security:
+  # Require authentication
+  require_auth: false
+
+  # API key (if require_auth=true)
+  api_key: null
+
+  # Rate limiting
+  rate_limit:
+    enabled: true
+    requests_per_minute: 60

@@ -6,7 +6,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { TaskTable } from '@/components/dashboard/TaskTable';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { Layers, PlayCircle, CheckCircle, Award, Lock, Trophy } from 'lucide-react';
-import { getTasks, getStatistics } from '@/services/taskService';
+import { getTasks, getStatistics } from '@/services/task.service';
 
 export default function StudentDashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);

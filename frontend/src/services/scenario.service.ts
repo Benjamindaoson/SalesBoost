@@ -1,4 +1,5 @@
-import api from '@/lib/api';
+
+import { api } from './api';
 
 export interface Persona {
   id: string;
@@ -21,14 +22,17 @@ export interface Scenario {
   personas: Persona[];
 }
 
+// Ensure endpoints match backend mounting (usually /api/v1/scenarios)
+const SCENARIOS_ENDPOINT = '/api/v1/scenarios';
+
 export const scenarioService = {
   listScenarios: async (params?: { course_id?: string; difficulty?: string }) => {
-    const response = await api.get<{ items: Scenario[]; total: number }>('/scenarios', { params });
-    return response.data;
+    const response = await api.get<{ items: Scenario[]; total: number }>(SCENARIOS_ENDPOINT, { params });
+    return response;
   },
 
   getScenario: async (scenarioId: string) => {
-    const response = await api.get<Scenario>(`/scenarios/${scenarioId}`);
-    return response.data;
+    const response = await api.get<Scenario>(`${SCENARIOS_ENDPOINT}/${scenarioId}`);
+    return response;
   }
 };

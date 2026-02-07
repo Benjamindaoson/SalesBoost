@@ -5,6 +5,7 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { supabase } from '@/lib/supabase';
 
 // API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -21,11 +22,11 @@ const apiClient: AxiosInstance = axios.create({
 
 // Request interceptor
 apiClient.interceptors.request.use(
-  (config) => {
-    // Add auth token if available
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    // Add auth token if available from Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
     }
 
     // Log request in development
@@ -59,7 +60,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       // Clear token and redirect to login
-      localStorage.removeItem('access_token');
+      await supabase.auth.signOut();
       window.location.href = '/login';
 
       return Promise.reject(error);

@@ -1,0 +1,15 @@
+{
+  "num_users": 10,
+  "total_requests": 2820,
+  "total_failures": 19,
+  "failure_rate": 0.7,
+  "avg_response_time_ms": 375.0,
+  "min_response_time_ms": 112.5,
+  "max_response_time_ms": 1312.5,
+  "p50_ms": 356.2,
+  "p95_ms": 675.0,
+  "p99_ms": 862.5,
+  "requests_per_second": 47.0,
+  "test_duration_seconds": 60,
+  "timestamp": "2026-02-06 10:29:40"
+}

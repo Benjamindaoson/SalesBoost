@@ -1,73 +1,81 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-from typing import Optional, List
+
+import logging
 import uvicorn
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="SalesBoost API", version="1.0.0")
+from core.config import get_settings
+from core.database import init_db, close_db
+from api.endpoints import tasks, knowledge, sessions, customers
+from api.endpoints.admin_modules import analytics, courses, personas, evaluation, scenarios
 
-# CORS 配置
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+settings = get_settings()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for startup and shutdown events.
+    """
+    logger.info("Starting up SalesBoost API...")
+    try:
+        await init_db()
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        # Continue even if DB fails, to allow debugging or fallback modes
+    
+    yield
+    
+    logger.info("Shutting down SalesBoost API...")
+    await close_db()
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version="1.0.0",
+    lifespan=lifespan,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
-# 数据模型
-class User(BaseModel):
-    id: Optional[int] = None
-    username: str
-    email: str
-    role: str = "student"
+# CORS Configuration
+if settings.BACKEND_CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
-# 内存数据库
-users_db: List[User] = []
-next_user_id = 1
+# Include Routers
+app.include_router(tasks.router, prefix=f"{settings.API_V1_STR}/tasks", tags=["tasks"])
+app.include_router(sessions.router, prefix=f"{settings.API_V1_STR}/sessions", tags=["sessions"])
+app.include_router(customers.router, prefix=f"{settings.API_V1_STR}/customers", tags=["customers"])
+app.include_router(knowledge.router, prefix=f"{settings.API_V1_STR}/knowledge", tags=["knowledge"])
 
-@app.get("/", response_class=HTMLResponse)
+# Admin Modules
+app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/admin/analytics", tags=["admin-analytics"])
+app.include_router(courses.router, prefix=f"{settings.API_V1_STR}/courses", tags=["courses"])
+app.include_router(personas.router, prefix=f"{settings.API_V1_STR}/personas", tags=["personas"])
+app.include_router(evaluation.router, prefix=f"{settings.API_V1_STR}/evaluation", tags=["evaluation"])
+app.include_router(scenarios.router, prefix=f"{settings.API_V1_STR}/scenarios", tags=["scenarios"])
+
+
+@app.get("/")
 async def root():
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>SalesBoost API</title>
-        <style>
-            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            h1 { color: #333; }
-            .status { background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; }
-            .endpoint { background: #f8f9fa; padding: 10px; margin: 10px 0; border-left: 4px solid #007bff; }
-        </style>
-    </head>
-    <body>
-        <h1>🚀 SalesBoost API</h1>
-        <div class="status">✅ API 服务正常运行</div>
-        <h2>可用端点：</h2>
-        <div class="endpoint">GET / - 此页面</div>
-        <div class="endpoint">GET /health - 健康检查</div>
-        <div class="endpoint">GET /api/users - 获取所有用户</div>
-        <div class="endpoint">POST /api/users - 创建用户</div>
-    </body>
-    </html>
-    """
+    return {
+        "status": "online",
+        "service": "SalesBoost API",
+        "version": "1.0.0",
+        "docs_url": "/docs"
+    }
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "service": "SalesBoost Backend", "version": "1.0.0"}
-
-@app.get("/api/users")
-async def get_users():
-    return {"users": users_db, "total": len(users_db)}
-
-@app.post("/api/users")
-async def create_user(user: User):
-    global next_user_id
-    user.id = next_user_id
-    next_user_id += 1
-    users_db.append(user)
-    return {"message": "用户创建成功", "user": user}
+    return {"status": "ok"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

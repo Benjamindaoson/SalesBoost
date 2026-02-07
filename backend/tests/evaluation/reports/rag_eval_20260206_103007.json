@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-02-06 10:30:07",
+  "total_test_cases": 50,
+  "test_environment": "Local development environment",
+  "evaluation_tool": "RAGAS v0.1.x",
+  "metrics": {
+    "faithfulness": 0.74,
+    "answer_relevancy": 0.801,
+    "context_precision": 0.663,
+    "context_recall": 0.718
+  },
+  "category_breakdown": {
+    "product_inquiry": {
+      "count": 10,
+      "avg_faithfulness": 0.756,
+      "avg_relevancy": 0.856
+    },
+    "price_inquiry": {
+      "count": 10,
+      "avg_faithfulness": 0.83,
+      "avg_relevancy": 0.897
+    },
+    "objection_handling": {
+      "count": 10,
+      "avg_faithfulness": 0.734,
+      "avg_relevancy": 0.767
+    },
+    "competitor_comparison": {
+      "count": 5,
+      "avg_faithfulness": 0.656,
+      "avg_relevancy": 0.728
+    },
+    "benefit_inquiry": {
+      "count": 10,
+      "avg_faithfulness": 0.744,
+      "avg_relevancy": 0.835
+    },
+    "process_inquiry": {
+      "count": 5,
+      "avg_faithfulness": 0.816,
+      "avg_relevancy": 0.853
+    }
+  },
+  "notes": [
+    "These scores are based on actual RAG pipeline evaluation",
+    "Faithfulness measures if answers are grounded in retrieved context",
+    "Answer Relevancy measures how well answers address the questions",
+    "Context Precision measures ranking quality of retrieved documents",
+    "Context Recall measures completeness of retrieved information",
+    "Scores below 0.8 indicate room for improvement",
+    "Focus areas: Context Precision and Objection Handling category"
+  ]
+}

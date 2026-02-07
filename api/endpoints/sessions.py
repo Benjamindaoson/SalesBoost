@@ -19,7 +19,7 @@ from app.tasks.evaluation_task import run_evaluation_task
 from app.tasks.store import TASK_STORE, TaskResult, TaskStatus
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/sessions", tags=["sessions"], dependencies=[Depends(require_user), Depends(audit_access)])
+router = APIRouter(tags=["sessions"], dependencies=[Depends(require_user), Depends(audit_access)])
 # ... (existing SessionCreate and SessionResponse)
 
 @router.get("/tasks/{task_id}", response_model=TaskResult)

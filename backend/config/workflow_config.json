@@ -1,0 +1,46 @@
+{
+  "name": "production_workflow",
+  "version": "1.0",
+  "description": "Production workflow with full features enabled",
+  "enabled_nodes": [
+    "intent",
+    "knowledge",
+    "npc",
+    "coach",
+    "compliance"
+  ],
+  "node_params": {
+    "intent": {
+      "confidence_threshold": 0.7
+    },
+    "knowledge": {
+      "top_k": 3,
+      "min_score": 0.5
+    },
+    "coach": {
+      "enable_fallback": true
+    },
+    "compliance": {
+      "risk_threshold": 0.8
+    }
+  },
+  "routing_rules": {
+    "knowledge": ["npc"],
+    "npc": ["coach"],
+    "coach": ["compliance"]
+  },
+  "conditional_routing": {
+    "intent": {
+      "knowledge": "knowledge",
+      "npc": "npc"
+    }
+  },
+  "routing_aliases": {
+    "tools": "knowledge"
+  },
+  "enable_reasoning": true,
+  "enable_routing_policy": true,
+  "routing_min_confidence": 0.5,
+  "enable_bandit": true,
+  "bandit_exploration_rate": 0.1
+}

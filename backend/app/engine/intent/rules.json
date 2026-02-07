@@ -1,0 +1,103 @@
+{
+  "confidence": {
+    "min_unclear": 0.4,
+    "min_primary": 0.51,
+    "max_primary": 0.99
+  },
+  "rules": [
+    {
+      "intent": "price_objection",
+      "weight": 1.0,
+      "stage_suggestion": "objection_handling",
+      "keywords": [
+        "价格",
+        "多少钱",
+        "贵",
+        "太贵",
+        "便宜",
+        "折扣",
+        "优惠",
+        "预算",
+        "expensive",
+        "price",
+        "cost",
+        "discount"
+      ]
+    },
+    {
+      "intent": "discovery_question",
+      "weight": 0.7,
+      "stage_suggestion": "discovery",
+      "keywords": [
+        "怎么",
+        "如何",
+        "什么",
+        "为什么",
+        "how",
+        "what",
+        "why"
+      ]
+    },
+    {
+      "intent": "product_inquiry",
+      "weight": 0.6,
+      "stage_suggestion": "discovery",
+      "keywords": [
+        "功能",
+        "支持",
+        "兼容",
+        "feature",
+        "capability"
+      ]
+    },
+    {
+      "intent": "benefit_inquiry",
+      "weight": 0.9,
+      "stage_suggestion": "discovery",
+      "keywords": [
+        "权益",
+        "条款",
+        "政策",
+        "费用",
+        "发票",
+        "退款",
+        "合同",
+        "benefit",
+        "terms",
+        "policy",
+        "invoice",
+        "refund",
+        "contract"
+      ]
+    },
+    {
+      "intent": "compliance_risk",
+      "weight": 1.2,
+      "stage_suggestion": null,
+      "keywords": [
+        "保证",
+        "必赚",
+        "100%",
+        "稳赚",
+        "无风险",
+        "api key",
+        "system prompt",
+        "ignore all previous"
+      ]
+    }
+  ],
+  "context_enhancement": {
+    "closing_stages": [
+      "closing",
+      "close",
+      "成交"
+    ],
+    "upgrade_intents_to_final_confirmation": [
+      "price_objection",
+      "benefit_inquiry"
+    ],
+    "final_confirmation_stage": "closing",
+    "confidence_boost": 0.08
+  }
+}
+

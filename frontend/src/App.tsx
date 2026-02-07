@@ -21,14 +21,14 @@ const Training = lazy(() => import('@/pages/student/Training'));
 const Evaluation = lazy(() => import('@/pages/student/Evaluation'));
 
 // Lazy load admin pages
-const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard'));
-const AdminCourses = lazy(() => import('@/pages/Admin/Courses'));
-const AdminTasks = lazy(() => import('@/pages/Admin/Tasks'));
-const AdminAnalysis = lazy(() => import('@/pages/Admin/Analysis'));
-const AdminUsers = lazy(() => import('@/pages/Admin/Users'));
-const AdminSettings = lazy(() => import('@/pages/Admin/Settings'));
-const EvolutionTrends = lazy(() => import('@/pages/Admin/EvolutionTrends'));
-const KnowledgeBase = lazy(() => import('@/pages/Admin/KnowledgeBase'));
+const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
+const AdminCourses = lazy(() => import('@/pages/admin/Courses'));
+const AdminTasks = lazy(() => import('@/pages/admin/Tasks'));
+const AdminAnalysis = lazy(() => import('@/pages/admin/Analysis'));
+const AdminUsers = lazy(() => import('@/pages/admin/Users'));
+const AdminSettings = lazy(() => import('@/pages/admin/Settings'));
+const EvolutionTrends = lazy(() => import('@/pages/admin/EvolutionTrends'));
+const KnowledgeBase = lazy(() => import('@/pages/admin/KnowledgeBase'));
 
 // Loading fallback component
 function LoadingFallback() {

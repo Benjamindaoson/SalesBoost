@@ -264,6 +264,114 @@ class ComplianceAgent:
 
 ---
 
+---
+
+## 📁 Project Structure
+
+```
+SalesBoost/
+├── backend/                    # Backend application
+│   ├── main.py                # FastAPI entry point
+│   ├── requirements.txt        # Python dependencies
+│   ├── app/                   # Application code
+│   │   ├── core/              # Core infrastructure
+│   │   ├── api/               # API endpoints
+│   │   ├── agents/            # AI agents
+│   │   ├── services/          # Business logic
+│   │   ├── engine/            # Workflow engine
+│   │   ├── infra/             # Infrastructure
+│   │   └── memory/            # Memory systems
+│   ├── tests/                 # Test suite
+│   ├── scripts/               # Utility scripts
+│   ├── alembic/               # Database migrations
+│   └── config/                # Configuration
+│
+├── frontend/                  # Frontend application
+│   ├── src/                   # Source code
+│   │   ├── components/        # React components
+│   │   ├── pages/             # Page components
+│   │   ├── services/          # API services
+│   │   └── store/             # State management
+│   └── public/                # Static assets
+│
+├── deployment/                # Deployment configurations
+│   ├── docker/                # Docker Compose files
+│   ├── scripts/               # Deployment scripts
+│   ├── kubernetes/            # K8s manifests
+│   ├── cloud/                 # Cloud configs
+│   └── monitoring/            # Monitoring setup
+│
+├── docs/                      # Documentation
+│   ├── architecture/          # Architecture docs
+│   ├── api/                   # API documentation
+│   ├── deployment/            # Deployment guides
+│   └── MIGRATION_GUIDE.md     # Migration guide
+│
+├── data/                      # Data files
+├── models/                    # ML models
+├── storage/                   # Runtime data
+├── scripts/                   # Root-level scripts
+├── Makefile                   # Common commands
+└── README.md                  # This file
+```
+
+### Key Directories
+
+- **backend/**: All backend code following Clean Architecture principles
+- **frontend/**: React application with TypeScript
+- **deployment/**: All deployment-related configurations and scripts
+- **docs/**: Comprehensive documentation
+- **data/**: Training data, SOPs, knowledge bases
+- **models/**: Pre-trained ML models
+
+---
+
+## 🛠️ Development Commands
+
+### Using Makefile
+
+```bash
+make help              # Show all available commands
+make setup             # Initial project setup
+make dev               # Start development environment
+make dev-backend       # Start backend only
+make dev-frontend      # Start frontend only
+make test              # Run all tests
+make test-unit         # Run unit tests
+make test-integration  # Run integration tests
+make lint              # Run code quality checks
+make format            # Format code
+make build             # Build production images
+make clean             # Clean temporary files
+make docker-up         # Start Docker services
+make docker-down       # Stop Docker services
+make docker-logs       # Show Docker logs
+make db-migrate        # Run database migrations
+make status            # Show project status
+```
+
+### Manual Commands
+
+```bash
+# Backend
+cd backend
+python main.py                    # Start backend server
+pytest tests/                     # Run tests
+alembic upgrade head              # Run migrations
+
+# Frontend
+cd frontend
+npm run dev                       # Start dev server
+npm run build                     # Build for production
+npm run lint                      # Run linter
+
+# Docker
+docker-compose -f deployment/docker/compose.base.yml up -d
+docker-compose -f deployment/docker/compose.base.yml down
+```
+
+---
+
 ## 🏗️ Architecture
 
 ### Multi-Agent Pipeline
@@ -325,9 +433,26 @@ User Request → API Gateway → Production Coordinator
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
+- Docker & Docker Compose (recommended)
 - PostgreSQL (production) or SQLite (development)
 
 ### Installation
+
+#### Option 1: Using Makefile (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/Benjamindaoson/SalesBoost.git
+cd SalesBoost
+
+# Initial setup (installs all dependencies)
+make setup
+
+# Start development environment
+make dev
+```
+
+#### Option 2: Manual Setup
 
 ```bash
 # Clone the repository
@@ -335,18 +460,28 @@ git clone https://github.com/Benjamindaoson/SalesBoost.git
 cd SalesBoost
 
 # Backend setup
-pip install -r config/python/requirements.txt
-python scripts/deployment/init_database.py
+cd backend
+pip install -r requirements.txt
+cd ..
 
 # Frontend setup
 cd frontend
 npm install
 cd ..
+
+# Start services
+docker-compose -f deployment/docker/compose.base.yml -f deployment/docker/compose.dev.yml up -d
+
+# Start backend
+cd backend && python main.py &
+
+# Start frontend
+cd frontend && npm run dev
 ```
 
 ### Configuration
 
-Create `.env` file:
+Create `.env` files:
 ```env
 ENV_STATE=development
 DATABASE_URL=sqlite:///data/databases/salesboost.db

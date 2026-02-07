@@ -1,0 +1,472 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "salesboost-intent-monitoring",
+    "title": "SalesBoost Intent Recognition Monitoring",
+    "tags": ["salesboost", "intent", "ml", "ai"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "type": "timeseries",
+        "title": "Intent Classification Rate (req/s)",
+        "targets": [
+          {
+            "expr": "rate(intent_classification_total[1m])",
+            "legendFormat": "{{intent}} ({{model_type}})",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisLabel": "Requests/sec",
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "fillOpacity": 10,
+              "showPoints": "never",
+              "spanNulls": true
+            },
+            "unit": "reqps"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "multi", "sort": "desc"},
+          "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean"]}
+        }
+      },
+      {
+        "id": 2,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "type": "timeseries",
+        "title": "Classification Success Rate (%)",
+        "targets": [
+          {
+            "expr": "rate(intent_classification_success_total[1m]) / rate(intent_classification_total[1m]) * 100",
+            "legendFormat": "{{intent}} ({{model_type}})",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisLabel": "Success Rate %",
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            },
+            "min": 0,
+            "max": 100,
+            "unit": "percent"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "multi", "sort": "desc"},
+          "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean"]}
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "type": "timeseries",
+        "title": "Classification Latency (P50/P95/P99)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(intent_classification_duration_seconds_bucket[1m]))",
+            "legendFormat": "P50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(intent_classification_duration_seconds_bucket[1m]))",
+            "legendFormat": "P95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(intent_classification_duration_seconds_bucket[1m]))",
+            "legendFormat": "P99",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisLabel": "Latency (seconds)",
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            },
+            "unit": "s"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "multi", "sort": "none"},
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 4,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "type": "timeseries",
+        "title": "Intent Distribution (Top 10)",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (intent) (rate(intent_classification_total[5m])))",
+            "legendFormat": "{{intent}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisLabel": "Requests/sec",
+              "drawStyle": "bars",
+              "lineWidth": 1,
+              "fillOpacity": 80,
+              "gradientMode": "opacity"
+            },
+            "unit": "reqps"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "multi", "sort": "desc"},
+          "legend": {"displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "sum"]}
+        }
+      },
+      {
+        "id": 5,
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16},
+        "type": "gauge",
+        "title": "Average Confidence Score",
+        "targets": [
+          {
+            "expr": "avg(intent_classification_confidence)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 0.6, "color": "yellow"},
+                {"value": 0.8, "color": "green"}
+              ]
+            },
+            "min": 0,
+            "max": 1,
+            "unit": "percentunit"
+          }
+        },
+        "options": {
+          "orientation": "auto",
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        }
+      },
+      {
+        "id": 6,
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 16},
+        "type": "timeseries",
+        "title": "Fallback to Rule Engine Rate",
+        "targets": [
+          {
+            "expr": "rate(intent_fallback_to_rules_total[1m])",
+            "legendFormat": "{{reason}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisLabel": "Fallbacks/sec",
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            },
+            "unit": "reqps"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "multi"},
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 7,
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16},
+        "type": "stat",
+        "title": "Classification Errors (5m)",
+        "targets": [
+          {
+            "expr": "sum(increase(intent_classification_errors_total[5m]))",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 10, "color": "yellow"},
+                {"value": 50, "color": "red"}
+              ]
+            },
+            "unit": "short"
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "value_and_name"
+        }
+      },
+      {
+        "id": 8,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "type": "timeseries",
+        "title": "Confidence Score Distribution",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(intent_classification_confidence_bucket[5m]))",
+            "legendFormat": "P50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.75, rate(intent_classification_confidence_bucket[5m]))",
+            "legendFormat": "P75",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.90, rate(intent_classification_confidence_bucket[5m]))",
+            "legendFormat": "P90",
+            "refId": "C"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(intent_classification_confidence_bucket[5m]))",
+            "legendFormat": "P95",
+            "refId": "D"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisLabel": "Confidence",
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            },
+            "min": 0,
+            "max": 1,
+            "unit": "percentunit"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "multi"},
+          "legend": {"displayMode": "list", "placement": "bottom"}
+        }
+      },
+      {
+        "id": 9,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "type": "timeseries",
+        "title": "Context-Aware Enhancements",
+        "targets": [
+          {
+            "expr": "rate(intent_context_aware_enhancements_total[1m])",
+            "legendFormat": "{{enhancement_type}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisLabel": "Enhancements/sec",
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "fillOpacity": 10
+            },
+            "unit": "reqps"
+          }
+        },
+        "options": {
+          "tooltip": {"mode": "multi"},
+          "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "mean"]}
+        }
+      },
+      {
+        "id": 10,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+        "type": "table",
+        "title": "Intent Classification Summary (Last 5m)",
+        "targets": [
+          {
+            "expr": "sum by (intent, model_type) (increase(intent_classification_total[5m]))",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true},
+              "indexByName": {},
+              "renameByName": {
+                "intent": "Intent",
+                "model_type": "Model Type",
+                "Value": "Count"
+              }
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Count"},
+              "properties": [
+                {"id": "custom.displayMode", "value": "color-background"},
+                {"id": "color", "value": {"mode": "continuous-GrYlRd"}}
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 11,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+        "type": "stat",
+        "title": "Model Info",
+        "targets": [
+          {
+            "expr": "intent_model_info",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "none",
+          "graphMode": "none",
+          "orientation": "vertical",
+          "textMode": "name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [{"value": 0, "color": "text"}]
+            }
+          }
+        }
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 1,
+    "links": [],
+    "panels": [],
+    "style": "dark",
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          "datasource": "Prometheus",
+          "definition": "label_values(intent_classification_total, intent)",
+          "hide": 0,
+          "includeAll": true,
+          "multi": true,
+          "name": "intent",
+          "options": [],
+          "query": {
+            "query": "label_values(intent_classification_total, intent)",
+            "refId": "StandardVariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 1,
+          "type": "query"
+        },
+        {
+          "current": {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          "datasource": "Prometheus",
+          "definition": "label_values(intent_classification_total, model_type)",
+          "hide": 0,
+          "includeAll": true,
+          "multi": true,
+          "name": "model_type",
+          "options": [],
+          "query": {
+            "query": "label_values(intent_classification_total, model_type)",
+            "refId": "StandardVariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 1,
+          "type": "query"
+        }
+      ]
+    }
+  },
+  "folderId": null,
+  "overwrite": true
+}

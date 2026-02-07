@@ -1,0 +1,38 @@
+# Testing Dependencies for SalesBoost
+
+# Core testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-timeout==2.2.0
+pytest-xdist==3.5.0  # Parallel test execution
+
+# Testcontainers
+testcontainers[redis]==3.7.1
+testcontainers[postgres]==3.7.1
+
+# HTTP/WebSocket testing
+httpx==0.25.2
+websockets==12.0
+
+# Mocking
+pytest-mock==3.12.0
+responses==0.24.1
+
+# Load testing
+locust==2.20.0
+
+# Type checking
+mypy==1.7.1
+types-redis==4.6.0.11
+types-requests==2.31.0.10
+
+# Code quality
+black==23.12.1
+isort==5.13.2
+flake8==6.1.0
+pylint==3.0.3
+
+# Security
+bandit==1.7.6
+safety==2.3.5

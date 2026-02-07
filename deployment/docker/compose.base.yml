@@ -1,0 +1,158 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # 后端服务
+  # ============================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: salesboost-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV_STATE=production
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - TENCENT_SECRET_ID=${TENCENT_SECRET_ID}
+      - TENCENT_SECRET_KEY=${TENCENT_SECRET_KEY}
+      - COS_BUCKET=${COS_BUCKET}
+      - COS_REGION=${COS_REGION}
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      - redis
+    networks:
+      - salesboost-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # 前端服务
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${API_URL}
+        - VITE_SUPABASE_URL=${SUPABASE_URL}
+        - VITE_SUPABASE_KEY=${SUPABASE_KEY}
+    container_name: salesboost-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    networks:
+      - salesboost-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # Redis缓存（如果不使用腾讯云Redis）
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: salesboost-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    networks:
+      - salesboost-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # Nginx反向代理（可选）
+  # ============================================
+  nginx:
+    image: nginx:alpine
+    container_name: salesboost-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - salesboost-network
+
+  # ============================================
+  # Prometheus监控（可选）
+  # ============================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: salesboost-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - salesboost-network
+
+  # ============================================
+  # Grafana可视化（可选）
+  # ============================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: salesboost-grafana
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - salesboost-network
+
+# ============================================
+# 数据卷
+# ============================================
+volumes:
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+# ============================================
+# 网络
+# ============================================
+networks:
+  salesboost-network:
+    driver: bridge

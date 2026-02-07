@@ -1,0 +1,190 @@
+# A2A (Agent-to-Agent) Configuration for SalesBoost
+
+# Message Bus Configuration
+message_bus:
+  # Transport type (redis, rabbitmq, kafka)
+  transport: redis
+
+  # Redis configuration
+  redis:
+    url: ${REDIS_URL:-redis://localhost:6379}
+    db: 0
+    password: ${REDIS_PASSWORD:-}
+
+  # Channel configuration
+  channels:
+    prefix: "a2a"
+    broadcast: "a2a:broadcast"
+    direct: "a2a:{agent_id}"
+    response: "a2a:response:{message_id}"
+
+  # Message history
+  history:
+    enabled: true
+    ttl: 3600  # 1 hour in seconds
+    max_messages: 1000
+
+# Agent Registry
+registry:
+  # Store agent info in Redis
+  enabled: true
+
+  # Heartbeat interval (seconds)
+  heartbeat_interval: 30
+
+  # Agent timeout (seconds)
+  agent_timeout: 90
+
+# Agent Configurations
+agents:
+  # SDR Agent
+  sdr_agent:
+    enabled: true
+    agent_type: SDRAgent
+    capabilities:
+      - sales
+      - objection_handling
+      - closing
+      - lead_qualification
+    metadata:
+      version: "2.0"
+      a2a_enabled: true
+    auto_start: true
+
+  # Coach Agent
+  coach_agent:
+    enabled: true
+    agent_type: CoachAgent
+    capabilities:
+      - coaching
+      - feedback
+      - evaluation
+      - suggestion
+    metadata:
+      version: "2.0"
+      a2a_enabled: true
+    auto_start: true
+    # Subscribe to all broadcast events
+    subscribe_to_broadcast: true
+
+  # Compliance Agent
+  compliance_agent:
+    enabled: true
+    agent_type: ComplianceAgent
+    capabilities:
+      - compliance_check
+      - risk_monitoring
+      - policy_enforcement
+      - audit_trail
+    metadata:
+      version: "2.0"
+      a2a_enabled: true
+    auto_start: true
+    # Subscribe to all events for monitoring
+    subscribe_to_broadcast: true
+
+  # Knowledge Agent (optional)
+  knowledge_agent:
+    enabled: false
+    agent_type: KnowledgeAgent
+    capabilities:
+      - knowledge
+      - search
+      - retrieval
+    metadata:
+      version: "1.0"
+    auto_start: false
+
+# Communication Patterns
+communication:
+  # Request-response timeout (seconds)
+  request_timeout: 30
+
+  # Enable message acknowledgments
+  enable_ack: true
+
+  # Message priority levels
+  priority:
+    urgent: 1
+    high: 2
+    normal: 3
+    low: 4
+
+  # Message TTL (seconds)
+  default_ttl: 300  # 5 minutes
+
+# Event Broadcasting
+events:
+  # Events to broadcast
+  broadcast_events:
+    - agent_online
+    - agent_offline
+    - deal_closed
+    - lead_qualified
+    - compliance_violation
+    - response_generated
+
+  # Event filters
+  filters:
+    # Only broadcast high-priority events
+    min_priority: normal
+
+# Monitoring
+monitoring:
+  # Enable metrics collection
+  enabled: true
+
+  # Metrics to collect
+  metrics:
+    - message_count
+    - message_latency
+    - agent_availability
+    - error_rate
+
+  # Metrics export
+  export:
+    type: prometheus
+    port: 9090
+
+# Security
+security:
+  # Enable message encryption
+  encryption:
+    enabled: false
+    algorithm: AES-256-GCM
+
+  # Enable message signing
+  signing:
+    enabled: false
+    algorithm: HMAC-SHA256
+
+  # Agent authentication
+  authentication:
+    enabled: false
+    method: token  # token, certificate
+
+# Logging
+logging:
+  level: INFO
+  format: json
+  file: logs/a2a.log
+
+  # Log all messages (for debugging)
+  log_messages: false
+
+  # Log only errors
+  log_errors_only: false
+
+# Performance
+performance:
+  # Message queue size per agent
+  queue_size: 1000
+
+  # Worker threads for message processing
+  worker_threads: 4
+
+  # Batch processing
+  batch:
+    enabled: false
+    size: 10
+    timeout: 1.0  # seconds
