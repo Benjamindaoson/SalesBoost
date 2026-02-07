@@ -56,27 +56,27 @@ export interface SessionReview {
 
 export const sessionService = {
   createSession: async (data: SessionCreate) => {
-    const response = await api.post<Session>('/sessions', data);
+    const response = await api.post<Session>('/api/v1/sessions', data);
     return response;
   },
 
   listSessions: async (params?: { user_id?: string; status?: string; page?: number; page_size?: number }) => {
-    const response = await api.get<{ items: Session[]; total: number }>('/sessions', { params });
+    const response = await api.get<{ items: Session[]; total: number }>('/api/v1/sessions', { params });
     return response;
   },
 
   getSession: async (sessionId: string) => {
-    const response = await api.get<Session>(`/sessions/${sessionId}`);
+    const response = await api.get<Session>(`/api/v1/sessions/${sessionId}`);
     return response;
   },
 
   getSessionReview: async (sessionId: string) => {
-    const response = await api.get<SessionReview>(`/sessions/${sessionId}/review`);
+    const response = await api.get<SessionReview>(`/api/v1/sessions/${sessionId}/review`);
     return response;
   },
 
   completeSession: async (sessionId: string) => {
-    const response = await api.patch<{ message: string; task_id: string }>(`/sessions/${sessionId}/complete`);
+    const response = await api.patch<{ message: string; task_id: string }>(`/api/v1/sessions/${sessionId}/complete`);
     return response;
   }
 };

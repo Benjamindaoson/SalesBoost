@@ -1,3 +1,0 @@
-# Infrastructure
-
-Core infrastructure components.
