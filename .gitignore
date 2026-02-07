@@ -49,8 +49,11 @@ dist-ssr/
 # Tool-specific directories (NEVER commit)
 .claude/
 .trae/
+.codebuddy/
 .vercel/
 .cursor/
+.deepeval/
+.ruff_cache/
 
 # Storage (runtime data)
 storage/logs/
