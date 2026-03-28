@@ -165,6 +165,19 @@ async def _init_memory_persistence() -> None:
         logger.warning(f"Memory persistence service initialization failed: {e}")
 
 
+async def _init_prompt_registry() -> None:
+    """加载 Prompt 模板到统一注册表"""
+    try:
+        from pathlib import Path
+        from .core.prompt_registry import load_prompts_from_dir
+        prompts_dir = Path(__file__).parent / "core" / "prompts"
+        count = load_prompts_from_dir(str(prompts_dir))
+        if count > 0:
+            logger.info("Loaded %d prompts into registry", count)
+    except Exception as e:
+        logger.debug("Prompt registry init skipped: %s", e)
+
+
 async def _init_audit() -> None:
     try:
         # Try plugin-based initialization; fall back to default if plugin not present
@@ -184,11 +197,22 @@ async def _init_audit() -> None:
         logger.warning(f"Audit service initialization failed: {e}.")
 
 
+async def _probe_concurrency_limiter() -> None:
+    """Probe Redis semaphore early so degradation is visible in startup logs."""
+    try:
+        from .infra.gateway.redis_semaphore import ConcurrencyLimiter
+        await ConcurrencyLimiter(limit=10).check_redis_available()
+    except Exception as e:
+        logger.warning("[startup] ConcurrencyLimiter probe failed: %s", e)
+
+
 async def perform_startup() -> None:
     """Run all startup tasks in sequence with graceful degradation."""
     # Run in sequence to preserve ordering requirements
     await _init_database()
     await _init_redis()
+    await _probe_concurrency_limiter()
+    await _init_prompt_registry()
     await _init_llm()
     await _init_cost_control()
     await _init_audit()
