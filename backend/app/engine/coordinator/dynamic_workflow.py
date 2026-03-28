@@ -7,6 +7,10 @@ import time
 import uuid
 from typing import Dict, Any, List, Optional, Set
 from pydantic import BaseModel, Field, model_validator
+try:
+    from pydantic import ConfigDict
+except ImportError:  # pydantic < 2 fallback
+    ConfigDict = None  # type: ignore
 from enum import Enum
 
 from langgraph.graph import StateGraph, END
@@ -189,8 +193,11 @@ class WorkflowConfig(BaseModel):
     version: str = Field(default="1.0", description="工作流版本")
     description: str = Field(default="", description="工作流描述")
 
-    class Config:
-        use_enum_values = True
+    if ConfigDict is not None:
+        model_config = ConfigDict(use_enum_values=True)
+    else:
+        class Config:
+            use_enum_values = True
 
     @model_validator(mode='after')
     def validate_dag(self):
@@ -343,12 +350,33 @@ class DynamicWorkflowCoordinator:
 
         # 动态构建图
         self.graph = self._build_dynamic_graph()
-        self.app = self.graph.compile()
+        self.app = self._compile_with_checkpointer()
 
         logger.info(
             f"[DynamicWorkflow] Built workflow '{config.name}' "
             f"with nodes: {config.enabled_nodes}"
         )
+
+    def _compile_with_checkpointer(self):
+        """Compile graph with Redis checkpointer for cross-worker state persistence.
+        Falls back to MemorySaver when Redis is unavailable."""
+        try:
+            from langgraph.checkpoint.redis import AsyncRedisSaver
+            settings = get_settings()
+            redis_url = getattr(settings, 'REDIS_URL', None)
+            if not redis_url:
+                raise ValueError("REDIS_URL not configured")
+            checkpointer = AsyncRedisSaver.from_conn_string(redis_url)
+            logger.info("[DynamicWorkflow] Using Redis checkpointer: %s", redis_url)
+            return self.graph.compile(checkpointer=checkpointer)
+        except Exception as e:
+            from langgraph.checkpoint.memory import MemorySaver
+            logger.warning(
+                "[DynamicWorkflow] Redis checkpointer unavailable (%s), "
+                "falling back to MemorySaver — workflow state is PROCESS-LOCAL only.",
+                e,
+            )
+            return self.graph.compile(checkpointer=MemorySaver())
 
     def _init_node_implementations(self):
         """初始化所有可用的节点实现"""
@@ -700,7 +728,7 @@ class DynamicWorkflowCoordinator:
             }
 
     async def _npc_node(self, state: CoordinatorState) -> Dict:
-        """NPC??????"""
+        """NPC 节点：生成客户回复，输出经 NPCAgentOutput Schema 校验"""
         start = time.perf_counter()
         npc_resp = await self.npc_agent.generate_response(
             message=state["user_message"],
@@ -708,23 +736,29 @@ class DynamicWorkflowCoordinator:
             persona=state.get("persona", self.persona),
             stage=state.get("fsm_state", {}).get("current_stage", "discovery")
         )
+        # Schema 校验：统一 Agent 输出格式
+        from ...schemas.agent_io import validate_npc_output
+        validated = validate_npc_output(
+            {"content": npc_resp.content, "mood": npc_resp.mood}
+        )
         latency_ms = round((time.perf_counter() - start) * 1000, 2)
 
         return {
-            "npc_response": npc_resp.content,
-            "npc_mood": npc_resp.mood,
+            "npc_response": validated.content,
+            "npc_mood": validated.mood,
             "trace_log": [
                 build_trace_event(
                     node="npc",
                     latency_ms=latency_ms,
-                    detail={"response_len": len(npc_resp.content)},
+                    detail={"response_len": len(validated.content)},
                 )
             ],
         }
 
     async def _coach_node(self, state: CoordinatorState) -> Dict:
         """
-        Coach???? (Enhanced with Graceful Degradation)
+        Coach 节点 (Enhanced with Graceful Degradation)
+        输出经 CoachAgentOutput Schema 校验
 
         Fallback Strategy:
         1. Try AI-generated advice first
@@ -746,12 +780,14 @@ class DynamicWorkflowCoordinator:
                 turn_number=state.get("turn_number", 1)
             )
 
-            if advice_obj and advice_obj.advice:
-                advice_text = advice_obj.advice
-                advice_source = "ai"
-                logger.info("[Coach] AI-generated advice used")
-            else:
-                raise ValueError("AI returned empty advice")
+            # Schema 校验：统一 Coach 输出格式
+            from ...schemas.agent_io import validate_coach_output
+            validated = validate_coach_output(advice_obj)
+            advice_text = f"{validated.action_advice}\n\n示例话术: {validated.script_example}"
+            if validated.compliance_risk and validated.compliance_risk.risk_level != "low":
+                advice_text += f"\n\n⚠️ 合规提示: {validated.compliance_risk.warning_message}"
+            advice_source = "ai"
+            logger.info("[Coach] AI-generated advice used (validated)")
 
         except Exception as e:
             logger.warning(f"[Coach] AI failed, using fallback: {e}")
@@ -965,13 +1001,22 @@ class DynamicWorkflowCoordinator:
         try:
             final_state = await self.app.ainvoke(initial_state)
 
+            # --- Bandit reward 闭环 ---
+            # 从当轮状态信号计算 per-turn reward，自动回写 LinUCB
+            bandit_decision = final_state.get("bandit_decision", {})
+            decision_id = bandit_decision.get("decision_id") if bandit_decision else None
+            if decision_id and self.bandit:
+                reward = self._compute_turn_reward(final_state)
+                self.bandit.record_feedback(decision_id, reward)
+                logger.debug("[Bandit] Auto reward recorded: decision=%s reward=%.3f", decision_id, reward)
+
             return {
                 "npc_reply": final_state.get("npc_response", ""),
                 "npc_mood": final_state.get("npc_mood", 0.5),
                 "coach_advice": final_state.get("coach_advice") if not skip_coach else None,
                 "intent": final_state.get("intent"),
                 "trace": final_state.get("trace_log", []),
-                "bandit_decision": final_state.get("bandit_decision", {}),
+                "bandit_decision": bandit_decision,
                 "tool_outputs": final_state.get("tool_outputs", []),
                 "tool_results": final_state.get("tool_results", []),
             }
@@ -985,6 +1030,43 @@ class DynamicWorkflowCoordinator:
                     self.config.conditional_routing = original_conditional
                 self.graph = self._build_dynamic_graph()
                 self.app = self.graph.compile()
+
+    def _compute_turn_reward(self, state: "CoordinatorState") -> float:
+        """
+        Compute per-turn bandit reward from state signals.
+
+        Reward formula (maps to -1..1):
+          task_completion  * 0.40  (NPC reached Completed/Closed stage)
+          response_quality * 0.30  (npc_mood as quality proxy)
+          compliance       * 0.20  (no violations = 1.0, blocked = -1.0)
+          efficiency       * 0.10  (fewer tool calls = more efficient)
+
+        Raw weighted sum is in [0, 1]; mapped to [-1, 1] via: reward = 2*score - 1
+        """
+        # Task completion: FSM reached terminal success state
+        fsm = state.get("fsm_state") or {}
+        final_stage = str(fsm.get("current_stage", "")).lower()
+        task_score = 1.0 if final_stage in {"completed", "closed", "closing"} else 0.5
+
+        # Response quality: npc_mood (0..1) as proxy
+        quality_score = float(state.get("npc_mood") or 0.5)
+
+        # Compliance: risk_score already in [0, 1]; invert so 0 risk = 1.0 score
+        risk = float(state.get("risk_score") or 0.0)
+        compliance_score = max(0.0, 1.0 - risk)
+
+        # Efficiency: penalise extra tool calls (0 calls = 1.0, 3+ calls = 0.0)
+        tool_calls = state.get("tool_calls") or []
+        efficiency_score = max(0.0, 1.0 - len(tool_calls) / 3.0)
+
+        weighted = (
+            task_score       * 0.40
+            + quality_score  * 0.30
+            + compliance_score * 0.20
+            + efficiency_score * 0.10
+        )
+        # Map [0, 1] → [-1, 1]
+        return round(2.0 * weighted - 1.0, 4)
 
     async def record_bandit_feedback(
         self,
@@ -1001,6 +1083,7 @@ class DynamicWorkflowCoordinator:
 
 def get_minimal_config() -> WorkflowConfig:
     """最小化配置（仅Intent + NPC）"""
+    settings = get_settings()
     return WorkflowConfig(
         name="minimal_workflow",
         enabled_nodes={NodeType.INTENT, NodeType.NPC},
