@@ -25,6 +25,7 @@ from ...engine.coordinator.routing_policy import RoutingAdvisor
 from ...engine.coordinator.trace_utils import build_trace_event
 from ...infra.gateway.schemas import AgentType
 from ...core.config import get_settings
+from ...observability.otel_tracing import node_span
 
 logger = logging.getLogger(__name__)
 
@@ -729,19 +730,21 @@ class DynamicWorkflowCoordinator:
 
     async def _npc_node(self, state: CoordinatorState) -> Dict:
         """NPC 节点：生成客户回复，输出经 NPCAgentOutput Schema 校验"""
-        start = time.perf_counter()
-        npc_resp = await self.npc_agent.generate_response(
-            message=state["user_message"],
-            history=state.get("history", []),
-            persona=state.get("persona", self.persona),
-            stage=state.get("fsm_state", {}).get("current_stage", "discovery")
-        )
-        # Schema 校验：统一 Agent 输出格式
-        from ...schemas.agent_io import validate_npc_output
-        validated = validate_npc_output(
-            {"content": npc_resp.content, "mood": npc_resp.mood}
-        )
-        latency_ms = round((time.perf_counter() - start) * 1000, 2)
+        session_id = str(state.get("session_id", ""))
+        async with node_span("npc", {"session_id": session_id}):
+            start = time.perf_counter()
+            npc_resp = await self.npc_agent.generate_response(
+                message=state["user_message"],
+                history=state.get("history", []),
+                persona=state.get("persona", self.persona),
+                stage=state.get("fsm_state", {}).get("current_stage", "discovery")
+            )
+            # Schema 校验：统一 Agent 输出格式
+            from ...schemas.agent_io import validate_npc_output
+            validated = validate_npc_output(
+                {"content": npc_resp.content, "mood": npc_resp.mood}
+            )
+            latency_ms = round((time.perf_counter() - start) * 1000, 2)
 
         return {
             "npc_response": validated.content,
@@ -766,6 +769,13 @@ class DynamicWorkflowCoordinator:
         3. If no intent match -> Use default fallback
         4. Track advice source (ai/fallback/error_fallback) for monitoring
         """
+        session_id = str(state.get("session_id", ""))
+        intent = state.get("intent", "unknown")
+        async with node_span("coach", {"session_id": session_id, "intent": intent}):
+            return await self._coach_node_impl(state)
+
+    async def _coach_node_impl(self, state: CoordinatorState) -> Dict:
+        """Inner coach logic extracted so node_span wraps the whole method."""
         start = time.perf_counter()
         advice_source = "ai"
         advice_text = ""
