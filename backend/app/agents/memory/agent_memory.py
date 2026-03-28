@@ -423,26 +423,20 @@ class AgentMemory:
         """
         生成文本嵌入
 
-        在生产环境中，应该使用真实的嵌入模型（如BGE-M3）
-        这里使用简单的TF-IDF模拟
+        使用 EmbeddingModelManager (BGE/OpenAI) 生成真实语义向量。
+        MD5 回退已移除：伪 embedding 会导致语义检索完全失效。
         """
-        # Simple hash-based embedding for demo
-        # In production, use real embedding model
-        import hashlib
+        try:
+            from ...infra.search.embedding_manager import EmbeddingModelManager
 
-        hash_obj = hashlib.md5(text.encode())
-        hash_bytes = hash_obj.digest()
-
-        # Convert to 128-dim vector
-        embedding = np.frombuffer(hash_bytes, dtype=np.uint8).astype(np.float32)
-        embedding = np.tile(embedding, 8)[:128]  # Extend to 128 dims
-
-        # Normalize
-        norm = np.linalg.norm(embedding)
-        if norm > 0:
-            embedding = embedding / norm
-
-        return embedding
+            manager = EmbeddingModelManager.get_instance()
+            emb_list = manager.encode_single(text or " ")
+            return np.array(emb_list, dtype=np.float32)
+        except Exception as e:
+            raise RuntimeError(
+                f"AgentMemory requires EmbeddingManager for semantic retrieval. "
+                f"Configure BGE/OpenAI embedding and ensure embedding_manager is initialized. Original: {e}"
+            ) from e
 
     def _cosine_similarity(self, a: np.ndarray, b: np.ndarray) -> float:
         """计算余弦相似度"""
@@ -521,3 +515,48 @@ class AgentMemory:
             self.semantic_memory[key] = entry
 
         logger.info(f"Memory loaded from {filepath}")
+
+    # ------------------------------------------------------------------
+    # L1 → L2 promotion
+    # L1 = in-process episodic list (fast, volatile)
+    # L2 = semantic memory dict (slower, durable within session)
+    # Entries with importance >= threshold are promoted to L2 so they
+    # survive beyond the working-memory window.
+    # ------------------------------------------------------------------
+    PROMOTION_THRESHOLD: float = 0.75
+
+    async def maybe_promote(self, entry: MemoryEntry) -> bool:
+        """
+        Promote a memory entry from L1 (episodic) to L2 (semantic) when its
+        importance score meets or exceeds PROMOTION_THRESHOLD.
+
+        Returns True if the entry was promoted, False otherwise.
+        """
+        if entry.importance < self.PROMOTION_THRESHOLD:
+            return False
+
+        key = entry.memory_id
+        if key in self.semantic_memory:
+            # Already promoted — update importance if higher
+            if entry.importance > self.semantic_memory[key].importance:
+                self.semantic_memory[key].importance = entry.importance
+            return False  # Not a new promotion
+
+        # Copy to L2
+        promoted = MemoryEntry(
+            memory_id=entry.memory_id,
+            memory_type=MemoryType.SEMANTIC,
+            content=entry.content,
+            metadata={**entry.metadata, "promoted_from": "episodic"},
+            embedding=entry.embedding,
+            importance=entry.importance,
+            access_count=entry.access_count,
+            last_access=entry.last_access,
+            created_at=entry.created_at,
+        )
+        self.semantic_memory[key] = promoted
+        logger.debug(
+            "[AgentMemory] Promoted entry %s to L2 (importance=%.2f)",
+            key, entry.importance,
+        )
+        return True
