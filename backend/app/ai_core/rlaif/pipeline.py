@@ -516,3 +516,127 @@ class RLAIFPipeline:
     def get_stats(self) -> Dict:
         """Get pipeline statistics."""
         return self.stats.copy()
+
+    async def measure_labeling_consistency(
+        self,
+        samples: Optional[List[ConversationSample]] = None,
+        n_samples: int = 20,
+    ) -> Dict:
+        """
+        Measure labeling consistency via Cohen's kappa.
+
+        Labels the same samples twice (two independent LLM calls at temperature=0.3)
+        and computes Cohen's kappa on the quality-rating dimension
+        (excellent / good / fair / poor → mapped to 0-3).
+
+        Returns:
+            {
+                "kappa": float,          # Cohen's kappa (-1 to 1)
+                "agreement_rate": float, # Raw pairwise agreement
+                "n_messages": int,       # Number of utterances compared
+                "interpretation": str,   # Landis-Koch label
+            }
+        """
+        QUALITY_MAP = {"excellent": 3, "good": 2, "fair": 1, "poor": 0}
+
+        if samples is None:
+            samples = self._load_samples("collected")
+        samples = samples[:n_samples]
+
+        if not samples:
+            logger.warning("[Kappa] No samples available for consistency check")
+            return {"kappa": None, "agreement_rate": None, "n_messages": 0,
+                    "interpretation": "no data"}
+
+        ratings_a: List[int] = []
+        ratings_b: List[int] = []
+
+        for sample in samples:
+            try:
+                label_a = await self.label_with_ai(sample)
+                label_b = await self.label_with_ai(sample)  # independent second call
+            except Exception as e:
+                logger.warning("[Kappa] Labeling failed for session %s: %s", sample.session_id, e)
+                continue
+
+            msgs_a = {m["message_index"]: m for m in label_a.labels.get("message_labels", [])}
+            msgs_b = {m["message_index"]: m for m in label_b.labels.get("message_labels", [])}
+
+            for idx in set(msgs_a) & set(msgs_b):
+                qa = QUALITY_MAP.get(msgs_a[idx].get("quality", "").lower())
+                qb = QUALITY_MAP.get(msgs_b[idx].get("quality", "").lower())
+                if qa is not None and qb is not None:
+                    ratings_a.append(qa)
+                    ratings_b.append(qb)
+
+        n = len(ratings_a)
+        if n == 0:
+            return {"kappa": None, "agreement_rate": None, "n_messages": 0,
+                    "interpretation": "no paired ratings"}
+
+        # Cohen's kappa
+        agreement = sum(a == b for a, b in zip(ratings_a, ratings_b)) / n
+
+        # Expected agreement via marginal frequencies
+        n_cats = 4  # 0-3
+        p_a = [ratings_a.count(c) / n for c in range(n_cats)]
+        p_b = [ratings_b.count(c) / n for c in range(n_cats)]
+        p_e = sum(p_a[c] * p_b[c] for c in range(n_cats))
+
+        kappa = (agreement - p_e) / (1.0 - p_e) if p_e < 1.0 else 1.0
+        kappa = round(kappa, 4)
+
+        # Landis-Koch (1977) interpretation
+        if kappa >= 0.81:
+            interpretation = "almost perfect"
+        elif kappa >= 0.61:
+            interpretation = "substantial"
+        elif kappa >= 0.41:
+            interpretation = "moderate"
+        elif kappa >= 0.21:
+            interpretation = "fair"
+        elif kappa >= 0.0:
+            interpretation = "slight"
+        else:
+            interpretation = "poor (worse than chance)"
+
+        result = {
+            "kappa": kappa,
+            "agreement_rate": round(agreement, 4),
+            "n_messages": n,
+            "interpretation": interpretation,
+        }
+        logger.info("[Kappa] Consistency result: %s", result)
+        return result
+
+
+# ---------------------------------------------------------------------------
+# Pragmatic rename: RLAIFPipeline → ConversationAnalyzer
+# The class is a conversation-quality analyser / data flywheel, not an
+# end-to-end RL trainer.  Keep old name as alias for backward compat.
+# ---------------------------------------------------------------------------
+ConversationAnalyzer = RLAIFPipeline
+
+
+class RewardDataCollector:
+    """
+    Stub — reserved for a future PyTorch / trl reward-model training loop.
+
+    When implemented this class will:
+    - Poll ConversationAnalyzer for labeled samples
+    - Format them as (prompt, chosen, rejected) preference pairs
+    - Upload to a training job (trl SFTTrainer / OpenRLHF)
+
+    TODO: implement when reward-model training is required.
+    """
+
+    def collect(self, *args, **kwargs):
+        raise NotImplementedError(
+            "RewardDataCollector is a training-pipeline stub. "
+            "Implement with trl or OpenRLHF when reward-model training is needed."
+        )
+
+    def upload(self, *args, **kwargs):
+        raise NotImplementedError(
+            "RewardDataCollector.upload is not yet implemented."
+        )
