@@ -1,12 +1,14 @@
 """
 PPO Policy - Proximal Policy Optimization
 
-实现PPO强化学习算法用于Agent决策优化。
+[EXPERIMENTAL - NOT FOR PRODUCTION]
+当前实现为 numpy 原型：update() 仅计算 loss，不执行梯度更新，无法真正训练。
+生产环境请使用 LLM-as-Judge 或 trl/OpenRLHF。默认已从主流程排除 (RL_ENABLED=false)。
 
 核心功能：
 1. 策略网络 (Policy Network)
 2. 价值网络 (Value Network)
-3. PPO更新算法
+3. PPO更新算法 (数学演示，无梯度)
 4. 经验回放 (Experience Replay)
 
 Author: Claude (Anthropic)
@@ -491,3 +493,33 @@ class PPOPolicy:
         self.value_net.weights = data["value_weights"]
 
         logger.info(f"Policy loaded from {filepath}")
+
+
+# ---------------------------------------------------------------------------
+# Renamed public API
+# PPOPolicy was misleading — numpy weights with no gradient updates.
+# TacticScorer is the accurate name for a heuristic action scorer.
+# ---------------------------------------------------------------------------
+TacticScorer = PPOPolicy
+
+
+class TrainablePolicy:
+    """
+    Stub: interface for a future neural-network-backed policy (real PPO).
+
+    Replace this class with a torch.nn.Module implementation to enable
+    true policy gradient training. Required components:
+      - Policy network (nn.Module with forward() returning action logits)
+      - Value network (nn.Module with forward() returning state value)
+      - GAE advantage estimation
+      - PPO clip objective: L_CLIP = E[min(r*A, clip(r,1-e,1+e)*A)]
+      - optimizer.step() with gradient updates
+
+    TODO: implement with trl or OpenRLHF for production-grade RLHF.
+    """
+
+    def select_action(self, state: dict) -> str:
+        raise NotImplementedError("TrainablePolicy is a future-work stub")
+
+    def update(self, experiences: list) -> dict:
+        raise NotImplementedError("TrainablePolicy is a future-work stub")
