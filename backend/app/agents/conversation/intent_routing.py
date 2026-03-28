@@ -2,16 +2,81 @@
 Intent Recognition & Dynamic RAG Routing
 
 Phase 3B Week 5 Day 5-6 交付物
-
-集成到 SalesBoost agent 架构的意图识别和路由模块
+方案 A: 支持 LLM 意图分类 (ENABLE_LLM_INTENT=true)
 """
 
 import logging
 from enum import Enum
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+
+# ===========================================================================
+# Sales Stage FSM — 阶段枚举 + 合法跳转表 + 守卫函数
+# ===========================================================================
+
+class SalesStage(str, Enum):
+    """销售漏斗阶段（硬编码 FSM）"""
+    OPENING = "opening"
+    DISCOVERY = "discovery"
+    PITCH = "pitch"
+    OBJECTION_HANDLING = "objection_handling"
+    CLOSING = "closing"
+    COMPLETED = "completed"
+
+
+# 每个阶段允许跳转到的目标阶段集合（含自身，表示保持当前阶段）
+VALID_TRANSITIONS: Dict[SalesStage, set] = {
+    SalesStage.OPENING:             {SalesStage.OPENING, SalesStage.DISCOVERY},
+    SalesStage.DISCOVERY:           {SalesStage.DISCOVERY, SalesStage.PITCH, SalesStage.OBJECTION_HANDLING},
+    SalesStage.PITCH:               {SalesStage.PITCH, SalesStage.OBJECTION_HANDLING, SalesStage.CLOSING},
+    SalesStage.OBJECTION_HANDLING:  {SalesStage.OBJECTION_HANDLING, SalesStage.PITCH, SalesStage.CLOSING},
+    SalesStage.CLOSING:             {SalesStage.CLOSING, SalesStage.COMPLETED},
+    SalesStage.COMPLETED:           {SalesStage.COMPLETED},
+}
+
+
+def validate_stage_transition(
+    current: Optional[SalesStage],
+    next_stage: SalesStage,
+) -> Tuple[bool, Optional[str]]:
+    """检查阶段跳转是否合法。返回 (ok, error_message)。
+
+    Args:
+        current: 当前阶段，None 表示首条消息（无约束）
+        next_stage: 目标阶段
+
+    Returns:
+        (True, None) 如果跳转合法
+        (False, error_str) 如果跳转非法
+    """
+    if current is None:
+        return True, None  # 首条消息，任何初始阶段均合法
+    allowed = VALID_TRANSITIONS.get(current, set())
+    if next_stage in allowed:
+        return True, None
+    return False, (
+        f"INVALID_TRANSITION: {current.value} -> {next_stage.value}. "
+        f"Allowed targets: {[s.value for s in allowed]}"
+    )
+
+
+async def analyze_intent_async(
+    message: str,
+    context: Optional[Dict[str, Any]] = None,
+) -> "IntentAnalysis":
+    """统一意图分析入口：ENABLE_LLM_INTENT 时用 LLM，否则用 keyword"""
+    try:
+        from ...core.config import get_settings
+        if get_settings().ENABLE_LLM_INTENT:
+            from ...services.llm_intent_classifier import llm_intent_classifier
+            return await llm_intent_classifier.classify(message, context)
+    except Exception as e:
+        logger.warning("LLM intent not available, fallback to keyword: %s", e)
+    router = IntentRouter()
+    return router.analyze_intent(message, context)
 
 
 class UserIntent(str, Enum):
@@ -167,8 +232,8 @@ class ActionRouter:
         message: str,
         conversation_context: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """路由行动"""
-        intent_analysis = self.intent_router.analyze_intent(message, conversation_context)
+        """路由行动（支持 LLM 意图分类）"""
+        intent_analysis = await analyze_intent_async(message, conversation_context)
 
         logger.info(
             f"Intent analysis: {intent_analysis.intent.value} "
