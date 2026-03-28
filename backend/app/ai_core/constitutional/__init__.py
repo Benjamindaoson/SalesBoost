@@ -7,6 +7,6 @@ Constitutional AI 2.0
 - Value alignment verification
 """
 
-from .constitutional_ai import ConstitutionalAI, Constitution, Critique
+from .constitutional_ai import ConstitutionalAI, Constitution, Critique, SafetyFilter, CritiqueReviseFilter
 
-__all__ = ["ConstitutionalAI", "Constitution", "Critique"]
+__all__ = ["ConstitutionalAI", "Constitution", "Critique", "SafetyFilter", "CritiqueReviseFilter"]

@@ -58,8 +58,34 @@ class Constitution:
     principles: List[Principle] = field(default_factory=list)
 
     @classmethod
-    def create_sales_constitution(cls) -> Constitution:
-        """创建销售伦理宪法"""
+    def load_from_registry(cls) -> "Constitution":
+        """从 prompt_registry 加载原则（constitutional_principles.md）。
+        加载失败时自动回退到 create_sales_constitution()。"""
+        try:
+            import json as _json
+            from ...core.prompt_registry import get_prompt
+            raw = get_prompt("constitutional_principles")
+            if not raw or not raw.strip().startswith("["):
+                raise ValueError("Registry entry empty or not JSON array")
+            data = _json.loads(raw)
+            principles = [
+                Principle(
+                    category=PrincipleCategory(p["category"]),
+                    statement=p["statement"],
+                    critique_prompt=p["critique_prompt"],
+                    weight=float(p.get("weight", 1.0)),
+                )
+                for p in data
+            ]
+            logger.info("[Constitution] Loaded %d principles from registry", len(principles))
+            return cls(principles=principles)
+        except Exception as e:
+            logger.warning("[Constitution] Registry load failed (%s) — using hardcoded defaults", e)
+            return cls.create_sales_constitution()
+
+    @classmethod
+    def create_sales_constitution(cls) -> "Constitution":
+        """创建销售伦理宪法（硬编码默认值，作为 registry 回退）"""
         principles = [
             # Honesty principles
             Principle(
@@ -157,8 +183,8 @@ class ConstitutionalAI:
 
     def __init__(
         self,
-        constitution: Constitution,
-        llm_client,
+        constitution: Optional[Constitution] = None,
+        llm_client = None,
         max_iterations: int = 3,
         alignment_threshold: float = 0.8,
     ):
@@ -171,7 +197,7 @@ class ConstitutionalAI:
             max_iterations: Max revision iterations
             alignment_threshold: Minimum alignment score
         """
-        self.constitution = constitution
+        self.constitution = constitution if constitution is not None else Constitution.load_from_registry()
         self.llm_client = llm_client
         self.max_iterations = max_iterations
         self.alignment_threshold = alignment_threshold
@@ -181,7 +207,7 @@ class ConstitutionalAI:
         self.total_revisions = 0
         self.alignment_violations = 0
 
-        logger.info("ConstitutionalAI initialized with %d principles", len(constitution.principles))
+        logger.info("ConstitutionalAI initialized with %d principles", len(self.constitution.principles))
 
     async def constitutional_generate(
         self,
@@ -445,3 +471,31 @@ Output only the revised response (no JSON, no explanation).
             "avg_revisions_per_generation": self.total_revisions / max(self.total_generations, 1),
             "principles_count": len(self.constitution.principles),
         }
+
+
+# ---------------------------------------------------------------------------
+# Pragmatic rename: ConstitutionalAI → SafetyFilter
+# The class is a runtime safety / alignment filter, not a full CAI trainer.
+# Keep old name as alias for backward compat.
+# ---------------------------------------------------------------------------
+SafetyFilter = ConstitutionalAI
+
+
+class CritiqueReviseFilter:
+    """
+    Stub — reserved for a multi-turn critique-and-revise loop backed by an
+    LLM judge (e.g. Constitutional AI red-teaming or Anthropic's CAI v2).
+
+    When implemented this class will:
+    - Accept a candidate response and a set of principles
+    - Use an LLM to critique the response against each principle
+    - Iteratively revise until all critiques pass or max_rounds is reached
+
+    TODO: implement when multi-turn CAI fine-tuning is required.
+    """
+
+    def critique_and_revise(self, *args, **kwargs):
+        raise NotImplementedError(
+            "CritiqueReviseFilter is a training-pipeline stub. "
+            "Implement with an LLM judge when CAI fine-tuning is needed."
+        )
