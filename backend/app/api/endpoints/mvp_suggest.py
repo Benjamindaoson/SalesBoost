@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...api.deps import require_user
 from ...api.auth_schemas import UserSchema as User
 from ...core.database import get_db_session
-from ...models.runtime_models import Message, Session, SessionState
+from ...models.message import Message
+from ...models.session import Session
+from ...models.config_models import SessionState
 from ...schemas.mvp import QuickSuggestRequest, QuickSuggestResponse
 from ...agents.ask.quick_suggest import QuickSuggestService
 

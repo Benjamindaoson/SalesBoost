@@ -7,14 +7,14 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.database import get_db_session
 from ...api.deps import audit_access, require_user
 from ...api.auth_schemas import UserSchema as User
-from ...models.runtime_models import Session
+from ...models.session import Session
 from ...tasks.evaluation_task import run_evaluation_task
 from ...tasks.store import TASK_STORE, TaskResult, TaskStatus
 
@@ -68,8 +68,7 @@ class SessionResponse(BaseModel):
     started_at: datetime
     completed_at: Optional[datetime]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SessionListResponse(BaseModel):
@@ -183,7 +182,7 @@ async def get_session_review(
     Aggregates Strategy Decisions, Adoptions, and Skill Diffs.
     """
     from ...models.adoption_models import AdoptionRecord, StrategyDecision
-    from ...models.runtime_models import EvaluationLog
+    from ...models.evaluation import Evaluation as EvaluationLog
     
     # 1. Verify Session
     session_res = await db.execute(select(Session).where(Session.id == session_id))

@@ -12,13 +12,46 @@ import asyncio
 import logging
 from datetime import datetime
 
-from ...core.database import get_async_session
-from ...core.redis import get_redis_client
+import time
+from typing import Dict, Any
+
+from sqlalchemy import text
+from ...core.database import async_session_factory
+from ...core.redis import get_redis
 from ...tools.health_check import get_health_checker
 from ...tools.registry import build_default_registry
+from ...downgrade_manager import downgrade_manager
+from ...core_startup import get_health as get_startup_health
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/health", tags=["health"])
+
+
+@router.get("", response_class=JSONResponse)
+async def health_check() -> JSONResponse:
+    """
+    Main health check - System health and downgrades.
+    Used by test_downgrade.py and for general monitoring.
+    """
+    startup_health = get_startup_health()
+    active_downgrades = downgrade_manager.get_active_issues()
+    
+    status_str = "ok"
+    if active_downgrades:
+        status_str = "degraded"
+    
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "status": status_str,
+            "timestamp": time.time(),
+            "system_health": {
+                "status": status_str,
+                "downgrades": active_downgrades,
+                "components": startup_health
+            }
+        }
+    )
 
 
 @router.get("/live")
@@ -61,8 +94,8 @@ async def readiness_check() -> JSONResponse:
 
     # Check database
     try:
-        async with get_async_session() as session:
-            await session.execute("SELECT 1")
+        async with async_session_factory() as session:
+            await session.execute(text("SELECT 1"))
         checks["database"] = {"status": "ready", "message": "Connected"}
     except Exception as e:
         checks["database"] = {"status": "not_ready", "message": str(e)}
@@ -71,7 +104,7 @@ async def readiness_check() -> JSONResponse:
 
     # Check Redis
     try:
-        redis = await get_redis_client()
+        redis = await get_redis()
         await redis.ping()
         checks["redis"] = {"status": "ready", "message": "Connected"}
     except Exception as e:
@@ -81,10 +114,21 @@ async def readiness_check() -> JSONResponse:
 
     # Check Vector Store (optional, don't fail if not available)
     try:
-        from ...services.knowledge_service_qdrant import KnowledgeServiceQdrant
-        KnowledgeServiceQdrant()
-        # Simple health check - don't fail if Qdrant is not configured
-        checks["vector_store"] = {"status": "ready", "message": "Available"}
+        from ...core.config import get_settings
+        s = get_settings()
+        url = getattr(s, "QDRANT_URL", None) or getattr(s, "VECTOR_STORE_URL", None)
+        if url:
+            try:
+                from qdrant_client import AsyncQdrantClient
+                client = AsyncQdrantClient(url=url)
+                await client.get_collections()
+                checks["vector_store"] = {"status": "ready", "message": "Connected"}
+            except ImportError:
+                checks["vector_store"] = {"status": "degraded", "message": "qdrant-client not installed"}
+            except Exception as qe:
+                checks["vector_store"] = {"status": "degraded", "message": str(qe)[:80]}
+        else:
+            checks["vector_store"] = {"status": "degraded", "message": "Not configured (optional)"}
     except Exception as e:
         checks["vector_store"] = {"status": "degraded", "message": "Not configured (optional)"}
         logger.warning(f"Vector store check: {e}")

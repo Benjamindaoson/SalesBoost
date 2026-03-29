@@ -873,7 +873,7 @@ class DynamicWorkflowCoordinator:
         }
 
     async def _compliance_node(self, state: CoordinatorState) -> Dict:
-        """??????"""
+        """合规节点：关键词合规检查 + Constitutional AI 价值对齐修正"""
         start = time.perf_counter()
         exec_result = await self.tool_executor.execute(
             "compliance_check",
@@ -894,11 +894,45 @@ class DynamicWorkflowCoordinator:
             risk_score = 0.9
         result["risk_score"] = risk_score
         is_compliant = risk_level == "OK"
-        latency_ms = round((time.perf_counter() - start) * 1000, 2)
 
+        # Constitutional AI: if compliance flagged a risk, attempt value-aligned revision
+        # ConstitutionalAI rewrites the NPC response to remove violations while preserving intent
+        revised_npc_response = state.get("npc_response", "")
+        cai_detail: Dict = {}
+        if not is_compliant and revised_npc_response:
+            try:
+                from ...ai_core.constitutional.constitutional_ai import ConstitutionalAI
+                cai = ConstitutionalAI(llm_client=getattr(self, "model_gateway", None))
+                cai_result = await cai.constitutional_generate(
+                    initial_response=revised_npc_response,
+                    context={
+                        "session_id": state.get("session_id", ""),
+                        "risk_level": risk_level,
+                        "risk_flags": result.get("risk_flags", []),
+                        "stage": state.get("fsm_state", {}).get("current_stage", ""),
+                    },
+                )
+                if cai_result.get("aligned"):
+                    revised_npc_response = cai_result["final_response"]
+                    risk_score = max(0.0, risk_score - 0.3)  # partial credit for aligned revision
+                    cai_detail = {
+                        "cai_aligned": True,
+                        "cai_iterations": cai_result.get("iterations", 0),
+                        "cai_score": cai_result.get("alignment_score", 0.0),
+                    }
+                    logger.info("[Compliance] ConstitutionalAI revised NPC response (score=%.2f)",
+                                cai_result.get("alignment_score", 0.0))
+                else:
+                    cai_detail = {"cai_aligned": False}
+            except Exception as _cai_exc:
+                logger.warning("[Compliance] ConstitutionalAI failed: %s", _cai_exc)
+
+        latency_ms = round((time.perf_counter() - start) * 1000, 2)
         prior_outputs = list(state.get("tool_outputs") or [])
         return {
+            "npc_response": revised_npc_response,
             "compliance_result": result,
+            "risk_score": risk_score,
             "tool_outputs": prior_outputs + [exec_result],
             "trace_log": [
                 build_trace_event(
@@ -906,7 +940,7 @@ class DynamicWorkflowCoordinator:
                     status="ok" if is_compliant else "warn",
                     source=exec_result.get("audit", {}).get("status"),
                     latency_ms=latency_ms,
-                    detail={"risk_level": risk_level, "risk_score": risk_score},
+                    detail={"risk_level": risk_level, "risk_score": risk_score, **cai_detail},
                 )
             ],
         }
@@ -1067,10 +1101,25 @@ class DynamicWorkflowCoordinator:
 
             # --- Bandit reward 闭环 ---
             # 从当轮状态信号计算 per-turn reward，自动回写 LinUCB
+            # LLMRewardService (LLM-as-Judge) replaces the rule-based heuristic when available,
+            # providing richer signal: task_progress, quality, satisfaction, efficiency, compliance.
             bandit_decision = final_state.get("bandit_decision", {})
             decision_id = bandit_decision.get("decision_id") if bandit_decision else None
             if decision_id and self.bandit:
                 reward = self._compute_turn_reward(final_state)
+                try:
+                    from ...services.llm_reward_service import llm_reward_service
+                    llm_result = await llm_reward_service.score_turn(
+                        history=list(final_state.get("history", [])),
+                        sales_response=user_message,
+                        customer_response=final_state.get("npc_response", ""),
+                        session_id=session_id,
+                    )
+                    # Normalise LLM score (0-10) to [-1, 1] to match bandit reward range
+                    reward = round((llm_result.overall / 10.0) * 2.0 - 1.0, 4)
+                    logger.debug("[Bandit] LLM reward=%.3f reasoning=%s", reward, llm_result.reasoning)
+                except Exception as _reward_exc:
+                    logger.debug("[Bandit] LLM reward failed, using heuristic: %s", _reward_exc)
                 self.bandit.record_feedback(decision_id, reward)
                 logger.debug("[Bandit] Auto reward recorded: decision=%s reward=%.3f", decision_id, reward)
 

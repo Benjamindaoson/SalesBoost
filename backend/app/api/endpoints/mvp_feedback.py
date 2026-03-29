@@ -11,7 +11,7 @@ from ...api.deps import require_user
 from ...api.auth_schemas import UserSchema as User
 from ...core.database import get_db_session
 from ...models.feedback_models import SessionFeedback
-from ...models.runtime_models import Session
+from ...models.session import Session
 from ...schemas.mvp import MicroFeedbackResponse
 from ...agents.ask.feedback_agent import MicroFeedbackService
 

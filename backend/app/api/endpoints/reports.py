@@ -11,7 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...api.deps import audit_access, require_user
 from ...api.auth_schemas import UserSchema as User
 from ...core.database import get_db_session
-from ...models.runtime_models import Message, Session
+from ...models.message import Message
+from ...models.session import Session
 from ...schemas.reports import TrainingReport
 from ...agents.evaluate.curriculum_planner import CurriculumPlanner
 from ...agents.evaluate.report_generator import ReportService

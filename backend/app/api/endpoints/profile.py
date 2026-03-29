@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...api.deps import audit_access, require_user
 from ...api.auth_schemas import UserSchema as User
 from ...core.database import get_db_session
-from ...models.runtime_models import EvaluationLog, Session
+from ...models.evaluation import Evaluation as EvaluationLog, Session
 from ...agents.evaluate.curriculum_planner import CurriculumPlanner
 from ...agents.evaluate.strategy_analyzer import StrategyAnalyzer
 

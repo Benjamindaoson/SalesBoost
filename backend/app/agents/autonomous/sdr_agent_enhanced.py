@@ -1,21 +1,24 @@
 """
 Enhanced SDR Agent - 增强版销售代表Agent
 
-评分: 10.0/10 (从7.5提升)
+[EXPERIMENTAL — 当前未接入主链路]
+
+此模块为实验性 SDR Agent，包含完整的多层记忆、PPO 强化学习和 AI 驱动决策能力。
+主链路使用的是 DynamicWorkflowCoordinator（dynamic_workflow.py），通过 LangGraph 图
+编排 NPC/Coach/Compliance 节点，并通过 AgentMemory.create_with_backends() 接入记忆。
+
+如需将此 Agent 接入主链路，参考以下步骤：
+1. 在 DynamicWorkflowCoordinator.__init__ 中实例化 SDRAgentEnhanced
+2. 在 execute_turn() 中调用 sdr_agent.make_decision() 并将结果注入 CoordinatorState
+3. 将 RL 策略的 update() 接入 data_flywheel.py 的训练循环
+4. 确保 RL_ENABLED=True 后 ppo_policy.py 实现真实的梯度更新
 
 新增功能：
 1. ✅ AI驱动决策（替代关键词匹配）
-2. ✅ 多层次记忆系统
-3. ✅ 强化学习能力
+2. ✅ 多层次记忆系统（接入 AgentMemory L1/L2/L3）
+3. ✅ 强化学习能力（PPO，当前 update() 为 stub）
 4. ✅ 上下文理解
 5. ✅ 自适应策略
-
-改进点：
-- 决策逻辑：简单关键词 → AI驱动 + RL优化
-- 记忆能力：无 → 情节/语义/工作记忆
-- 学习能力：无 → PPO强化学习
-- 上下文：单轮 → 多轮上下文记忆
-- 策略：固定 → 自适应优化
 
 Author: Claude (Anthropic)
 Version: 2.0 (Enhanced)

@@ -29,23 +29,27 @@ import time
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Any, Dict
 
+# Load environment variables FIRST before any other imports
+from dotenv import load_dotenv
+load_dotenv()
+
 import sentry_sdk
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse, JSONResponse
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
-from backend.app.api.deps import get_session_count
-from backend.app.api.middleware.tenant_middleware import TenantMiddleware
-from backend.app.core.config import EnvironmentState, Settings, get_settings
-from backend.app.core.database import close_db
-from backend.app.core.exceptions import SalesBoostException, create_error_response
-from backend.app.core.redis import close_redis
-from backend.app.middleware import setup_middleware
-from backend.app.logging.security_filter import SensitiveDataFilter
-from backend.app.logging.json_formatter import JSONFormatter
-from backend.app.core_startup import perform_startup, get_health
-from backend.app.engine.coordinator.workflow_planner import WorkflowPlanner
+from app.api.deps import get_session_count
+from app.api.middleware.tenant_middleware import TenantMiddleware
+from app.core.config import EnvironmentState, Settings, get_settings
+from app.core.database import close_db
+from app.core.exceptions import SalesBoostException, create_error_response
+from app.core.redis import close_redis
+from app.middleware import setup_middleware
+from app.logging.security_filter import SensitiveDataFilter
+from app.logging.json_formatter import JSONFormatter
+from app.core_startup import perform_startup, get_health
+from app.engine.coordinator.workflow_planner import WorkflowPlanner
 
 # 配置日志
 settings = get_settings()
@@ -109,17 +113,19 @@ def print_startup_banner():
 async def _run_workflow_cycle(trigger: str, query: str = "production readiness check") -> Dict[str, Any]:
     """Run the multi-agent planner once and record the result."""
     global _LAST_CYCLE_RESULT
-    result = {
+    result: Dict[str, Any] = {
         "trigger": trigger,
-        "status": "failed",
         "timestamp": time.time(),
     }
     try:
-        cycle = await workflow_planner.run_full_cycle(query, session_id=f"{trigger}-{int(time.time())}")
-        result.update({"status": "success", "details": cycle})
+        cycle = await workflow_planner.run_full_cycle(
+            query,
+            session_id=f"{trigger}-{int(time.time())}",
+        )
+        result.update({"status": cycle.get("status", "success"), "details": cycle})
     except Exception as exc:
         logger.error("WorkflowPlanner cycle failed for %s: %s", trigger, exc, exc_info=True)
-        result.setdefault("details", {})["error"] = str(exc)
+        result.update({"status": "error", "details": {"error": str(exc)}})
     _LAST_CYCLE_RESULT = result
     return result
 
@@ -161,7 +167,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Start metrics exporter (for Intent Monitoring)
     try:
-        from backend.app.observability.metrics_exporter import start_metrics_export
+        from app.observability.metrics_exporter import start_metrics_export
         # Note: metrics_exporter doesn't exist yet in original code
         # But we've created prometheus_exporter, so this is optional
         logger.info("Metrics exporter initialized (optional)")
@@ -185,7 +191,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # 停止后台任务
     try:
-        from backend.app.engine.coordinator.task_executor import background_task_manager
+        from app.engine.coordinator.task_executor import background_task_manager
 
         await background_task_manager.stop()
         logger.info("Background task manager stopped successfully ✅")
@@ -194,7 +200,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Stop metrics exporter
     try:
-        from backend.app.observability.metrics_exporter import stop_metrics_export
+        from app.observability.metrics_exporter import stop_metrics_export
         stop_metrics_export()
         logger.info("Metrics exporter stopped successfully ✅")
     except ImportError:
@@ -220,6 +226,18 @@ def create_application(settings: Settings = None) -> FastAPI:
     """
     if settings is None:
         settings = get_settings()
+
+    # OpenTelemetry distributed tracing (must run before instrument_fastapi)
+    if getattr(settings, "TRACING_ENABLED", True):
+        try:
+            from app.observability.otel_tracing import init_otel_tracing
+            init_otel_tracing(
+                service_name=settings.PROJECT_NAME,
+                endpoint=getattr(settings, "OTEL_EXPORTER_OTLP_ENDPOINT", None),
+                enabled=True,
+            )
+        except Exception as e:
+            logger.warning("OpenTelemetry init skipped: %s", e)
 
     # 初始化 Sentry
     if os.getenv("SENTRY_DSN"):
@@ -249,7 +267,7 @@ def create_application(settings: Settings = None) -> FastAPI:
 
     # 全局输入校验中间件
     try:
-        from backend.app.middleware.input_validation import InputValidationMiddleware
+        from app.middleware.input_validation import InputValidationMiddleware
         app.add_middleware(InputValidationMiddleware)
     except Exception:
         logger.warning("InputValidationMiddleware failed to load; continuing without it.")
@@ -269,6 +287,14 @@ def create_application(settings: Settings = None) -> FastAPI:
 
     # 配置异常处理器
     _configure_exception_handlers(app)
+
+    # OpenTelemetry FastAPI instrumentation
+    if getattr(settings, "TRACING_ENABLED", True):
+        try:
+            from app.observability.otel_tracing import instrument_fastapi
+            instrument_fastapi(app)
+        except Exception as e:
+            logger.warning("OpenTelemetry FastAPI instrumentation skipped: %s", e)
 
     logger.info(f"FastAPI application created: {settings.PROJECT_NAME} v1.0.0")
     return app
@@ -295,104 +321,12 @@ def _configure_routes(app: FastAPI) -> None:
                 "metrics": "/metrics",
                 "admin_review": "/admin/ws/review",
                 "admin_dashboard": "/admin/dashboard.html",
-                "websocket": "/ws/chat"
+                "websocket": "/ws/train"
             }
         }
 
-    @app.get("/health")
-    async def health_check():
-        """System health check with detailed subsystem status"""
-        session_count = get_session_count()
-        system_health = get_health()
-        downgrades = system_health.pop("downgrades", [])
-
-        # Derive overall health from boolean subsystems only
-        bool_checks = [value for value in system_health.values() if isinstance(value, bool)]
-        all_healthy = all(bool_checks) if bool_checks else False
-        any_healthy = any(bool_checks) if bool_checks else False
-        overall = "ok" if all_healthy and not downgrades else (
-            "degraded" if any_healthy else "unavailable"
-        )
-        settings = get_settings()
-        last_cycle = _LAST_CYCLE_RESULT or {}
-
-        result = {
-            "status": overall,
-            "version": "1.0.0",
-            "active_sessions": session_count,
-            "debug_mode": app.debug,
-            "system_health": system_health,
-            "downgrades": downgrades,
-            "components": {
-                "bandit_routing": settings.BANDIT_ROUTING_ENABLED,
-                "bandit_backend": "redis" if settings.BANDIT_REDIS_ENABLED else "memory",
-                "tool_cache": settings.TOOL_CACHE_ENABLED,
-                "semantic_cache": settings.SEMANTIC_CACHE_ENABLED,
-                "tool_cache_tools": settings.TOOL_CACHE_TOOLS,
-            },
-            "features": {
-                "human_in_loop": True,
-                "dynamic_workflow": True,
-                "intent_monitoring": True,
-                "ab_testing": True
-            }
-        }
-        result["last_lifecycle_cycle"] = last_cycle
-        return result
-
-    @app.get("/metrics")
-    async def metrics():
-        """Prometheus metrics endpoint"""
-        try:
-            from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-            metrics_output = generate_latest()
-            return PlainTextResponse(content=metrics_output, media_type=CONTENT_TYPE_LATEST)
-        except Exception as e:
-            logger.error(f"Failed to generate metrics: {e}")
-            return PlainTextResponse(content=f"# Error generating metrics: {e}\n", status_code=500)
-
-    @app.get("/metrics/cost")
-    async def cost_metrics():
-        """Cost optimization metrics"""
-        try:
-            from backend.app.infra.gateway.cost_control import cost_optimized_caller
-
-            return {
-                "status": "healthy",
-                "cost_optimization_enabled": True,
-                "active_budgets": len(cost_optimized_caller.budget_manager.session_budgets),
-                "total_cost_records": len(cost_optimized_caller.budget_manager.cost_tracking),
-                "available_models": len(cost_optimized_caller.smart_router.available_models),
-                "timestamp": time.time(),
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "cost_optimization_enabled": False,
-                "error": str(e),
-                "timestamp": time.time(),
-            }
-
-    @app.get("/health/live")
-    async def health_live():
-        """Lightweight probe used by container healthcheck."""
-        return {"status": "healthy", "timestamp": time.time()}
-
-    @app.get("/run-lifecycle")
-    async def run_lifecycle(query: str = "production readiness check"):
-        """Trigger the full multi-agent lifecycle validator on demand."""
-        return await _run_workflow_cycle("api-diagnostic", query=query)
-
-    @app.get("/metrics/background")
-    async def background_metrics():
-        """Background task metrics"""
-        try:
-            from backend.app.engine.coordinator.task_executor import background_task_manager
-
-            status = background_task_manager.get_task_status()
-            return {"status": "healthy", "background_tasks": status, "timestamp": time.time()}
-        except Exception as e:
-            return {"status": "error", "error": str(e), "timestamp": time.time()}
+    # Redundant endpoints removed in favor of modular routers:
+    # /health, /metrics, /health/live, /metrics/background, etc.
 
     # Register API routes (including new Phase A-D endpoints)
     _register_api_routes(app)
@@ -423,51 +357,56 @@ def _register_api_routes(app: FastAPI) -> None:
 
     # 1. Intent Recognition Monitoring (Prometheus)
     logger.info("Registering Phase A-D endpoints...")
-    _safe_include("api.endpoints.monitoring", "", tags=["monitoring"])
+    _safe_include("app.api.endpoints.monitoring", "", tags=["monitoring"])
+    _required_include("app.api.endpoints.health", "", tags=["health"])
 
     # 2. Human-in-the-Loop Admin Review
-    _safe_include("api.endpoints.admin_review", "/admin", tags=["admin"])
+    _safe_include("app.api.endpoints.admin_review", "/admin", tags=["admin"])
 
     # ==================== Original Endpoints ====================
 
-    # WebSocket
-    _safe_include("api.endpoints.websocket", "/ws", tags=["websocket"])
+    # WebSocket (required for training)
+    _required_include("app.api.endpoints.websocket", "/ws", tags=["websocket"])
 
-    # Core APIs
-    _safe_include("api.v1.endpoints.sales_coach", "/api/v1", tags=["sales-coach"])
-    _safe_include("api.endpoints.sessions", "/api/v1/sessions", tags=["sessions"])
-    _safe_include("api.endpoints.scenarios", "/api/v1/scenarios", tags=["scenarios"])
-    _safe_include("api.endpoints.reports", "/api/v1/reports", tags=["reports"])
-    _safe_include("api.endpoints.knowledge", "/api/v1/knowledge", tags=["knowledge"])
-    _safe_include("api.endpoints.profile", "/api/v1/profile", tags=["profile"])
-    _safe_include("api.endpoints.auth", "/api/v1", tags=["auth"])
-    _safe_include("api.endpoints.admin", "/api/v1/admin", tags=["admin"])
+    # Core APIs (required)
+    # NOTE: app.api.v1.endpoints.sales_coach was removed — functionality merged into assistant.py
+    _required_include("app.api.endpoints.sessions", "/api/v1/sessions", tags=["sessions"])
+    _safe_include("app.api.endpoints.scenarios", "/api/v1/scenarios", tags=["scenarios"])
+    _safe_include("app.api.endpoints.reports", "/api/v1/reports", tags=["reports"])
+    _safe_include("app.api.endpoints.knowledge", "/api/v1/knowledge", tags=["knowledge"])
+    _safe_include("app.api.endpoints.profile", "/api/v1/profile", tags=["profile"])
+    _required_include("app.api.endpoints.auth", "/api/v1", tags=["auth"])
+    _safe_include("app.api.endpoints.admin", "/api/v1/admin", tags=["admin"])
 
     # MVP Features
-    _safe_include("api.endpoints.mvp_suggest", "/api/v1/suggest", tags=["mvp"])
-    _safe_include("api.endpoints.mvp_compliance", "/api/v1/compliance", tags=["mvp"])
-    _safe_include("api.endpoints.mvp_feedback", "/api/v1/feedback", tags=["mvp"])
+    _safe_include("app.api.endpoints.mvp_suggest", "/api/v1/suggest", tags=["mvp"])
+    _safe_include("app.api.endpoints.mvp_compliance", "/api/v1/compliance", tags=["mvp"])
+    _safe_include("app.api.endpoints.mvp_feedback", "/api/v1/feedback", tags=["mvp"])
 
     # Memory Service (Required)
-    _required_include("api.endpoints.memory_service", "/api/v1/memory", tags=["memory"])
+    _required_include("app.api.endpoints.memory_service", "/api/v1/memory", tags=["memory"])
 
     # Assistant & Feedback
-    _safe_include("api.endpoints.assistant", "/api/v1/assistant", tags=["assistant"])
-    _safe_include("api.endpoints.feedback", "/api/v1/feedback", tags=["feedback"])
+    _safe_include("app.api.endpoints.assistant", "/api/v1/assistant", tags=["assistant"])
+    _safe_include("app.api.endpoints.feedback", "/api/v1/feedback", tags=["feedback"])
 
     # Coordinator Improvements - User Feedback API
-    _safe_include("api.endpoints.user_feedback", "/api/v1/feedback", tags=["coordinator", "feedback"])
+    _safe_include("app.api.endpoints.user_feedback", "/api/v1/feedback", tags=["coordinator", "feedback"])
 
     # ==================== New CRUD APIs ====================
 
     # Course Management
-    _safe_include("api.endpoints.courses", "/api/v1/courses", tags=["courses"])
+    _safe_include("app.api.endpoints.courses_simple", "/api/v1/courses", tags=["courses"])
 
     # User Management
-    _safe_include("api.endpoints.users", "/api/v1/users", tags=["users"])
+    _safe_include("app.api.endpoints.users", "/api/v1/users", tags=["users"])
 
     # Task Management
-    _safe_include("api.endpoints.tasks", "/api/v1/tasks", tags=["tasks"])
+    _safe_include("app.api.endpoints.tasks_simple", "/api/v1/tasks", tags=["tasks"])
+
+    # Statistics API
+    _safe_include("app.api.endpoints.statistics_simple", "/api/v1/statistics", tags=["statistics"])
+    # SECURITY: test.py endpoint removed — debug routes must NOT be exposed in production
 
     # ==================== New Frontend Support APIs ====================
 
@@ -481,7 +420,24 @@ def _register_api_routes(app: FastAPI) -> None:
     _safe_include("app.api.routes.team", "", tags=["team"])
 
     # Customer Management API
-    _safe_include("api.endpoints.customers", "/api/v1", tags=["customers"])
+    _safe_include("app.api.endpoints.customers_simple", "/api/v1", tags=["customers"])
+
+    # ==================== Sales Battle System APIs ====================
+
+    # Deals & Pipeline
+    _safe_include("app.api.endpoints.deals", "/api/v1", tags=["deals"])
+
+    # Executive Cockpit
+    _safe_include("app.api.endpoints.cockpit", "/api/v1", tags=["cockpit"])
+
+    # Copilot (embeddable SDK API)
+    _safe_include("app.api.endpoints.copilot", "/api/v1", tags=["copilot"])
+
+    # Data Flywheel
+    _safe_include("app.api.endpoints.flywheel", "/api/v1", tags=["flywheel"])
+
+    # Export API
+    _safe_include("app.api.endpoints.export", "/api/v1/export", tags=["export"])
 
     logger.info("All routers registered successfully")
 
