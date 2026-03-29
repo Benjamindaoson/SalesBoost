@@ -6,8 +6,13 @@ from typing import Optional
 
 try:
     from pydantic_settings import BaseSettings
+    from pydantic import ConfigDict
 except ImportError:  # pragma: no cover - fallback for older pydantic installs
     from pydantic import BaseSettings
+    try:
+        from pydantic import ConfigDict
+    except ImportError:
+        ConfigDict = None  # type: ignore
 
 
 class EnvironmentState(str, Enum):
@@ -84,6 +89,8 @@ class Settings(BaseSettings):
     ALLOW_LEGACY_COORDINATOR: bool = False
     BANDIT_ROUTING_ENABLED: bool = False
     BANDIT_REDIS_ENABLED: bool = False
+    ENABLE_LLM_INTENT: bool = True  # 方案A: LLM 意图分类
+    RL_ENABLED: bool = False  # PPO 为实验性，update 不更新权重，默认关闭
 
     # Graph execution
     GRAPH_MAX_RETRIES: int = 3
@@ -94,10 +101,29 @@ class Settings(BaseSettings):
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
+    LLM_USE_REDIS_SEMAPHORE: bool = True  # Distributed rate limit for horizontal scaling
 
-    # Memory service
+    # Memory service (legacy file-based path, still used by memory_service endpoint)
     MEMORY_STORAGE_BACKEND: str = "sqlite"  # redis|sqlite|local
     MEMORY_STORAGE_PATH: str = "./storage/memory"
+
+    # AgentMemory persistent backends
+    # -----------------------------------------------------------------------
+    # L1 (Redis) — fast episodic session cache, TTL-bounded.
+    #   TO ENABLE: set AGENT_MEMORY_REDIS_ENABLED=true and ensure REDIS_URL is set.
+    # L2 (Qdrant) — cross-session semantic vector store.
+    #   TO ENABLE: set AGENT_MEMORY_QDRANT_ENABLED=true and point
+    #   AGENT_MEMORY_QDRANT_URL at your Qdrant instance.
+    # L3 (Procedural) — NOT YET IMPLEMENTED.
+    #   See: backend/app/agents/memory/memory_backend.py :: ProceduralMemoryStub
+    # -----------------------------------------------------------------------
+    AGENT_MEMORY_REDIS_ENABLED: bool = False
+    AGENT_MEMORY_REDIS_TTL_SECONDS: int = 7200          # 2-hour session window
+    AGENT_MEMORY_QDRANT_ENABLED: bool = False
+    AGENT_MEMORY_QDRANT_URL: str = "http://localhost:6333"
+    AGENT_MEMORY_QDRANT_API_KEY: Optional[str] = None
+    AGENT_MEMORY_QDRANT_COLLECTION_PREFIX: str = "agent_mem"
+    AGENT_MEMORY_VECTOR_SIZE: int = 1024                # must match embedding model output dim
 
     # Context summarization
     CONTEXT_MAX_TOKENS: int = 4000
@@ -148,6 +174,8 @@ class Settings(BaseSettings):
     TRACE_RETENTION_DAYS: int = 14
     METRICS_ENABLED: bool = True
     AUDIT_LOG_ENABLED: bool = True
+    TRACING_ENABLED: bool = True  # OpenTelemetry distributed tracing
+    OTEL_EXPORTER_OTLP_ENDPOINT: Optional[str] = None  # Jaeger/Zipkin: http://localhost:4317
 
     # Model lifecycle governance
     LIFECYCLE_JOB_INTERVAL_SECONDS: float = 60.0
@@ -233,11 +261,19 @@ class Settings(BaseSettings):
     SLOW_PATH_TIMEOUT_SECONDS: int = 30
     TRACE_ID_HEADER: str = "X-Trace-Id"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-        extra = "ignore"  # Ignore extra fields from .env
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",  # Ignore extra fields from .env
+    ) if ConfigDict is not None else None  # type: ignore
+
+    if ConfigDict is None:
+        class Config:  # type: ignore
+            env_file = ".env"
+            env_file_encoding = "utf-8"
+            case_sensitive = True
+            extra = "ignore"
 
 
 settings = Settings()

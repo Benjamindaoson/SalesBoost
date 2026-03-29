@@ -122,7 +122,152 @@ class AgentMemory:
         self.total_retrieved = 0
         self.total_forgotten = 0
 
+        # Persistent backends (attached after construction via attach_backends())
+        # L1 = RedisEpisodicBackend  — fast session cache
+        # L2 = QdrantSemanticBackend — cross-session vector store
+        # L3 = ProceduralMemoryStub  — not yet implemented
+        self._l1 = None  # type: Optional[Any]
+        self._l2 = None  # type: Optional[Any]
+        self._l3 = None  # type: Optional[Any]
+        self._session_id: Optional[str] = None
+
         logger.info(f"AgentMemory initialized for {agent_id}")
+
+    # ------------------------------------------------------------------
+    # Backend management
+    # ------------------------------------------------------------------
+
+    def attach_backends(self, l1=None, l2=None, l3=None) -> None:
+        """
+        挂载持久化后端。在 AgentMemory 构造后、load_session() 前调用。
+
+        Args:
+            l1: RedisEpisodicBackend 实例（或 None 表示不启用）
+            l2: QdrantSemanticBackend 实例（或 None 表示不启用）
+            l3: ProceduralMemoryStub 实例（或 None；当前为 stub，未实现）
+
+        示例:
+            from app.agents.memory.memory_backend import (
+                RedisEpisodicBackend, QdrantSemanticBackend
+            )
+            memory.attach_backends(
+                l1=RedisEpisodicBackend(redis_url=settings.REDIS_URL),
+                l2=QdrantSemanticBackend(qdrant_url=settings.AGENT_MEMORY_QDRANT_URL),
+            )
+        """
+        self._l1 = l1
+        self._l2 = l2
+        self._l3 = l3
+        backends = []
+        if l1:
+            backends.append("L1-Redis")
+        if l2:
+            backends.append("L2-Qdrant")
+        if l3:
+            backends.append("L3-Procedural")
+        logger.info(
+            "[AgentMemory:%s] Backends attached: %s",
+            self.agent_id,
+            ", ".join(backends) if backends else "none (in-process only)",
+        )
+
+    async def load_session(self, session_id: str) -> None:
+        """
+        从持久化后端加载 session 记忆到进程内缓存。
+
+        加载顺序:
+            1. L1 (Redis) → 恢复情节记忆（本 session 快照）
+            2. L2 (Qdrant) → 恢复语义记忆（跨 session 持久化事实）
+
+        任一后端失败时静默降级（fail-safe）：进程内缓存为空但程序正常运行。
+
+        Args:
+            session_id: 当前会话 ID（与 LangGraph checkpointer 的 thread_id 保持一致）
+        """
+        self._session_id = session_id
+
+        # --- L1: Redis episodic ---
+        if self._l1 is not None:
+            raw_entries = await self._l1.load(self.agent_id, session_id)
+            for item in raw_entries:
+                try:
+                    entry = MemoryEntry(
+                        memory_id=item["memory_id"],
+                        memory_type=MemoryType(item["memory_type"]),
+                        content=item["content"],
+                        metadata=item.get("metadata", {}),
+                        importance=item.get("importance", 0.5),
+                        access_count=item.get("access_count", 0),
+                        last_access=item.get("last_access", time.time()),
+                        created_at=item.get("created_at", time.time()),
+                    )
+                    # Re-generate embedding (not stored in Redis)
+                    entry.embedding = await self._generate_embedding(entry.content)
+                    self.episodic_memory.append(entry)
+                except Exception as exc:
+                    logger.warning("[AgentMemory] load_session L1 entry error: %s", exc)
+            logger.info(
+                "[AgentMemory:%s] L1 loaded %d episodic entries for session %s",
+                self.agent_id, len(self.episodic_memory), session_id,
+            )
+
+        # --- L2: Qdrant semantic ---
+        if self._l2 is not None:
+            raw_facts = await self._l2.load_all(self.agent_id)
+            for item in raw_facts:
+                try:
+                    key = item.get("memory_id", "")
+                    if not key:
+                        continue
+                    entry = MemoryEntry(
+                        memory_id=key,
+                        memory_type=MemoryType(item.get("memory_type", "semantic")),
+                        content=item["content"],
+                        metadata=item.get("metadata", {}),
+                        importance=item.get("importance", 0.7),
+                        access_count=item.get("access_count", 0),
+                        last_access=item.get("last_access", time.time()),
+                        created_at=item.get("created_at", time.time()),
+                    )
+                    entry.embedding = await self._generate_embedding(entry.content)
+                    self.semantic_memory[key] = entry
+                except Exception as exc:
+                    logger.warning("[AgentMemory] load_session L2 entry error: %s", exc)
+            logger.info(
+                "[AgentMemory:%s] L2 loaded %d semantic entries",
+                self.agent_id, len(self.semantic_memory),
+            )
+
+    async def save_session(self) -> None:
+        """
+        将进程内记忆快照写回持久化后端。
+
+        调用时机:
+            - session 正常结束时（websocket 断开、用户登出）
+            - 定期 checkpoint（推荐每 N 条交互后调用一次）
+
+        写入策略:
+            L1 (Redis): 保存全部情节记忆 + 工作记忆（当前 session 快照）
+            L2 (Qdrant): 批量 upsert 全部语义记忆
+
+        任一后端失败时静默降级，不影响进程内副本。
+        """
+        if self._session_id is None:
+            logger.debug("[AgentMemory:%s] save_session called but no session_id set", self.agent_id)
+            return
+
+        if self._l1 is not None:
+            all_episodic = list(self.episodic_memory) + list(self.working_memory)
+            ok = await self._l1.save(self.agent_id, self._session_id, all_episodic)
+            if ok:
+                logger.info(
+                    "[AgentMemory:%s] L1 saved %d entries", self.agent_id, len(all_episodic)
+                )
+
+        if self._l2 is not None:
+            semantic_entries = list(self.semantic_memory.values())
+            n = await self._l2.upsert_many(self.agent_id, semantic_entries)
+            logger.info("[AgentMemory:%s] L2 upserted %d semantic entries", self.agent_id, n)
 
     async def store_interaction(
         self,
@@ -164,6 +309,12 @@ class AgentMemory:
 
         # Also add to working memory
         await self._add_to_working_memory(entry)
+
+        # Persist to L1 (Redis) — async, fail-safe
+        if self._l1 is not None and self._session_id is not None:
+            await self._l1.save(
+                self.agent_id, self._session_id, self.episodic_memory
+            )
 
         # Extract facts to semantic memory
         await self._extract_semantic_facts(entry)
@@ -220,6 +371,10 @@ class AgentMemory:
 
         self.semantic_memory[key] = entry
         self.total_stored += 1
+
+        # Persist to L2 (Qdrant) — async, fail-safe
+        if self._l2 is not None:
+            await self._l2.upsert(self.agent_id, entry)
 
         # Limit semantic memory size
         if len(self.semantic_memory) > self.max_semantic:
@@ -289,6 +444,43 @@ class AgentMemory:
             memory.last_access = time.time()
 
         self.total_retrieved += len(results)
+
+        # Augment with L2 (Qdrant) vector search — finds cross-session semantic memories
+        # not yet loaded into the in-process dict.
+        if self._l2 is not None and query_embedding is not None:
+            try:
+                remote_payloads = await self._l2.search(
+                    agent_id=self.agent_id,
+                    query_vector=query_embedding.tolist(),
+                    top_k=top_k,
+                    min_score=0.5,
+                    memory_type_filter=(
+                        memory_type.value if memory_type is not None else None
+                    ),
+                )
+                known_ids = {m.memory_id for m in results}
+                for payload in remote_payloads:
+                    mid = payload.get("memory_id", "")
+                    if mid and mid not in known_ids:
+                        try:
+                            remote_entry = MemoryEntry(
+                                memory_id=mid,
+                                memory_type=MemoryType(payload.get("memory_type", "semantic")),
+                                content=payload["content"],
+                                metadata=payload.get("metadata", {}),
+                                importance=payload.get("importance", 0.5),
+                                access_count=payload.get("access_count", 0),
+                                last_access=payload.get("last_access", time.time()),
+                                created_at=payload.get("created_at", time.time()),
+                            )
+                            results.append(remote_entry)
+                            known_ids.add(mid)
+                        except Exception:
+                            pass
+                # Re-sort after augmentation and re-apply top_k
+                results = results[:top_k]
+            except Exception as exc:
+                logger.debug("[AgentMemory] L2 augment failed (non-fatal): %s", exc)
 
         logger.debug(f"Retrieved {len(results)} relevant memories for query: {query[:50]}")
         return results
@@ -559,4 +751,9 @@ class AgentMemory:
             "[AgentMemory] Promoted entry %s to L2 (importance=%.2f)",
             key, entry.importance,
         )
+
+        # Persist promoted entry to Qdrant L2 — async, fail-safe
+        if self._l2 is not None:
+            await self._l2.upsert(self.agent_id, promoted)
+
         return True
