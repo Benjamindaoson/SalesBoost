@@ -65,7 +65,7 @@ class CoordinatorEngine(str, Enum):
 class TurnResult:
     """Standardized turn execution result"""
     turn_number: int
-    npc_response: str
+    npc_reply: str
     npc_mood: float
     intent: str
     stage: str
@@ -117,7 +117,7 @@ class ProductionCoordinator:
         advice = await coordinator.get_coach_advice_async(
             turn_number=1,
             user_message="这个产品多少钱?",
-            npc_response=result.npc_response
+            npc_reply=result.npc_reply
         )
     """
 
@@ -235,39 +235,67 @@ class ProductionCoordinator:
 
         elif self.engine == CoordinatorEngine.LANGGRAPH:
             # Use LangGraphCoordinator (legacy)
-            from ...engine.coordinator.langgraph_coordinator import LangGraphCoordinator
-            return LangGraphCoordinator(
-                model_gateway=self.model_gateway,
-                budget_manager=self.budget_manager,
-                persona=self.persona
-            )
-
-        elif self.engine == CoordinatorEngine.WORKFLOW:
-            # Use WorkflowCoordinator (deprecated wrapper)
-            from ...engine.coordinator.workflow_coordinator import WorkflowCoordinator
-            if not get_settings().ALLOW_LEGACY_COORDINATOR:
-                logger.warning(
-                    "[ProductionCoordinator] Deprecated WorkflowCoordinator disabled; "
-                    "falling back to DYNAMIC_WORKFLOW."
+            try:
+                from ...engine.coordinator.langgraph_coordinator import LangGraphCoordinator
+                return LangGraphCoordinator(
+                    model_gateway=self.model_gateway,
+                    budget_manager=self.budget_manager,
+                    persona=self.persona
                 )
+            except ImportError as exc:
+                logger.warning(
+                    f"[ProductionCoordinator] LangGraphCoordinator not found, "
+                    f"falling back to DYNAMIC_WORKFLOW. Error: {exc}"
+                )
+                self.engine = CoordinatorEngine.DYNAMIC_WORKFLOW
                 workflow_config = config or get_full_config()
                 return DynamicWorkflowCoordinator(
                     model_gateway=self.model_gateway,
                     budget_manager=self.budget_manager,
                     persona=self.persona,
-                    config=workflow_config,
+                    config=workflow_config
                 )
-            logger.warning(
-                "[ProductionCoordinator] Using deprecated WorkflowCoordinator. "
-                "Please migrate to DYNAMIC_WORKFLOW."
-            )
-            return WorkflowCoordinator(
-                model_gateway=self.model_gateway,
-                budget_manager=self.budget_manager,
-                session_director=self.session_director,
-                persona=self.persona,
-                max_history_len=self.max_history_len
-            )
+
+        elif self.engine == CoordinatorEngine.WORKFLOW:
+            # Use WorkflowCoordinator (deprecated wrapper)
+            try:
+                from ...engine.coordinator.workflow_coordinator import WorkflowCoordinator
+                if not get_settings().ALLOW_LEGACY_COORDINATOR:
+                    logger.warning(
+                        "[ProductionCoordinator] Deprecated WorkflowCoordinator disabled; "
+                        "falling back to DYNAMIC_WORKFLOW."
+                    )
+                    workflow_config = config or get_full_config()
+                    return DynamicWorkflowCoordinator(
+                        model_gateway=self.model_gateway,
+                        budget_manager=self.budget_manager,
+                        persona=self.persona,
+                        config=workflow_config,
+                    )
+                logger.warning(
+                    "[ProductionCoordinator] Using deprecated WorkflowCoordinator. "
+                    "Please migrate to DYNAMIC_WORKFLOW."
+                )
+                return WorkflowCoordinator(
+                    model_gateway=self.model_gateway,
+                    budget_manager=self.budget_manager,
+                    session_director=self.session_director,
+                    persona=self.persona,
+                    max_history_len=self.max_history_len
+                )
+            except ImportError as exc:
+                logger.warning(
+                    f"[ProductionCoordinator] WorkflowCoordinator not found, "
+                    f"falling back to DYNAMIC_WORKFLOW. Error: {exc}"
+                )
+                self.engine = CoordinatorEngine.DYNAMIC_WORKFLOW
+                workflow_config = config or get_full_config()
+                return DynamicWorkflowCoordinator(
+                    model_gateway=self.model_gateway,
+                    budget_manager=self.budget_manager,
+                    persona=self.persona,
+                    config=workflow_config
+                )
 
         else:
             raise ValueError(f"Unknown engine: {self.engine}")
@@ -302,6 +330,25 @@ class ProductionCoordinator:
             f"[ProductionCoordinator] Session initialized: {session_id}, "
             f"user: {user_id}, engine: {self.engine}"
         )
+
+    async def close_session(self, session_id: Optional[str] = None) -> None:
+        """
+        Flush and tear down AgentMemory for the current (or specified) session.
+
+        Call this when a training session ends so episodic memories are persisted
+        to L1/L2 backends and the in-process cache entry is released.
+
+        Args:
+            session_id: Session to close. Defaults to ``self.session_id``.
+        """
+        target = session_id or self.session_id
+        if self.engine == CoordinatorEngine.DYNAMIC_WORKFLOW and hasattr(self._backend, "close_session"):
+            await self._backend.close_session(target)
+            logger.info("[ProductionCoordinator] Session closed: %s", target)
+        else:
+            logger.debug(
+                "[ProductionCoordinator] close_session: no-op for engine=%s", self.engine
+            )
 
     async def execute_turn(
         self,
@@ -397,7 +444,7 @@ class ProductionCoordinator:
                 )
             return TurnResult(
                 turn_number=turn_number,
-                npc_response=result.get("npc_reply", ""),
+                npc_reply=result.get("npc_reply", ""),
                 npc_mood=result.get("npc_mood", self.fsm_state.npc_mood),
                 intent=result.get("intent", "unknown"),
                 stage=stage_value,
@@ -423,7 +470,7 @@ class ProductionCoordinator:
 
             return TurnResult(
                 turn_number=turn_number,
-                npc_response="",
+                npc_reply="",
                 npc_mood=self.fsm_state.npc_mood,
                 intent="error",
                 stage=stage_value,
@@ -535,8 +582,8 @@ class ProductionCoordinator:
             self.last_bandit_decision_id = decision_id
 
         # Prune history
-        if len(self.history) > self.max_history_len * 2:
-            self.history = self.history[-self.max_history_len * 2:]
+        if len(self.history) > self.max_history_len:
+            self.history = self.history[-self.max_history_len:]
 
 
 # ==================== Factory Function ====================

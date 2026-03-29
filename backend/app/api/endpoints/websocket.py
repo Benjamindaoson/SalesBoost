@@ -19,8 +19,14 @@ from ...core.database import get_db_session
 from ...api.deps import require_user
 from ...api.auth_schemas import UserSchema as User
 from ...api.deps import get_current_user_from_token
-from ...models.config_models import Course, CustomerPersona, ScenarioConfig
-from ...models.runtime_models import Message, Session, SessionState
+from ...models.message import Message
+from ...models.config_models import (
+    Course,
+    CustomerPersona,
+    ScenarioConfig,
+    Session,
+    SessionState,
+)
 from ...schemas.fsm import FSMState, SalesStage
 from ...engine.state.recovery import state_recovery_service
 from ...cognitive.errors import AuditBlockedError, CognitiveError, TimeoutError as CognitiveTimeoutError
@@ -267,6 +273,7 @@ async def delete_session_snapshot(session_id: str, user_id: str, current_user: U
 
 
 @router.websocket("/train")
+@router.websocket("/chat")  # Alias for frontend compatibility
 async def websocket_training(
     websocket: WebSocket,
     session_id: Optional[str] = Query(None),
@@ -463,6 +470,13 @@ async def websocket_training(
             except Exception:
                 pass
         if session_id:
+            # Flush AgentMemory for this session (persist to L1/L2 backends)
+            try:
+                _orch = manager.get_orchestrator(session_id)
+                if _orch is not None and hasattr(_orch, "close_session"):
+                    await _orch.close_session(session_id)
+            except Exception as _mem_close_exc:
+                logger.warning("Memory close_session failed: %s", _mem_close_exc)
             await manager.disconnect(session_id, user_id)
 
 

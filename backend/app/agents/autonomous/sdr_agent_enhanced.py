@@ -67,7 +67,7 @@ class SDRAgentEnhanced(BaseAgent):
         self,
         agent_id: str = "sdr_enhanced",
         model_gateway=None,
-        enable_rl: bool = True,
+        enable_rl: Optional[bool] = None,
         enable_memory: bool = True,
     ):
         """
@@ -76,9 +76,16 @@ class SDRAgentEnhanced(BaseAgent):
         Args:
             agent_id: Agent identifier
             model_gateway: Model gateway for LLM calls
-            enable_rl: Enable reinforcement learning
+            enable_rl: Enable reinforcement learning. Default from RL_ENABLED config.
+                       PPO is EXPERIMENTAL (update does not apply gradients).
             enable_memory: Enable memory system
         """
+        if enable_rl is None:
+            try:
+                from ...core.config import get_settings
+                enable_rl = getattr(get_settings(), "RL_ENABLED", False)
+            except Exception:
+                enable_rl = False
         super().__init__()
         self.agent_id = agent_id
         self.gateway = model_gateway
@@ -126,17 +133,21 @@ class SDRAgentEnhanced(BaseAgent):
 
         logger.info(f"SDRAgentEnhanced initialized: {agent_id}")
 
-    async def initialize(self):
+    async def initialize(self, session_id: Optional[str] = None):
         """初始化Agent"""
         logger.info(f"Initializing {self.agent_id}")
 
-        # Load memory if exists
-        if self.memory:
-            try:
-                await self.memory.load_from_disk(f"data/memory/{self.agent_id}.json")
-                logger.info("Memory loaded from disk")
-            except FileNotFoundError:
-                logger.info("No existing memory found, starting fresh")
+        # Wire AgentMemory to Redis/Qdrant backends (falls back to in-process if
+        # backends are disabled — no infra required in dev/test).
+        if self.enable_memory:
+            self.memory = await AgentMemory.create_with_backends(
+                agent_id=self.agent_id,
+                max_episodic=1000,
+                max_semantic=500,
+                max_working=10,
+            )
+            if session_id:
+                await self.memory.load_session(session_id)
 
         # Load RL policy if exists
         if self.rl_policy:

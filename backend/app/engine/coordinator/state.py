@@ -142,6 +142,10 @@ class CoordinatorState(TypedDict, total=False):
     recent_tool_calls: bool
     bandit_decision: dict
 
+    # Memory context (populated before NPC/Coach nodes each turn)
+    # Each entry is a dict with keys: memory_id, content, memory_type, importance
+    memory_context: list
+
     # Compliance
     compliance_result: dict
     risk_score: float
@@ -232,6 +236,9 @@ def create_initial_state(
         route_choice="",
         recent_tool_calls=False,
         bandit_decision={},
+
+        # Memory context (populated per-turn by execute_turn)
+        memory_context=[],
 
         # Compliance (will be populated)
         compliance_result={},

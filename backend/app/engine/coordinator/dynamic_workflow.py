@@ -346,6 +346,11 @@ class DynamicWorkflowCoordinator:
         self.persona = persona
         self.config = config
 
+        # Per-session AgentMemory instances (keyed by session_id).
+        # Populated lazily on first execute_turn call for a session.
+        # Call close_session(session_id) to flush and release.
+        self._session_memories: Dict[str, Any] = {}
+
         # 初始化节点实现
         self._init_node_implementations()
 
@@ -733,9 +738,25 @@ class DynamicWorkflowCoordinator:
         session_id = str(state.get("session_id", ""))
         async with node_span("npc", {"session_id": session_id}):
             start = time.perf_counter()
+
+            # Inject retrieved memories into history so the NPC can reference past interactions
+            base_history = list(state.get("history", []))
+            memory_context = state.get("memory_context", [])
+            if memory_context:
+                memory_lines = []
+                for m in memory_context:
+                    content = m.get("content", "")
+                    mtype = m.get("memory_type", "episodic")
+                    importance = m.get("importance", 0.5)
+                    if content:
+                        memory_lines.append(f"[{mtype}|importance={importance:.2f}] {content}")
+                if memory_lines:
+                    memory_prefix = "[记忆参考 - 以下是与本次对话相关的历史记忆，可用于保持对话一致性]\n" + "\n".join(memory_lines)
+                    base_history = [{"role": "system", "content": memory_prefix}] + base_history
+
             npc_resp = await self.npc_agent.generate_response(
                 message=state["user_message"],
-                history=state.get("history", []),
+                history=base_history,
                 persona=state.get("persona", self.persona),
                 stage=state.get("fsm_state", {}).get("current_stage", "discovery")
             )
@@ -781,9 +802,24 @@ class DynamicWorkflowCoordinator:
         advice_text = ""
         advice_tips = []
 
+        # Build history with memory context prepended so coach advice is grounded in past turns
+        base_history = list(state.get("history", []))
+        memory_context = state.get("memory_context", [])
+        if memory_context:
+            memory_lines = []
+            for m in memory_context:
+                content = m.get("content", "")
+                mtype = m.get("memory_type", "episodic")
+                importance = m.get("importance", 0.5)
+                if content:
+                    memory_lines.append(f"[{mtype}|importance={importance:.2f}] {content}")
+            if memory_lines:
+                memory_prefix = "[历史记忆参考 - 教练建议应基于以下上下文]\n" + "\n".join(memory_lines)
+                base_history = [{"role": "system", "content": memory_prefix}] + base_history
+
         try:
             advice_obj = await self.coach_agent.get_advice(
-                history=state.get("history", []) + [
+                history=base_history + [
                     {"role": "user", "content": state["user_message"]}
                 ],
                 session_id=state.get("session_id", "default"),
@@ -933,6 +969,23 @@ class DynamicWorkflowCoordinator:
         Returns:
             Dict with NPC reply and optional coach advice
         """
+        # ------------------------------------------------------------------
+        # Memory: retrieve relevant context for this turn.
+        # Lazily initialise AgentMemory for the session on first call.
+        # ------------------------------------------------------------------
+        memory_context: list = []
+        try:
+            if session_id not in self._session_memories:
+                from ...agents.memory.agent_memory import AgentMemory
+                mem = await AgentMemory.create_with_backends(agent_id="coordinator")
+                await mem.load_session(session_id)
+                self._session_memories[session_id] = mem
+            mem = self._session_memories[session_id]
+            relevant = await mem.retrieve_relevant(query=user_message, top_k=5)
+            memory_context = [r.to_dict() for r in relevant]
+        except Exception as _mem_exc:
+            logger.warning("[DynamicWorkflow] Memory retrieval failed: %s", _mem_exc)
+
         initial_state = CoordinatorState(
             user_message=user_message,
             session_id=session_id,
@@ -940,6 +993,7 @@ class DynamicWorkflowCoordinator:
             history=history,
             fsm_state=fsm_state,
             persona=self.persona,
+            memory_context=memory_context,
             trace_log=[],
             tool_outputs=[],
             tool_results=[],
@@ -1020,6 +1074,25 @@ class DynamicWorkflowCoordinator:
                 self.bandit.record_feedback(decision_id, reward)
                 logger.debug("[Bandit] Auto reward recorded: decision=%s reward=%.3f", decision_id, reward)
 
+            # --- Memory: store this turn's interaction ---
+            try:
+                if session_id in self._session_memories:
+                    mem = self._session_memories[session_id]
+                    npc_reply = final_state.get("npc_response", "")
+                    await mem.store_interaction(
+                        session_id=session_id,
+                        turn_number=turn_number,
+                        user_message=user_message,
+                        npc_response=npc_reply,
+                        metadata={
+                            "intent": final_state.get("intent", ""),
+                            "npc_mood": final_state.get("npc_mood", 0.5),
+                            "fsm_stage": fsm_state.get("current_stage", ""),
+                        },
+                    )
+            except Exception as _mem_store_exc:
+                logger.warning("[DynamicWorkflow] Memory store failed: %s", _mem_store_exc)
+
             return {
                 "npc_reply": final_state.get("npc_response", ""),
                 "npc_mood": final_state.get("npc_mood", 0.5),
@@ -1040,6 +1113,25 @@ class DynamicWorkflowCoordinator:
                     self.config.conditional_routing = original_conditional
                 self.graph = self._build_dynamic_graph()
                 self.app = self.graph.compile()
+
+    async def close_session(self, session_id: str) -> None:
+        """
+        Flush and tear down the AgentMemory for a session.
+
+        Call this when a training session ends (e.g., from production_coordinator
+        or the sessions endpoint) to persist episodic memories to the L1/L2 backends
+        and free the in-process cache entry.
+
+        Usage:
+            await coordinator.close_session(session_id)
+        """
+        mem = self._session_memories.pop(session_id, None)
+        if mem is not None:
+            try:
+                await mem.save_session(session_id)
+                logger.info("[DynamicWorkflow] Memory session saved: %s", session_id)
+            except Exception as exc:
+                logger.warning("[DynamicWorkflow] Memory save failed for %s: %s", session_id, exc)
 
     def _compute_turn_reward(self, state: "CoordinatorState") -> float:
         """

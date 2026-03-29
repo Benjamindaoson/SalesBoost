@@ -171,6 +171,75 @@ class AgentMemory:
             ", ".join(backends) if backends else "none (in-process only)",
         )
 
+    @classmethod
+    async def create_with_backends(cls, agent_id: str, **kwargs) -> "AgentMemory":
+        """Factory: construct AgentMemory and wire L1/L2 backends from app settings.
+
+        Reads AGENT_MEMORY_REDIS_ENABLED and AGENT_MEMORY_QDRANT_ENABLED from
+        config. If disabled, the returned instance runs fully in-process (no
+        infra required). Call ``load_session(session_id)`` afterwards to
+        restore a prior session.
+
+        Args:
+            agent_id: Unique identifier for this agent.
+            **kwargs: Forwarded to AgentMemory.__init__ (e.g. max_interactions).
+
+        Returns:
+            Fully initialised AgentMemory with backends attached.
+        """
+        from backend.app.core.config import settings
+        from backend.app.agents.memory.memory_backend import (
+            RedisEpisodicBackend,
+            QdrantSemanticBackend,
+        )
+
+        instance = cls(agent_id=agent_id, **kwargs)
+        l1 = None
+        l2 = None
+
+        if settings.AGENT_MEMORY_REDIS_ENABLED:
+            try:
+                import redis.asyncio as aioredis
+                redis_client = aioredis.from_url(
+                    settings.REDIS_URL,
+                    encoding="utf-8",
+                    decode_responses=True,
+                )
+                l1 = RedisEpisodicBackend(
+                    redis_client=redis_client,
+                    ttl_seconds=settings.AGENT_MEMORY_REDIS_TTL_SECONDS,
+                )
+                logger.info("AgentMemory L1 Redis attached for agent=%s", agent_id)
+            except Exception as exc:
+                logger.warning("AgentMemory L1 Redis failed: %s", exc)
+
+        if settings.AGENT_MEMORY_QDRANT_ENABLED:
+            try:
+                from qdrant_client import AsyncQdrantClient
+                qdrant_client = AsyncQdrantClient(
+                    url=settings.AGENT_MEMORY_QDRANT_URL,
+                    api_key=settings.AGENT_MEMORY_QDRANT_API_KEY,
+                )
+                collection_name = (
+                    f"{settings.AGENT_MEMORY_QDRANT_COLLECTION_PREFIX}_{agent_id}"
+                )
+                l2 = QdrantSemanticBackend(
+                    client=qdrant_client,
+                    collection_name=collection_name,
+                    vector_size=settings.AGENT_MEMORY_VECTOR_SIZE,
+                )
+                await l2.ensure_collection()
+                logger.info(
+                    "AgentMemory L2 Qdrant attached for agent=%s collection=%s",
+                    agent_id, collection_name,
+                )
+            except Exception as exc:
+                logger.warning("AgentMemory L2 Qdrant failed: %s", exc)
+
+        # L3 ProceduralMemory is a stub — not yet implemented.
+        instance.attach_backends(l1=l1, l2=l2, l3=None)
+        return instance
+
     async def load_session(self, session_id: str) -> None:
         """
         从持久化后端加载 session 记忆到进程内缓存。
