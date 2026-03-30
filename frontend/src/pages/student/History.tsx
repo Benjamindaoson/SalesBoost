@@ -28,28 +28,99 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { getHistory } from '@/services/mockData';
+import { sessionService } from '@/services/session.service';
 import { HistoryRecord, HistoryStats } from '@/types/business';
 import { StatCard } from '@/components/dashboard/StatCard';
+import { useAuthStore } from '@/store/auth.store';
+import { useToast } from '@/hooks/use-toast';
 
 export default function StudentHistory() {
   const [stats, setStats] = useState<HistoryStats | null>(null);
   const [records, setRecords] = useState<HistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuthStore();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await getHistory();
-        setStats(data.stats);
-        setRecords(data.records);
+        // 获取用户的会话列表
+        const sessionsData = await sessionService.listSessions({
+          user_id: user?.id,
+          page: 1,
+          page_size: 100
+        });
+
+        // 转换为历史记录格式
+        const historyRecords: HistoryRecord[] = sessionsData.items.map((session: any) => {
+          const startTime = new Date(session.started_at);
+          const endTime = session.completed_at ? new Date(session.completed_at) : new Date();
+          const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+          const score = session.final_score || 0;
+          const scoreLevel: HistoryRecord['scoreLevel'] =
+            score >= 90 ? 'excellent' : score >= 70 ? 'good' : score >= 60 ? 'average' : 'poor';
+
+          return {
+            id: session.id,
+            dateTime: startTime.toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            courseName: session.course_id || '未知课程',
+            customerName: session.persona_id || '未知客户',
+            customerRole: '客户',
+            category: '新客户培训',
+            duration: `${durationMinutes}分钟`,
+            score,
+            scoreLevel,
+          };
+        });
+
+        setRecords(historyRecords);
+
+        // 计算统计数据
+        const totalRehearsals = historyRecords.length;
+        const scores = historyRecords.map(r => r.score).filter(s => s > 0);
+        const averageScore = scores.length > 0
+          ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+          : 0;
+        const bestScore = scores.length > 0 ? Math.max(...scores) : 0;
+        const totalDurationMinutes = historyRecords.reduce((total, record) => {
+          const minutes = parseInt(record.duration.replace('分钟', ''));
+          return total + (isNaN(minutes) ? 0 : minutes);
+        }, 0);
+
+        setStats({
+          totalRehearsals,
+          averageScore,
+          bestScore,
+          totalDurationMinutes
+        });
+      } catch (error) {
+        console.error('Failed to fetch history:', error);
+        toast({
+          variant: 'destructive',
+          title: '加载失败',
+          description: '无法加载历史记录，请稍后重试'
+        });
+        // 设置空数据
+        setRecords([]);
+        setStats({
+          totalRehearsals: 0,
+          averageScore: 0,
+          bestScore: 0,
+          totalDurationMinutes: 0
+        });
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [user, toast]);
 
   return (
     <div className="space-y-6">

@@ -39,17 +39,17 @@ graph_rag = get_enhanced_graph_rag_service("org_001", llm_client)
 # Ingest champion conversations
 await graph_rag.ingest_sales_conversation(
     conversation_id="conv_001",
-    conversation_text="客户：年费太贵...\n销冠：我理解您的顾虑...",
+    conversation_text="客户：年费太贵...\n销售：我理解您的顾虑...",
     metadata={"champion": "张三"}
 )
 
 # Answer complex queries
 result = await graph_rag.answer_complex_query(
-    query="客户说年费太贵，销冠通常怎么应对？"
+    query="客户说年费太贵，销售通常怎么应对？"
 )
 
 print(result["answer"])
-# "根据销冠经验，应该使用权益话术，通过价值转化技巧..."
+# "根据销售经验，应该使用权益话术，通过价值转化技巧..."
 
 print(result["reasoning_paths"])
 # [{"entities": [...], "reasoning": "...", "score": 0.95}]
@@ -164,7 +164,7 @@ print(ranked)
 - **Natural Language Explanation**: Converts paths to readable reasoning
 
 #### 3. Complex Query Answering
-- **Natural Language Queries**: "客户说年费太贵，销冠通常怎么应对？"
+- **Natural Language Queries**: "客户说年费太贵，销售通常怎么应对？"
 - **Reasoning Paths**: Shows the logical chain from question to answer
 - **Confidence Scores**: Provides confidence for each answer
 
@@ -302,8 +302,8 @@ Ingestion result: {'conversation_id': 'conv_001', 'total_entities': 5, 'total_re
   - Entity types: ['objection', 'response', 'benefit', 'technique']
 
 [Test 2] Answering complex query...
-Query: 客户说年费太贵，销冠通常怎么应对？
-Answer: 根据销冠经验，应该使用权益话术，通过价值转化技巧...
+Query: 客户说年费太贵，销售通常怎么应对？
+Answer: 根据销售经验，应该使用权益话术，通过价值转化技巧...
 Confidence: 0.95
 Reasoning paths: 2
 

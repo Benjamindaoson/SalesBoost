@@ -41,7 +41,7 @@ Successfully reorganized the project to clearly reflect the multi-agent pipeline
 - ✅ Organized 100+ scripts into appropriate categories
 
 ### Phase 4: Directory Naming
-- ✅ Renamed `销冠能力复制数据库/` → `data/raw_sop/`
+- ✅ Renamed `data/sales_knowledge/` → `data/raw_sop/`
 - ✅ Renamed `前端图形/` → `frontend/assets_backup/`
 - ✅ Improved cross-platform compatibility
 

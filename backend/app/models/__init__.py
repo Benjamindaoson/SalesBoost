@@ -10,6 +10,9 @@ Models:
 - Session: Training sessions
 - Message: Conversation messages
 - Evaluation: Performance evaluations
+- Deal: Sales opportunities / pipeline items
+- Encounter: Interactions within a deal (prep / live / review)
+- CockpitEvent: Event stream for the executive cockpit
 """
 
 from .base import Base
@@ -19,6 +22,7 @@ from .task import Task, TaskStatus
 from .session import Session, SessionStatus
 from .message import Message, MessageRole
 from .evaluation import Evaluation
+from .deal import Deal, DealStage, Encounter, EncounterType, CockpitEvent
 
 __all__ = [
     "Base",
@@ -33,4 +37,9 @@ __all__ = [
     "Message",
     "MessageRole",
     "Evaluation",
+    "Deal",
+    "DealStage",
+    "Encounter",
+    "EncounterType",
+    "CockpitEvent",
 ]

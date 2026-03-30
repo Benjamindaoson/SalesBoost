@@ -6,7 +6,12 @@ import {
   CheckSquare, 
   BarChart2, 
   Database,
-  LogOut
+  LogOut,
+  Gauge,
+  Target,
+  Users,
+  Settings,
+  Key
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -20,11 +25,12 @@ export function AdminSidebar() {
   };
 
   const navItems = [
-    { to: '/admin/dashboard', icon: BookOpen, label: '统一培训' },
-    { to: '/admin/courses', icon: LayoutDashboard, label: '课程管理' },
-    { to: '/admin/tasks', icon: CheckSquare, label: '任务管理' },
-    { to: '/admin/analysis', icon: BarChart2, label: '能力分析' },
-    { to: '/admin/knowledge', icon: Database, label: '知识库房' },
+    { to: '/admin/cockpit', icon: Gauge, label: '总裁驾驶舱' },
+    { to: '/admin/analysis', icon: Target, label: '方法论洞察' },
+    { to: '/admin/users', icon: Users, label: '团队管理' },
+    { to: '/admin/knowledge', icon: Database, label: '知识库' },
+    { to: '/admin/dashboard', icon: BookOpen, label: '培训管理' },
+    { to: '/admin/settings', icon: Settings, label: '系统设置' },
   ];
 
   return (
@@ -35,8 +41,8 @@ export function AdminSidebar() {
           AI
         </div>
         <div>
-          <h1 className="text-base font-bold text-gray-900 leading-tight">销冠AI系统</h1>
-          <p className="text-xs text-gray-500">管理型基础协同</p>
+          <h1 className="text-base font-bold text-gray-900 leading-tight">SalesBoost</h1>
+          <p className="text-xs text-gray-500">总裁驾驶舱</p>
         </div>
       </div>
 

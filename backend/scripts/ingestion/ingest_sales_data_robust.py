@@ -21,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # 数据目录
-DATA_DIR = Path(__file__).parent.parent / "销冠能力复制数据库"
+DATA_DIR = Path(__file__).parent.parent.parent / "data" / "sales_knowledge"
 
 # 检查依赖
 HAS_EXCEL = False

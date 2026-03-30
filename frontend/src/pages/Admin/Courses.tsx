@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Plus, 
   Search, 
@@ -10,6 +10,8 @@ import {
   Eye,
   Edit2
 } from 'lucide-react';
+import { courseService, Course } from '@/services/course.service';
+import { customerService } from '@/services/customer.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -24,105 +26,60 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-// Mock Data based on Image 1
-const CATALOG_CATEGORIES = [
-  "全部课程",
-  "运维联名高尔夫白金卡",
-  "新客户开卡场景训练",
-  "异议处理训练",
-  "权益推荐场景",
-  "合规话术训练",
-  "白金卡销售话术",
-  "Visa全币种卡",
-  "腾讯视频联名卡"
-];
+// 分类与角色来自 API
 
-const COURSES = [
-  {
-    id: 1,
-    title: "新客户开卡场景训练",
-    description: "针对新客户推荐口金卡的开卡场景，帮助学员掌握核心话术和销售技巧",
-    author: "张明",
-    time: "今天 17:29",
-    category: "新客户开卡场景训练"
-  },
-  {
-    id: 2,
-    title: "异议处理训练",
-    description: "客户对年费、权益等提出异议时的应对训练，提升学员解决客户疑虑的能力",
-    author: "李华",
-    time: "今天 15:20",
-    category: "异议处理训练"
-  },
-  {
-    id: 3,
-    title: "权益推荐场景",
-    description: "针对客户需求，精准推荐卡片权益的场景训练",
-    author: "王芳",
-    time: "昨天 23:16",
-    category: "权益推荐场景"
-  },
-  {
-    id: 4,
-    title: "合规话术训练",
-    description: "确保销售话术符合监管要求，避免承诺性表述",
-    author: "赵强",
-    time: "昨天 18:09",
-    category: "合规话术训练"
-  },
-  {
-    id: 5,
-    title: "白金卡销售话术",
-    description: "销冠总结的白金卡销售黄金话术库，适用于各种...",
-    author: "钱伟",
-    time: "昨天 14:30",
-    category: "白金卡销售话术"
-  },
-  {
-    id: 6,
-    title: "新客户开卡场景训练",
-    description: "百夫长卡开卡场景训练，针对高端客户的销售...",
-    author: "孙丽",
-    time: "前天 09:15",
-    category: "新客户开卡场景训练"
-  }
-];
-
-// Mock Data based on Image 2
-const ROLES = [
-  {
-    id: 1,
-    name: "刘先生",
-    description: "27岁，互联网行业程序员，商旅流求高",
-    author: "张明",
-    time: "今天 17:29"
-  },
-  {
-    id: 2,
-    name: "王女士",
-    description: "35岁，金融行业，有家庭，关注子女教育",
-    author: "李华",
-    time: "今天 15:20"
-  },
-  {
-    id: 3,
-    name: "李总",
-    description: "42岁，企业高管，追求高端服务和品质",
-    author: "王芳",
-    time: "昨天 23:16"
-  },
-  {
-    id: 4,
-    name: "张小姐",
-    description: "29岁，设计师，注重生活品质和消费体验",
-    author: "赵强",
-    time: "昨天 18:09"
-  }
-];
+interface RoleItem {
+  id: string;
+  name: string;
+  description: string;
+  author: string;
+  time: string;
+}
 
 export default function AdminCourses() {
   const [activeTab, setActiveTab] = useState("custom");
   const [selectedCategory, setSelectedCategory] = useState("全部课程");
+  const [categories, setCategories] = useState<string[]>(["全部课程"]);
+  const [courses, setCourses] = useState<Array<Course & { author?: string; time?: string }>>([]);
+  const [roles, setRoles] = useState<RoleItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [courseList, categoryList, customerList] = await Promise.all([
+          courseService.list(),
+          courseService.listCategories().catch(() => ["全部课程"]),
+          customerService.getCustomers().catch(() => []),
+        ]);
+        setCourses(courseList.map((c) => ({
+          ...c,
+          author: '系统',
+          time: (c as any).updated_at ? new Date((c as any).updated_at).toLocaleString('zh-CN') : '',
+        })));
+        setCategories(Array.isArray(categoryList) && categoryList.length > 0 ? categoryList : ["全部课程"]);
+        setRoles(customerList.map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          author: p.creator,
+          time: p.lastRehearsalTime || '',
+        })));
+      } catch {
+        setCourses([]);
+        setCategories(["全部课程"]);
+        setRoles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filteredCourses = selectedCategory === "全部课程"
+    ? courses
+    : courses.filter((c) => c.category === selectedCategory || c.title.includes(selectedCategory));
 
   return (
     <div className="flex flex-col h-full space-y-6">
@@ -174,7 +131,7 @@ export default function AdminCourses() {
               <MoreVertical className="w-4 h-4 text-gray-400 cursor-pointer" />
             </div>
             <div className="flex-1 overflow-y-auto py-2">
-              {CATALOG_CATEGORIES.map((cat, idx) => (
+              {categories.map((cat, idx) => (
                 <div 
                   key={idx}
                   onClick={() => setSelectedCategory(cat)}
@@ -227,9 +184,11 @@ export default function AdminCourses() {
 
           {/* Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
-            {activeTab === 'roles' ? (
-              // Role Cards
-              ROLES.map((role) => (
+            {loading && activeTab !== 'roles' ? (
+              <div className="col-span-full py-12 text-center text-gray-500">加载中...</div>
+            ) : activeTab === 'roles' ? (
+              // Role Cards (from customers API)
+              roles.map((role) => (
                 <Card key={role.id} className="overflow-hidden border-gray-200 hover:shadow-lg transition-shadow duration-200 group">
                   <div className="h-32 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative">
                     <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-purple-600">
@@ -266,7 +225,7 @@ export default function AdminCourses() {
               ))
             ) : (
               // Course Cards
-              COURSES.map((course) => (
+              (loading ? [] : filteredCourses).map((course) => (
                 <Card key={course.id} className="overflow-hidden border-gray-200 hover:shadow-lg transition-shadow duration-200 group">
                   <div className="h-32 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative">
                     <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-purple-600">
@@ -275,7 +234,7 @@ export default function AdminCourses() {
                   </div>
                   <CardContent className="p-5">
                     <h3 className="font-bold text-gray-900 text-lg mb-1">{course.title}</h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 h-10 mb-4">{course.description}</p>
+                    <p className="text-sm text-gray-500 line-clamp-2 h-10 mb-4">{course.description || ''}</p>
                     
                     <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
                       <div className="flex items-center gap-1">

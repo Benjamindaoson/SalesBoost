@@ -49,7 +49,7 @@ class Message(BaseModel):
     sales_technique = Column(String(50))  # SPIN, FAB, etc.
     score = Column(Float)  # 0-10
     feedback = Column(Text)
-    metadata = Column(Text)  # JSON
+    message_metadata = Column(Text)  # JSON (renamed to avoid SQLAlchemy reserved word)
 
     # Relationships
     session = relationship("Session", back_populates="messages")

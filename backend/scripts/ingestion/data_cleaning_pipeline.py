@@ -24,7 +24,7 @@ class DataCleaningPipeline:
     """数据清洗管道"""
 
     def __init__(self):
-        self.source_dir = Path("销冠能力复制数据库")
+        self.source_dir = Path("data/sales_knowledge")
         self.product_rights_dir = self.source_dir / "产品权益"
         self.sales_recordings_dir = self.source_dir / "销售录音"
 

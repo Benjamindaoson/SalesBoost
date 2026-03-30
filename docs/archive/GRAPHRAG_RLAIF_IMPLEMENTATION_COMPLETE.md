@@ -34,7 +34,7 @@
 # 示例：从销售对话中提取知识
 conversation = """
 客户：你们的信用卡年费太贵了。
-销冠：我理解您的顾虑。其实我们的白金卡虽然年费1000元，
+销售：我理解您的顾虑。其实我们的白金卡虽然年费1000元，
      但只要您年消费满10万，年费就全免。而且您可以享受
      机场贵宾厅、积分返现等价值超过5000元的权益。
 """
@@ -53,13 +53,13 @@ conversation = """
 #### 1.2 Multi-hop Reasoning
 **核心功能**:
 - **路径发现**: 在知识图谱中找到多跳推理路径
-- **智能推理**: 回答复杂问题如"客户说年费贵，销冠通常怎么应对？"
+- **智能推理**: 回答复杂问题如"客户说年费贵，销售通常怎么应对？"
 - **路径排序**: 使用LLM对推理路径进行相关性排序
 
 **技术亮点**:
 ```python
 # 示例：多跳推理
-query = "客户说年费太贵，销冠通常怎么应对？"
+query = "客户说年费太贵，销售通常怎么应对？"
 
 # 系统自动找到推理路径：
 # [异议:年费贵] --addresses--> [应对:权益话术] --part_of--> [技巧:价值转化]
@@ -69,7 +69,7 @@ query = "客户说年费太贵，销冠通常怎么应对？"
 #                              [利益:积分返现]
 
 # 生成答案：
-# "根据销冠经验，应该使用权益话术，通过价值转化技巧，
+# "根据销售经验，应该使用权益话术，通过价值转化技巧，
 #  强调机场贵宾厅和积分返现等权益的价值远超年费。"
 ```
 
@@ -100,12 +100,12 @@ await graph_rag.ingest_sales_conversation(
 
 # 回答复杂查询
 result = await graph_rag.answer_complex_query(
-    query="客户说年费太贵，销冠通常怎么应对？",
+    query="客户说年费太贵，销售通常怎么应对？",
     use_multi_hop=True
 )
 
 print(result["answer"])
-# "根据销冠经验，应该使用权益话术..."
+# "根据销售经验，应该使用权益话术..."
 
 print(result["reasoning_paths"])
 # [
@@ -335,7 +335,7 @@ for response_id, score in ranked:
 
 | 价值点 | 说明 | 量化指标 |
 |--------|------|---------|
-| **销冠经验结构化** | 自动从对话中提取知识 | 提取效率提升10x |
+| **销售经验结构化** | 自动从对话中提取知识 | 提取效率提升10x |
 | **隐性知识显性化** | 发现隐含的销售策略 | 知识发现率+183% |
 | **培训效果提升** | 精准的弱项诊断 | 培训效率提升50% |
 | **合规风险降低** | 自动合规检查 | 违规率降低80% |
@@ -357,8 +357,8 @@ from app.infra.gateway.model_gateway import get_model_gateway
 llm_client = get_model_gateway()
 graph_rag = get_enhanced_graph_rag_service("org_001", llm_client)
 
-# 步骤2: 摄入销冠对话
-conversations = load_champion_conversations()  # 加载销冠对话数据
+# 步骤2: 摄入销售对话
+conversations = load_champion_conversations()  # 加载销售对话数据
 
 for conv in conversations:
     await graph_rag.ingest_sales_conversation(
@@ -369,7 +369,7 @@ for conv in conversations:
 
 # 步骤3: 查询知识
 result = await graph_rag.answer_complex_query(
-    query="客户说年费太贵，销冠通常怎么应对？"
+    query="客户说年费太贵，销售通常怎么应对？"
 )
 
 print(result["answer"])
@@ -437,7 +437,7 @@ class CoachAgent:
         self.evaluator = get_rlaif_evaluator(self.model_gateway)
 
     async def provide_guidance(self, query: str) -> str:
-        # 使用GraphRAG查询销冠经验
+        # 使用GraphRAG查询销售经验
         graph_result = await self.graph_rag.answer_complex_query(query)
 
         # 结合传统RAG
@@ -520,7 +520,7 @@ class CoachAgent:
 ### 短期优化 (1-2周)
 
 1. **数据收集**
-   - 收集至少1000条销冠对话
+   - 收集至少1000条销售对话
    - 标注高质量样本
    - 构建评估数据集
 

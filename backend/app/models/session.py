@@ -59,8 +59,8 @@ class Session(BaseModel):
     objections_resolved = Column(Integer, default=0)
     turns_count = Column(Integer, default=0)
 
-    # Metadata
-    metadata = Column(Text)  # JSON
+    # Metadata (renamed to avoid SQLAlchemy reserved word)
+    session_metadata = Column(Text)  # JSON
 
     # Relationships
     user = relationship("User", back_populates="sessions")

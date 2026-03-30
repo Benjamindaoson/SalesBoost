@@ -25,7 +25,7 @@ client = OpenAI(
 )
 
 # Test with first page of first PDF
-pdf_path = Path("销冠能力复制数据库/销售成交营销SOP和话术/《绝对成交》谈判大师.pdf")
+pdf_path = Path("data/sales_knowledge/销售成交营销SOP和话术/《绝对成交》谈判大师.pdf")
 output_dir = Path("data/processed/books")
 output_dir.mkdir(parents=True, exist_ok=True)
 

@@ -1,61 +1,47 @@
 @echo off
-REM SalesBoost Quick Start Script (Windows)
-REM This script starts both backend and frontend servers
+REM SalesBoost 快速启动脚本
+REM 用于同时启动后端和前端服务
 
-echo ==========================================
-echo SalesBoost - Quick Start
-echo ==========================================
+echo ========================================
+echo   SalesBoost 快速启动
+echo ========================================
 echo.
 
-REM Check if Python is available
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo X Python not found. Please install Python 3.11+
+REM 检查是否在正确的目录
+if not exist "backend" (
+    echo [错误] 请在SalesBoost根目录运行此脚本
     pause
     exit /b 1
 )
-echo √ Python found
 
-REM Check if Node.js is available
-node --version >nul 2>&1
-if errorlevel 1 (
-    echo X Node.js not found. Please install Node.js 18+
-    pause
-    exit /b 1
-)
-echo √ Node.js found
-echo.
+echo [1/3] 启动后端服务...
+cd backend
+start "SalesBoost Backend" cmd /k "python main.py"
+cd ..
 
-REM Start backend
-echo Step 1: Starting backend server...
-echo   Backend will run on http://localhost:8000
-start "SalesBoost Backend" cmd /k "cd /d %~dp0 && python main.py"
-timeout /t 5 /nobreak >nul
-echo √ Backend started
-echo.
+echo [2/3] 等待后端启动...
+timeout /t 10 /nobreak > nul
 
-REM Start frontend
-echo Step 2: Starting frontend server...
-echo   Frontend will run on http://localhost:5173
-start "SalesBoost Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
-timeout /t 3 /nobreak >nul
-echo √ Frontend started
-echo.
+echo [3/3] 启动前端服务...
+cd frontend
+start "SalesBoost Frontend" cmd /k "npm run dev"
+cd ..
 
-echo ==========================================
-echo √ SalesBoost is starting!
-echo ==========================================
 echo.
-echo 📊 Services:
-echo   Backend:  http://localhost:8000
-echo   Frontend: http://localhost:5173
-echo   Health:   http://localhost:8000/health
+echo ========================================
+echo   启动完成!
+echo ========================================
 echo.
-echo 🌐 Open your browser and visit:
-echo   http://localhost:5173
+echo 后端地址: http://localhost:8000
+echo 前端地址: http://localhost:5173 (或 5174)
+echo API文档: http://localhost:8000/docs
 echo.
-echo 💡 To stop the servers:
-echo   Close the terminal windows or press Ctrl+C
+echo 按任意键打开浏览器...
+pause > nul
+
+start http://localhost:5173/student/dashboard
+
 echo.
-echo ==========================================
-pause
+echo 提示: 关闭此窗口不会停止服务
+echo 要停止服务,请关闭后端和前端的命令行窗口
+echo.

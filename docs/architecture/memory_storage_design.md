@@ -1,4 +1,4 @@
-﻿# Memory Storage Design (PostgreSQL + Qdrant/Chroma)
+# Memory Storage Design (PostgreSQL + Qdrant/Chroma)
 
 本设计与 `docs/api/memory_service_api.md` 的字段严格对齐，用于落地 MVP 记忆模块的主存储、审计与检索索引。
 
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS memory_knowledge (
 CREATE INDEX IF NOT EXISTS idx_knowledge_lookup ON memory_knowledge (tenant_id, domain, product_id, is_enabled);
 CREATE INDEX IF NOT EXISTS idx_knowledge_effective ON memory_knowledge (tenant_id, effective_from, effective_to);
 
--- 5. StrategyUnit（销冠策略单元）
+-- 5. StrategyUnit（策略单元）
 CREATE TABLE IF NOT EXISTS memory_strategy_unit (
     strategy_id         TEXT NOT NULL,
     tenant_id           TEXT NOT NULL,

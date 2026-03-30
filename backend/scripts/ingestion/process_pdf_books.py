@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 class PDFBookProcessor:
     """Process PDF sales books with OCR and structure extraction"""
 
-    def __init__(self, pdf_dir: str = "销冠能力复制数据库/销售成交营销SOP和话术"):
+    def __init__(self, pdf_dir: str = "data/sales_knowledge/销售成交营销SOP和话术"):
         self.pdf_dir = Path(pdf_dir)
         self.output_dir = Path("data/processed/books")
         self.output_dir.mkdir(parents=True, exist_ok=True)

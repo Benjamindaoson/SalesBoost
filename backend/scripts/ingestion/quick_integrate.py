@@ -17,7 +17,7 @@ class QuickIntegration:
     """快速集成"""
 
     def __init__(self):
-        self.cleaned_data_dir = Path("销冠能力复制数据库/cleaned_data_20260201_001")
+        self.cleaned_data_dir = Path("data/sales_knowledge/cleaned_data_20260201_001")
         self.product_rights_dir = self.cleaned_data_dir / "product_rights"
         self.sales_recordings_dir = self.cleaned_data_dir / "sales_recordings"
         self.output_dir = Path("storage/integrated_data")

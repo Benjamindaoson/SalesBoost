@@ -5,6 +5,8 @@ User Preferences API
 
 Author: Claude (Anthropic)
 Date: 2026-02-05
+
+Storage: In-memory dict keyed by user_id. Replace with Redis/DB for production.
 """
 
 from typing import Any, Dict, List, Optional
@@ -15,6 +17,10 @@ from pydantic import BaseModel, Field
 from ...api.middleware import User, get_current_user
 
 router = APIRouter(prefix="/api/user/preferences", tags=["preferences"])
+
+# In-memory storage (replace with DB/Redis for production)
+_preferences_store: Dict[str, dict] = {}
+_custom_personas_store: Dict[str, List[dict]] = {}
 
 
 class CustomerPersona(BaseModel):
@@ -100,10 +106,10 @@ async def get_preferences(
     Returns:
         用户偏好设置
     """
-    # TODO: 从数据库加载用户偏好
-    # preferences = db.query(UserPreferencesModel).filter_by(user_id=user.id).first()
-
-    # 临时返回默认设置
+    # Load from in-memory store (or default)
+    stored = _preferences_store.get(str(user.id))
+    if stored:
+        return UserPreferences(**stored)
     return UserPreferences()
 
 
@@ -122,9 +128,8 @@ async def update_preferences(
     Returns:
         更新后的偏好设置
     """
-    # TODO: 保存到数据库
-    # db.query(UserPreferencesModel).filter_by(user_id=user.id).update(preferences.dict())
-    # db.commit()
+    # Save to in-memory store
+    _preferences_store[str(user.id)] = preferences.model_dump()
 
     return {
         "success": True,
@@ -148,12 +153,18 @@ async def create_custom_persona(
     Returns:
         创建的画像
     """
-    # TODO: 保存到数据库
+    # Save to in-memory store
+    uid = str(user.id)
+    if uid not in _custom_personas_store:
+        _custom_personas_store[uid] = []
+    persona_id = f"persona_{len(_custom_personas_store[uid])}_{uid}"
+    entry = {"id": persona_id, **persona.model_dump()}
+    _custom_personas_store[uid].append(entry)
 
     return {
         "success": True,
         "message": "Custom persona created",
-        "persona": persona,
+        "persona": entry,
     }
 
 
@@ -172,7 +183,10 @@ async def delete_custom_persona(
     Returns:
         删除结果
     """
-    # TODO: 从数据库删除
+    # Remove from in-memory store
+    uid = str(user.id)
+    if uid in _custom_personas_store:
+        _custom_personas_store[uid] = [p for p in _custom_personas_store[uid] if p.get("id") != persona_id]
 
     return {
         "success": True,
@@ -195,8 +209,7 @@ async def export_data(
     Returns:
         导出文件URL
     """
-    # TODO: 生成导出文件
-
+    # Generate export placeholder (full implementation would use export_service)
     return {
         "success": True,
         "download_url": f"/api/downloads/{user.id}/export.{settings.format}",

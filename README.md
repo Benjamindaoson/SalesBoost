@@ -1,5 +1,6 @@
-# 🤖 SalesBoost - AI Sales Champion Replication Platform
-## 销冠能力复制多智能体平台
+# SalesBoost - AI Sales Enablement Platform
+
+> **Canonical name**: `sales-boost` (lowercase, kebab-case)
 
 <div align="center">
 
@@ -9,595 +10,265 @@
 [![LangGraph](https://img.shields.io/badge/LangGraph-Latest-FF6B6B?style=for-the-badge)](https://github.com/langchain-ai/langgraph)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-**A Production-Ready Multi-Agent AI System for Sales Training**
+**AI-Powered Sales Enablement: Training, Pipeline, Methodology & Live Assist**
 
-*Featuring Intent Recognition, Dynamic Orchestration, Self-Correcting Tools, and 4-Tier Memory*
+*Multi-Agent Orchestration • Intent Recognition • Hybrid RAG • 4-Tier Memory • FSM State Machine*
 
-[🚀 Quick Start](#-quick-start) • [📖 Documentation](docs/) • [🎯 Innovations](#-core-innovations) • [🏗️ Architecture](#-architecture) • [🤝 Contributing](CONTRIBUTING.md)
+[Quick Start](#-quick-start) • [Architecture](#-architecture) • [Innovations](#-core-innovations) • [Contributing](CONTRIBUTING.md)
 
 </div>
 
 ---
 
-## 🌟 What is SalesBoost?
+## What is SalesBoost?
 
-SalesBoost is a **cutting-edge AI platform** that replicates top sales performers' capabilities through advanced multi-agent architecture. It combines state-of-the-art AI algorithms, innovative system design, and production-ready engineering to create an intelligent sales training ecosystem.
+SalesBoost is an **AI-powered sales enablement platform** that helps sales teams win more deals through:
 
-### 🎯 The Problem We Solve
+- **AI Sales Training** – Simulate customer conversations with NPC personas, get real-time coach feedback
+- **Deal Pipeline Management** – Track deals with methodology frameworks (MEDDPICC, SPIN, Challenger)
+- **Battle Prep** – AI-generated prep prompts and talking points before customer calls
+- **Live Assist** – Real-time suggestions during calls
+- **Post-Call Review** – Session replay and multi-dimensional evaluation
+- **Executive Cockpit** – Pipeline overview and team analytics
 
-Traditional sales training is:
-- ❌ **Expensive**: Requires experienced trainers and extensive time
-- ❌ **Inconsistent**: Quality varies by trainer and trainee
-- ❌ **Slow**: Takes months to develop proficiency
-- ❌ **Not Scalable**: Limited by human trainer availability
+### Problem We Solve
 
-### ✅ Our Solution
+- Traditional sales training is expensive, inconsistent, and not scalable
+- Deals slip due to methodology gaps (e.g., missing Economic Buyer in MEDDPICC)
+- Reps lack real-time guidance during high-stakes conversations
 
-SalesBoost provides:
-- ✅ **AI-Powered Coaching**: Real-time feedback with SOP grounding
-- ✅ **Realistic Practice**: NPC simulator with diverse customer personas
-- ✅ **Intelligent Evaluation**: Multi-dimensional performance analysis
-- ✅ **Knowledge Retrieval**: Semantic search across sales materials
-- ✅ **24/7 Availability**: Train anytime, anywhere
+### Solution
 
----
-
-## 🚀 Core Innovations
-
-### 🧠 AI Algorithm Innovations
-
-#### 1. **Context-Aware Intent Classification**
-- **Multi-level intent recognition** with contextual understanding
-- **Intent Types**: Social, Informational, Objection, Closing, Compliance
-- **Accuracy**: 85%+ with contextual bandit learning
-- **Technology**: Fine-tuned BERT + Contextual Embeddings
-
-**Innovation**: Unlike traditional rule-based systems, our intent classifier uses **contextual bandit algorithms** to continuously learn optimal routing strategies from user interactions.
-
-#### 2. **Semantic Search with BGE-M3 Embeddings**
-- **375 semantic chunks** with <50ms query latency
-- **Model**: BAAI/bge-small-zh-v1.5 (512 dimensions)
-- **Performance**: 44.56ms average latency
-- **Coverage**: Champion cases, SOPs, product info, training scenarios
-
-**Innovation**: Implements **hybrid retrieval** combining dense embeddings with sparse keyword matching for superior relevance.
-
-#### 3. **Self-Correcting Tool Execution**
-```python
-# Tools that learn from failures and auto-correct
-class ReflectionAgent:
-    def execute_with_correction(self, tool, params):
-        result = tool.execute(params)
-        if result.failed:
-            correction = self.analyze_failure(result)
-            return tool.execute(correction.params)
-```
-
-**Innovation**: First sales AI system with **reflection-based self-correction**, reducing error rates by 60%.
-
-#### 4. **4-Tier Memory Architecture**
-```
-S0: Short-term (Redis-backed sliding window)
-S1: Session summary (Compressed context)
-S2: User profile (Long-term preferences)
-S3: Global knowledge (Tenant-wide insights)
-```
-
-**Innovation**: Inspired by human memory systems, enables **context-aware responses** while maintaining efficiency.
+- **24/7 AI coaching** with SOP-grounded feedback
+- **Methodology-aware pipeline** with dimension tracking and gap analysis
+- **Intent-aware routing** to the right agent (Coach, NPC, Knowledge, Compliance)
+- **Semantic knowledge retrieval** across sales materials
 
 ---
 
-### 🎨 AI Application Development Innovations
+## Core Innovations
 
-#### 1. **Dynamic Workflow Orchestration with LangGraph**
-```python
-# Runtime-configurable execution graphs
-class DynamicWorkflowCoordinator:
-    def build_graph(self, config: WorkflowConfig):
-        graph = StateGraph(AgentState)
-        # Dynamically add nodes based on config
-        if config.enable_coach:
-            graph.add_node("coach", coach_agent)
-        if config.enable_knowledge:
-            graph.add_node("knowledge", knowledge_retriever)
-        return graph.compile()
-```
+All items below are **implemented in code** with file paths for verification.
 
-**Innovation**: **Zero-downtime workflow updates** - modify agent pipelines without restarting the system.
+### AI Algorithm
 
-#### 2. **Production Coordinator Pattern**
-- Unified facade for multi-agent orchestration
-- Intent routing with contextual bandit
-- Dynamic workflow construction
-- State management with FSM
-- Tool execution with retry logic
-- Memory integration across tiers
+| Innovation | Implementation | Evidence |
+|------------|----------------|----------|
+| **LLM + Keyword Intent Classification** | LLM when `ENABLE_LLM_INTENT=true`, keyword fallback on failure | [`llm_intent_classifier.py`](backend/app/services/llm_intent_classifier.py), [`intent_routing.py`](backend/app/agents/conversation/intent_routing.py) |
+| **Intent Types** | INFORMATIONAL, SOCIAL, OBJECTION, BUYING_SIGNAL, CLARIFICATION, UNKNOWN | [`intent_routing.py`](backend/app/agents/conversation/intent_routing.py) L43-53 |
+| **Hybrid RAG (Vector + BM25 + Reranker)** | Dense embeddings + BM25 + BGE Reranker | [`vector_store.py`](backend/app/infra/search/vector_store.py), [`bm25_retriever.py`](backend/app/infra/search/bm25_retriever.py), [`config.py`](backend/app/core/config.py) L183-215 |
+| **Embedding Models** | paraphrase-multilingual-MiniLM-L12-v2, BAAI/bge-m3, text2vec-base-chinese, OpenAI | [`embedding_manager.py`](backend/app/infra/search/embedding_manager.py) L37-80 |
+| **Self-RAG** | ReflectionAgent: Relevance, Faithfulness, Completeness checks | [`self_rag.py`](backend/app/retrieval/self_rag.py) L63-100 |
+| **HyDE** | Hypothetical document generation for improved retrieval | [`hyde_retriever.py`](backend/app/retrieval/hyde_retriever.py) |
+| **Agent Memory (3 types)** | Episodic, Semantic, Working memory with vector retrieval | [`agent_memory.py`](backend/app/agents/memory/agent_memory.py) L30-35 |
+| **4-Tier Context (S0–S3)** | S0: recent messages (Redis), S1: session summary, S2: user profile, S3: tenant knowledge | [`context_manager/memory.py`](backend/app/context_manager/memory.py) L31-92 |
+| **Contextual Bandit** | SimpleContextualBandit + RedisContextualBandit for routing | [`bandit.py`](backend/app/engine/coordinator/bandit.py), [`bandit_redis.py`](backend/app/engine/coordinator/bandit_redis.py) |
+| **LLM-as-Judge Reward** | Multi-dimensional scoring (task_progress, quality, satisfaction, efficiency, compliance) | [`llm_reward_service.py`](backend/app/services/llm_reward_service.py) |
 
-**Innovation**: Industry-first **production-grade coordinator** that handles 1000+ concurrent sessions with <100ms latency.
+### AI Application Development
 
-#### 3. **Streaming Response with Backpressure**
-```python
-# Real-time streaming with flow control
-async def stream_response(query):
-    async for chunk in agent.stream(query):
-        if buffer.is_full():
-            await asyncio.sleep(0.01)  # Backpressure
-        yield chunk
-```
+| Innovation | Implementation | Evidence |
+|------------|----------------|----------|
+| **Production Coordinator** | Unified facade, routes to DynamicWorkflow or LangGraph | [`production_coordinator.py`](backend/app/engine/coordinator/production_coordinator.py) |
+| **Dynamic Workflow (LangGraph)** | Runtime-configurable nodes (intent, knowledge, NPC, coach, compliance), DAG validation | [`dynamic_workflow.py`](backend/app/engine/coordinator/dynamic_workflow.py) L113-220 |
+| **FSM State Machine** | SalesStage: OPENING, NEEDS_DISCOVERY, PRODUCT_INTRO, OBJECTION_HANDLING, CLOSING | [`fsm.py`](backend/app/schemas/fsm.py) L10-18, L71-84 |
+| **Self-Correcting Tool Execution** | ReflectionAgent + execute_with_correction loop | [`reflection.py`](backend/app/tools/reflection.py) L36-77, [`executor.py`](backend/app/tools/executor.py) L577-650 |
+| **Prompt Version Management** | register_prompt, get_prompt_hash, list_versions, load from .md | [`prompt_registry.py`](backend/app/core/prompt_registry.py) |
+| **Golden Dataset Regression** | intent_regression, prompt_hash_regression | [`test_golden_regression.py`](backend/tests/unit/test_golden_regression.py) |
 
-**Innovation**: Implements **adaptive backpressure** to prevent memory overflow during high-load scenarios.
+### AI System Design
 
-#### 4. **Multi-Modal Agent Communication**
-```python
-# Agents communicate via structured messages
-@dataclass
-class AgentMessage:
-    sender: AgentType
-    receiver: AgentType
-    intent: IntentType
-    payload: Dict[str, Any]
-    metadata: MessageMetadata
-```
+| Innovation | Implementation | Evidence |
+|------------|----------------|----------|
+| **Model Gateway** | Multi-provider routing (OpenAI, Gemini, SiliconFlow, Anthropic), Shadow Mode, tiktoken cost tracking | [`model_gateway.py`](backend/app/infra/gateway/model_gateway.py) L56-140 |
+| **Redis Distributed Semaphore** | Concurrency limit for horizontal scaling | [`model_gateway.py`](backend/app/infra/gateway/model_gateway.py) L21-31, [`redis_semaphore.py`](backend/app/infra/gateway/redis_semaphore.py) |
+| **Tenant Middleware** | X-Tenant-ID, token-derived tenant, public path bypass | [`tenant_middleware.py`](backend/app/api/middleware/tenant_middleware.py) |
+| **Streaming Guard** | Sensitive pattern detection, content blocking | [`streaming_guard.py`](backend/app/infra/guardrails/streaming_guard.py) |
+| **Compliance Agent** | COMPLIANCE_INTERCEPT_WORDS, SECURITY_INJECTION_PATTERNS, safe_rewrite | [`compliance_agent.py`](backend/app/agents/roles/compliance_agent.py), [`config.py`](backend/app/core/config.py) L234-239 |
+| **OpenTelemetry** | Distributed tracing, FastAPI instrumentation | [`otel_tracing.py`](backend/app/observability/otel_tracing.py), [`main.py`](backend/main.py) L231-241 |
+| **Prometheus Metrics** | Exporter for observability | [`prometheus_exporter.py`](backend/app/observability/prometheus_exporter.py) |
+| **Sensitive Data Filter** | Log脱敏 | [`security_filter.py`](backend/app/logging/security_filter.py) |
 
-**Innovation**: **Type-safe inter-agent communication** with automatic serialization and validation.
+### AI Product
 
----
-
-### 🏗️ System Design Innovations
-
-#### 1. **Microservices-Ready Architecture**
-```
-┌─────────────────────────────────────────────────────────┐
-│                   API Gateway (FastAPI)                  │
-├─────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
-│  │ Auth Service │  │ Rate Limiter │  │ Circuit      │ │
-│  │              │  │              │  │ Breaker      │ │
-│  └──────────────┘  └──────────────┘  └──────────────┘ │
-├─────────────────────────────────────────────────────────┤
-│              Production Coordinator                      │
-├─────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
-│  │ Coach Agent  │  │ NPC Simulator│  │ Evaluator    │ │
-│  └──────────────┘  └──────────────┘  └──────────────┘ │
-├─────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
-│  │ Vector Store │  │ Redis Cache  │  │ PostgreSQL   │ │
-│  └──────────────┘  └──────────────┘  └──────────────┘ │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Innovation**: **Horizontally scalable** design supporting 10,000+ concurrent users per instance.
-
-#### 2. **Event-Driven State Management**
-```python
-# FSM-based sales stage tracking
-class SalesStateMachine:
-    states = [Opening, Discovery, Pitch, Objection, Closing]
-    transitions = {
-        (Opening, Discovery): validate_rapport,
-        (Discovery, Pitch): validate_needs,
-        (Pitch, Objection): handle_concerns,
-        (Objection, Closing): validate_resolution
-    }
-```
-
-**Innovation**: **Deterministic state transitions** with automatic rollback on validation failure.
-
-#### 3. **Observability-First Design**
-```python
-# Built-in metrics, tracing, and logging
-@observe(metrics=["latency", "tokens", "cost"])
-async def agent_execute(query: str):
-    with tracer.span("agent_execution"):
-        result = await agent.run(query)
-        metrics.record("agent_latency", result.duration)
-        return result
-```
-
-**Innovation**: **Zero-instrumentation observability** - all components auto-instrumented with OpenTelemetry.
-
-#### 4. **Multi-Tenancy with Row-Level Security**
-```python
-# Tenant isolation at database level
-class TenantMiddleware:
-    async def __call__(self, request):
-        tenant_id = extract_tenant(request)
-        set_tenant_context(tenant_id)
-        # All queries automatically filtered by tenant_id
-```
-
-**Innovation**: **Database-level isolation** ensuring complete data separation between tenants.
+| Innovation | Implementation | Evidence |
+|------------|----------------|----------|
+| **Battle Center** | Active deals, pipeline amount, methodology score, encounter count | [`BattleCenter.tsx`](frontend/src/pages/student/BattleCenter.tsx) |
+| **Pipeline** | Deal CRUD, stage filter, funnel view, MEDDPICC/SPIN/Challenger | [`Pipeline.tsx`](frontend/src/pages/student/Pipeline.tsx), [`deals.py`](backend/app/api/endpoints/deals.py) |
+| **Battle Prep** | Prep prompt, methodology state, key gaps, talking points | [`BattlePrep.tsx`](frontend/src/pages/student/BattlePrep.tsx), [`methodology_engine.py`](backend/app/services/methodology_engine.py) |
+| **Live Assist** | Real-time copilot during calls | [`LiveAssist.tsx`](frontend/src/pages/student/LiveAssist.tsx), [`copilot.py`](backend/app/api/endpoints/copilot.py) |
+| **Executive Cockpit** | Overview, funnel, methodology stats | [`Cockpit.tsx`](frontend/src/pages/admin/Cockpit.tsx), [`cockpit.py`](backend/app/api/endpoints/cockpit.py) |
+| **Methodology Engine** | MEDDPICC, SPIN, Challenger dimensions, probe questions, gap analysis | [`methodology_engine.py`](backend/app/services/methodology_engine.py) L40-120 |
+| **Multi-Dimensional Evaluation** | Strategy analyzer, evaluation dimensions | [`strategy_analyzer.py`](backend/app/agents/evaluate/strategy_analyzer.py) |
 
 ---
 
-### 💡 AI Product Innovations
-
-#### 1. **Adaptive Learning System**
-```python
-# Contextual bandit for optimal agent routing
-class ContextualBandit:
-    def select_agent(self, context: Context) -> Agent:
-        # Thompson sampling for exploration-exploitation
-        scores = self.predict_rewards(context)
-        agent = self.sample(scores)
-        self.update_on_feedback(agent, context, reward)
-        return agent
-```
-
-**Innovation**: System **learns from user feedback** to optimize agent selection, improving success rate by 25% over time.
-
-#### 2. **Personalized Training Paths**
-```python
-# AI-generated curriculum based on performance
-class AdaptiveCurriculum:
-    def generate_path(self, user_profile: UserProfile):
-        weaknesses = self.analyze_performance(user_profile)
-        scenarios = self.select_scenarios(weaknesses)
-        return TrainingPath(scenarios, difficulty_curve)
-```
-
-**Innovation**: **Dynamic difficulty adjustment** based on real-time performance metrics.
-
-#### 3. **Real-Time Compliance Checking**
-```python
-# Regulatory compliance validation during conversation
-class ComplianceAgent:
-    def validate(self, message: str) -> ComplianceResult:
-        violations = self.check_regulations(message)
-        if violations:
-            return ComplianceResult(
-                approved=False,
-                violations=violations,
-                suggestions=self.generate_alternatives(message)
-            )
-```
-
-**Innovation**: **Proactive compliance enforcement** preventing regulatory violations before they occur.
-
-#### 4. **Multi-Dimensional Evaluation**
-- **Dimensions**: Integrity, Relevance, Correctness, Logic, Compliance, Persuasiveness, Empathy
-- **Holistic assessment** beyond simple metrics
-- **Actionable insights** for continuous improvement
-
-**Innovation**: Comprehensive performance analysis providing **360-degree feedback**.
-
----
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-SalesBoost/
-├── backend/                    # Backend application
-│   ├── main.py                # FastAPI entry point
-│   ├── requirements.txt        # Python dependencies
-│   ├── app/                   # Application code
-│   │   ├── core/              # Core infrastructure
-│   │   ├── api/               # API endpoints
-│   │   ├── agents/            # AI agents
-│   │   ├── services/          # Business logic
-│   │   ├── engine/            # Workflow engine
-│   │   ├── infra/             # Infrastructure
-│   │   └── memory/            # Memory systems
-│   ├── tests/                 # Test suite
-│   ├── scripts/               # Utility scripts
-│   ├── alembic/               # Database migrations
-│   └── config/                # Configuration
-│
-├── frontend/                  # Frontend application
-│   ├── src/                   # Source code
-│   │   ├── components/        # React components
-│   │   ├── pages/             # Page components
-│   │   ├── services/          # API services
-│   │   └── store/             # State management
-│   └── public/                # Static assets
-│
-├── deployment/                # Deployment configurations
-│   ├── docker/                # Docker Compose files
-│   ├── scripts/               # Deployment scripts
-│   ├── kubernetes/            # K8s manifests
-│   ├── cloud/                 # Cloud configs
-│   └── monitoring/            # Monitoring setup
-│
-├── docs/                      # Documentation
-│   ├── architecture/          # Architecture docs
-│   ├── api/                   # API documentation
-│   ├── deployment/            # Deployment guides
-│   └── MIGRATION_GUIDE.md     # Migration guide
-│
-├── data/                      # Data files
-├── models/                    # ML models
-├── storage/                   # Runtime data
-├── scripts/                   # Root-level scripts
-├── Makefile                   # Common commands
-└── README.md                  # This file
-```
-
-### Key Directories
-
-- **backend/**: All backend code following Clean Architecture principles
-- **frontend/**: React application with TypeScript
-- **deployment/**: All deployment-related configurations and scripts
-- **docs/**: Comprehensive documentation
-- **data/**: Training data, SOPs, knowledge bases
-- **models/**: Pre-trained ML models
-
----
-
-## 🛠️ Development Commands
-
-### Using Makefile
-
-```bash
-make help              # Show all available commands
-make setup             # Initial project setup
-make dev               # Start development environment
-make dev-backend       # Start backend only
-make dev-frontend      # Start frontend only
-make test              # Run all tests
-make test-unit         # Run unit tests
-make test-integration  # Run integration tests
-make lint              # Run code quality checks
-make format            # Format code
-make build             # Build production images
-make clean             # Clean temporary files
-make docker-up         # Start Docker services
-make docker-down       # Stop Docker services
-make docker-logs       # Show Docker logs
-make db-migrate        # Run database migrations
-make status            # Show project status
-```
-
-### Manual Commands
-
-```bash
-# Backend
-cd backend
-python main.py                    # Start backend server
-pytest tests/                     # Run tests
-alembic upgrade head              # Run migrations
-
-# Frontend
-cd frontend
-npm run dev                       # Start dev server
-npm run build                     # Build for production
-npm run lint                      # Run linter
-
-# Docker
-docker-compose -f deployment/docker/compose.base.yml up -d
-docker-compose -f deployment/docker/compose.base.yml down
+sales-boost/
+├── backend/
+│   ├── main.py                 # FastAPI entry
+│   ├── app/
+│   │   ├── agents/             # Coach, NPC, Evaluator, Compliance, Memory, RL
+│   │   ├── api/endpoints/      # REST + WebSocket
+│   │   ├── engine/coordinator/ # ProductionCoordinator, DynamicWorkflow, Bandit
+│   │   ├── infra/             # ModelGateway, VectorStore, BM25, Embedding
+│   │   ├── retrieval/         # Self-RAG, HyDE
+│   │   ├── services/          # LLM intent, Reward, Methodology, Export
+│   │   ├── core/              # config, prompt_registry
+│   │   └── context_manager/   # S0-S3 memory
+│   ├── tests/
+│   └── alembic/
+├── frontend/
+│   └── src/
+│       ├── pages/student/     # BattleCenter, Pipeline, BattlePrep, LiveAssist, Review, Training
+│       ├── pages/admin/       # Cockpit, Courses, KnowledgeBase
+│       └── services/
+├── deployment/docker/
+└── docs/
 ```
 
 ---
 
-## 🏗️ Architecture
+## Technology Stack
 
-### Multi-Agent Pipeline
-
-```
-User Request → API Gateway → Production Coordinator
-                                    ↓
-                    ┌───────────────┼───────────────┐
-                    ↓               ↓               ↓
-              Coach Agent    NPC Simulator    Evaluator
-                    │               │               │
-                    └───────────────┼───────────────┘
-                                    ↓
-                          Tool Executor
-                                    ↓
-                          Memory Management
-                                    ↓
-                              Response
-```
-
-### Technology Stack
-
-**Backend**: FastAPI, LangGraph, PostgreSQL, Redis, Celery
-**Frontend**: React 18, Vite, Zustand, Tailwind CSS, Radix UI
-**AI/ML**: DeepSeek, SiliconFlow, BGE-M3, Fine-tuned BERT
-**DevOps**: Docker, Kubernetes, Prometheus, Grafana, OpenTelemetry
+| Layer | Stack |
+|-------|-------|
+| **Backend** | FastAPI, LangGraph, SQLAlchemy (async), Alembic |
+| **Frontend** | React 18, Vite, TypeScript, Tailwind CSS, Radix UI, Zustand |
+| **AI/LLM** | OpenAI, Google Gemini, SiliconFlow (DeepSeek), Anthropic |
+| **Embedding** | sentence-transformers (BGE, paraphrase-multilingual), OpenAI |
+| **RAG** | Qdrant (optional), BM25 (rank_bm25), BGE Reranker |
+| **Infra** | PostgreSQL / SQLite, Redis, Celery |
+| **Observability** | OpenTelemetry, Prometheus, Sentry |
 
 ---
 
-## 📊 Performance Metrics
-
-### System Performance
-| Metric | Value | Industry Standard |
-|--------|-------|-------------------|
-| **Query Latency** | 44.56ms | <100ms ✅ |
-| **Concurrent Users** | 1000+ | 100-500 ✅ |
-| **Uptime** | 99.9% | 99.5% ✅ |
-| **Memory Usage** | 0.73 MB (375 chunks) | 1-2 MB ✅ |
-| **Intent Accuracy** | 85%+ | 70-80% ✅ |
-
-### AI Performance
-| Metric | Value | Improvement |
-|--------|-------|-------------|
-| **Semantic Search Relevance** | 0.65 avg score | +40% vs keyword |
-| **Self-Correction Success** | 60% error reduction | Industry first |
-| **Contextual Bandit Learning** | 25% improvement | Over random |
-| **Response Quality** | 4.2/5.0 user rating | +35% vs baseline |
-
-### Business Impact
-- **Training Time Reduction**: 60% faster
-- **Cost Savings**: 70% vs human trainers
-- **Scalability**: 10,000+ users per instance
-- **ROI**: 3-6 months payback
-
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
 - Node.js 18+
-- Docker & Docker Compose (recommended)
-- PostgreSQL (production) or SQLite (development)
+- Docker (optional, for Redis/PostgreSQL)
 
-### Installation
-
-#### Option 1: Using Makefile (Recommended)
+### Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/Benjamindaoson/SalesBoost.git
 cd SalesBoost
 
-# Initial setup (installs all dependencies)
-make setup
-
-# Start development environment
-make dev
-```
-
-#### Option 2: Manual Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/Benjamindaoson/SalesBoost.git
-cd SalesBoost
-
-# Backend setup
+# Backend
 cd backend
 pip install -r requirements.txt
-cd ..
+# Set .env: SILICONFLOW_API_KEY or OPENAI_API_KEY, DATABASE_URL, REDIS_URL
+python main.py
 
-# Frontend setup
+# Frontend (new terminal)
 cd frontend
 npm install
-cd ..
-
-# Start services
-docker-compose -f deployment/docker/compose.base.yml -f deployment/docker/compose.dev.yml up -d
-
-# Start backend
-cd backend && python main.py &
-
-# Start frontend
-cd frontend && npm run dev
+npm run dev
 ```
 
 ### Configuration
 
-Create `.env` files:
+Copy `.env.example` to `.env` and set:
+
 ```env
 ENV_STATE=development
-DATABASE_URL=sqlite:///data/databases/salesboost.db
-DEEPSEEK_API_KEY=your_key
-SILICONFLOW_API_KEY=your_key
+DATABASE_URL=sqlite+aiosqlite:///./storage/salesboost.db
+REDIS_URL=redis://localhost:6379/0
+SILICONFLOW_API_KEY=your_key   # or OPENAI_API_KEY
 SECRET_KEY=your_secret
 ```
 
 ### Run
 
-```bash
-# Start backend
-python main.py
-
-# Start frontend (new terminal)
-cd frontend && npm run dev
-```
-
-Visit:
 - **Frontend**: http://localhost:5173
 - **API Docs**: http://localhost:8000/docs
+- **Health**: http://localhost:8000/health
 
 ---
 
-## 📖 Documentation
+## Development Commands
 
-- [Quick Start Guide](docs/QUICK_REFERENCE.md)
-- [Architecture Overview](docs/architecture/)
-- [API Documentation](docs/api/)
-- [Deployment Guide](docs/deployment/CLOUD_DEPLOYMENT_GUIDE.md)
-- [Contributing Guide](CONTRIBUTING.md)
-
----
-
-## 🎯 Use Cases
-
-1. **Sales Training** - Train new reps with AI coaching
-2. **Performance Evaluation** - Multi-dimensional analysis
-3. **Compliance Monitoring** - Real-time regulatory checks
-4. **Knowledge Management** - Semantic search across materials
-5. **Onboarding Acceleration** - Reduce time from months to weeks
+```bash
+make help              # List commands
+make setup             # Install dependencies
+make dev-backend       # Start backend
+make dev-frontend      # Start frontend
+make test              # Run tests
+make test-unit         # Unit tests
+make lint              # Ruff + ESLint
+```
 
 ---
 
-## 🛣️ Roadmap
+## Architecture
+
+```
+User → FastAPI → TenantMiddleware → ProductionCoordinator
+                                          ↓
+                              DynamicWorkflowCoordinator (LangGraph)
+                                          ↓
+                    ┌─────────────────────┼─────────────────────┐
+                    ↓                     ↓                     ↓
+              IntentRouter          NPC Simulator         Coach Agent
+                    ↓                     ↓                     ↓
+              Knowledge (RAG)        Compliance           Evaluator
+                    ↓                     ↓                     ↓
+              ModelGateway ←──────── Redis ←──────── ContextManager (S0-S3)
+```
+
+---
+
+## Use Cases
+
+1. **Sales Training** – AI coaching with NPC simulation
+2. **Pipeline Management** – Deals with MEDDPICC/SPIN/Challenger
+3. **Battle Prep** – Pre-call prep prompts and talking points
+4. **Live Assist** – Real-time suggestions during calls
+5. **Compliance** – Intercept risky phrases, suggest safe alternatives
+6. **Knowledge Retrieval** – Semantic search over sales materials
+
+---
+
+## Roadmap
 
 ### Q1 2026 ✅
 - [x] Multi-agent architecture
-- [x] Semantic search
-- [x] Production coordinator
-- [x] 4-tier memory system
+- [x] Hybrid RAG (BM25 + Dense + Reranker)
+- [x] Production Coordinator
+- [x] 4-tier context (S0-S3)
+- [x] Methodology engine (MEDDPICC, SPIN, Challenger)
+- [x] Battle Center, Pipeline, Live Assist
 
 ### Q2 2026 🚧
-- [ ] Voice interaction (TTS/STT)
-- [ ] Multi-language support
-- [ ] Mobile app
-- [ ] Advanced analytics
+- [ ] Voice (TTS/STT)
+- [ ] Multi-language
+- [ ] Mobile
 
 ### Q3-Q4 2026 📋
-- [ ] Fine-tuned domain models
-- [ ] Federated learning
-- [ ] AR/VR training modules
+- [ ] Fine-tuned intent model
+- [ ] LangGraph checkpointer
 - [ ] Cross-industry adaptation
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md).
-
-### Ways to Contribute
-- 🐛 Report bugs
-- 💡 Suggest features
-- 📝 Improve documentation
-- 🔧 Submit pull requests
-- ⭐ Star the project
+See [CONTRIBUTING.md](CONTRIBUTING.md). We welcome PRs, bug reports, and feature ideas.
 
 ---
 
-## 📄 License
+## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-**Technologies**: FastAPI, LangGraph, React, BAAI/BGE
-**Inspiration**: AutoGPT, LangChain, CrewAI
-**Community**: Thanks to all contributors!
+MIT License. See [LICENSE](LICENSE).
 
 ---
 
-## 📞 Contact & Support
+## Acknowledgments
 
-- 📧 Email: support@salesboost.ai
-- 🐛 Issues: [GitHub Issues](https://github.com/Benjamindaoson/SalesBoost/issues)
-- 📖 Docs: [Documentation](docs/)
-
----
-
-## 📊 Project Stats
-
-![GitHub stars](https://img.shields.io/github/stars/Benjamindaoson/SalesBoost?style=social)
-![GitHub forks](https://img.shields.io/github/forks/Benjamindaoson/SalesBoost?style=social)
-![GitHub contributors](https://img.shields.io/github/contributors/Benjamindaoson/SalesBoost)
-![GitHub issues](https://img.shields.io/github/issues/Benjamindaoson/SalesBoost)
-
----
-
-<div align="center">
-
-**Built with ❤️ by the SalesBoost Team**
-
-*Empowering sales teams with AI*
-
-[⬆ Back to Top](#-salesboost---ai-sales-champion-replication-platform)
-
-</div>
+**Technologies**: FastAPI, LangGraph, React, BAAI/BGE, LangChain  
+**Inspiration**: AutoGPT, CrewAI, modern sales enablement tools

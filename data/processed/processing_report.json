@@ -1,6 +1,6 @@
 {
   "processed_at": "2026-02-01T10:08:36.836598",
-  "data_directory": "销冠能力复制数据库",
+  "data_directory": "data/sales_knowledge",
   "files_processed": {
     "excel": 4,
     "pdf": 4,

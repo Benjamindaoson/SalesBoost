@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 class SalesDataProcessor:
     """销售数据处理器"""
 
-    def __init__(self, data_dir: str = "销冠能力复制数据库"):
+    def __init__(self, data_dir: str = "data/sales_knowledge"):
         self.data_dir = Path(data_dir)
         self.db_path = Path("data/databases/salesboost_local.db")
         self.processed_data_dir = Path("data/processed")

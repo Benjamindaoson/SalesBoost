@@ -1,4 +1,4 @@
-﻿# Memory Service API 规格（MVP 可验收版）
+# Memory Service API 规格（MVP 可验收版）
 
 > 目标：把“记忆”从“说了什么”升级为“是否有效/是否合规/是否被采纳/可追溯来源”，并支持多 Agent 协作。本文档为 **API 合同**，用于对齐 PRD 的 MVP 验收。
 
@@ -191,10 +191,10 @@ Memory Service 在 `POST /memory/query` 内必须返回路由结果，且写入�
 
 ---
 
-### 4.5 写入 StrategyUnit（销冠策略单元）
+### 4.5 写入 StrategyUnit（策略单元）
 **POST** `/memory/write/strategy`
 
-**做什么**：写入销冠策略/异议处理/合规替代表达。
+**做什么**：写入销售策略/异议处理/合规替代表达。
 **为什么**：提升采纳率与推进率。
 
 **Request**

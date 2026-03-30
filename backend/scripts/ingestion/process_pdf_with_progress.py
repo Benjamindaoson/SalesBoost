@@ -203,7 +203,7 @@ def extract_chunks(text: str, book_type: str, filename: str) -> List[Dict[str, A
 def main():
     """Main processing function"""
     # Setup paths
-    pdf_dir = Path("销冠能力复制数据库/销售成交营销SOP和话术")
+    pdf_dir = Path("data/sales_knowledge/销售成交营销SOP和话术")
     output_dir = Path("data/processed/books")
     output_dir.mkdir(parents=True, exist_ok=True)
 

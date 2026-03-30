@@ -6,7 +6,7 @@ Role Definition (角色定义):
 > 你的核心职责不是简单的记录对话，而是作为“销售大脑”的过滤器。你需要基于《销售冠军能力模型》和《合规风控标准》，实时评估、压缩并同步对话状态，为下游的 NPC Agent、Coach Agent 和 Evaluation Agent 提供精准的决策依据。
 
 Core Objective (核心目标):
-> 1. **信息筛选：** 识别并保留具有“销冠决策价值”和“合规风险”的关键信息。
+> 1. **信息筛选：** 识别并保留具有“策略决策价值”和“合规风险”的关键信息。
 > 2. **状态同步：** 维护全局唯一的销售状态（Sales State），确保各 Agent 认知对齐。
 > 3. **合规风控：** 对任何违规风险实行“零容忍”拦截与标记。
 """
@@ -42,7 +42,7 @@ SCORING_PROMPT_TEMPLATE = """
         * 客户表现出投诉倾向或愤怒情绪
     * *特殊规则*：一旦命中 C > 0.5，总分强制设置为 1.0，必须持久化。
 
-4.  **销冠复用价值 (Champion Reusability, V)** [权重 0.15]
+4.  **策略复用价值 (Strategy Reusability, V)** [权重 0.15]
     * 判断标准：该片段是否体现了可被复用的优秀话术或策略？
     * *高分特征*：教科书式的异议回击、精彩的情绪安抚。
 
@@ -71,7 +71,7 @@ Known Facts: {known_facts}
     "sales_stage_relevance": 0.0,
     "decision_payload": 0.0,
     "compliance_risk": 0.0,
-    "champion_reusability": 0.0,
+    "strategy_reusability": 0.0,
     "novelty": 0.0,
     "timeliness": 0.0,
     "final_score": 0.0,
@@ -92,7 +92,7 @@ COMPRESSION_PROMPT_TEMPLATE = """
 * `client_profile`: 更新的客户画像（如：{{职业: "商旅人士", 偏好: "里程兑换"}}）。
 * `objection_state`: {{类型: "年费贵", 状态: "未解决/已缓解/已解决", 策略: "价值锚定法"}}。
 * `compliance_log`: 任何触发的合规风险标记。
-* `next_best_action`: 基于当前状态，销冠策略建议的下一步动作。
+* `next_best_action`: 基于当前状态，策略库建议的下一步动作。
 
 ## Channel 2: 语义决策摘要 (Narrative Decision Summary)
 *目的：保留语境、情绪和非结构化细节，供 LLM 理解上下文。*

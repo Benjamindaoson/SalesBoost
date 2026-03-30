@@ -1,7 +1,7 @@
 import json
 import pytest
 
-from core.redis import InMemoryCache
+from app.core.redis import InMemoryCache
 
 
 @pytest.fixture()
@@ -13,7 +13,7 @@ def redis_cache():
 def patch_redis(monkeypatch, redis_cache):
     async def _fake_get_redis():
         return redis_cache
-    monkeypatch.setattr("core.redis.get_redis", _fake_get_redis)
+    monkeypatch.setattr("app.core.redis.get_redis", _fake_get_redis)
     return redis_cache
 
 

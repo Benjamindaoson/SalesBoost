@@ -27,7 +27,7 @@ class MinerUQwenProcessor:
     """Process PDFs using MinerU + Qwen-VL-OCR hybrid approach"""
 
     def __init__(self):
-        self.pdf_dir = Path("销冠能力复制数据库/销售成交营销SOP和话术")
+        self.pdf_dir = Path("data/sales_knowledge/销售成交营销SOP和话术")
         self.output_dir = Path("data/processed/books")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 

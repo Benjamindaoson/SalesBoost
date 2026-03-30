@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.config import get_settings
-from ..models.saas_models import User as DBUser
+from ..models.user import User as DBUser
 from ..api.auth_schemas import UserSchema
 
 logger = logging.getLogger(__name__)

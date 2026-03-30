@@ -32,7 +32,69 @@ export interface KnowledgeListParams {
   stage?: string;
 }
 
+export interface KnowledgeStats {
+  total_documents: number;
+  vector_count: number;
+  total_size_bytes: number;
+  by_source: Record<string, number>;
+  by_stage: Record<string, number>;
+  recent_uploads: Array<{ date: string; count: number }>;
+}
+
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+  percent: number;
+}
+
 export const knowledgeService = {
+  /**
+   * Get knowledge base statistics
+   */
+  async getStats(): Promise<KnowledgeStats> {
+    try {
+      const { items, total } = await this.listKnowledge({ page_size: 1000 });
+      const bySource: Record<string, number> = {};
+      const byStage: Record<string, number> = {};
+      items.forEach((item) => {
+        const src = item.metadata?.source || 'unknown';
+        bySource[src] = (bySource[src] || 0) + 1;
+        const stage = item.metadata?.stage || 'general';
+        byStage[stage] = (byStage[stage] || 0) + 1;
+      });
+      return {
+        total_documents: total,
+        vector_count: total,
+        total_size_bytes: 0,
+        by_source: bySource,
+        by_stage: byStage,
+        recent_uploads: [],
+      };
+    } catch {
+      return {
+        total_documents: 0,
+        vector_count: 0,
+        total_size_bytes: 0,
+        by_source: {},
+        by_stage: {},
+        recent_uploads: [],
+      };
+    }
+  },
+
+  validateFile(file: File): { valid: boolean; error?: string } {
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    const allowed = ['.pdf', '.doc', '.docx', '.txt', '.md'];
+    const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
+    if (!allowed.includes(ext)) {
+      return { valid: false, error: `File type not allowed. Use: ${allowed.join(', ')}` };
+    }
+    if (file.size > maxSize) {
+      return { valid: false, error: 'File too large (max 50MB)' };
+    }
+    return { valid: true };
+  },
+
   /**
    * List knowledge entries with pagination and filtering
    */
@@ -83,7 +145,7 @@ export const knowledgeService = {
         });
         return {
             success: true,
-            id: response.ids[0],
+            id: response.ids?.[0] ?? 'unknown',
             message: 'Uploaded successfully'
         };
     } catch (error) {
@@ -95,7 +157,11 @@ export const knowledgeService = {
   /**
    * Upload file
    */
-  async uploadFile(file: File): Promise<{ success: boolean; id: string; message: string }> {
+  async uploadFile(
+    file: File,
+    _metadata?: KnowledgeMetadata,
+    _onProgress?: (p: UploadProgress) => void
+  ): Promise<{ success: boolean; id: string; message: string }> {
       try {
           const formData = new FormData();
           formData.append('file', file);
@@ -114,7 +180,7 @@ export const knowledgeService = {
           
           return {
               success: true,
-              id: response.ids[0],
+              id: response.ids?.[0] ?? 'unknown',
               message: 'File uploaded successfully'
           };
       } catch (error) {

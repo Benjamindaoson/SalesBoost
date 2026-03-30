@@ -13,7 +13,7 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileText, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import knowledgeService, { type KnowledgeMetadata, type UploadProgress } from '@/services/knowledge.service';
+import { knowledgeService, type KnowledgeMetadata, type UploadProgress } from '@/services/knowledge.service';
 
 interface KnowledgeUploaderProps {
   onUploadSuccess?: () => void;
@@ -94,7 +94,7 @@ export default function KnowledgeUploader({ onUploadSuccess }: KnowledgeUploader
         const result = await knowledgeService.uploadFile(
           selectedFile,
           metadata,
-          (progress) => setUploadProgress(progress)
+          (progress: UploadProgress) => setUploadProgress(progress)
         );
         toast.success(result.message || 'File uploaded successfully');
       } else if (uploadMode === 'text') {
@@ -278,12 +278,12 @@ export default function KnowledgeUploader({ onUploadSuccess }: KnowledgeUploader
         <div className="mb-6">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Uploading...</span>
-            <span>{uploadProgress.percentage}%</span>
+            <span>{uploadProgress.percent}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${uploadProgress.percentage}%` }}
+              style={{ width: `${uploadProgress.percent}%` }}
             />
           </div>
         </div>

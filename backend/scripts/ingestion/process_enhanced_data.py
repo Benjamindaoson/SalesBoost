@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 class EnhancedDataProcessor:
     """Enhanced data processor for additional source documents"""
 
-    def __init__(self, data_dir: str = "销冠能力复制数据库"):
+    def __init__(self, data_dir: str = "data/sales_knowledge"):
         self.data_dir = Path(data_dir)
         self.output_dir = Path("data/processed")
         self.output_dir.mkdir(parents=True, exist_ok=True)

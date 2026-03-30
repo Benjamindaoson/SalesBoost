@@ -167,7 +167,7 @@ class OrchestratorTurnResult(BaseModel):
     coach_result: CoachOutput
     evaluator_result: EvaluatorOutput
     
-    # 策略分析（销冠能力复制系统）
+    # 策略分析（策略对比与指导）
     strategy_analysis: Optional[Dict[str, Any]] = Field(
         default=None,
         description="策略分析结果"

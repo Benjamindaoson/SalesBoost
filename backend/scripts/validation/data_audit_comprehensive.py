@@ -20,7 +20,7 @@ from datetime import datetime
 
 # 数据资产路径配置
 DATA_ASSETS = {
-    "sales_knowledge_db": "销冠能力复制数据库",
+    "sales_knowledge_db": "data/sales_knowledge",
     "intent_data": "data/intent",
     "storage": "storage",
     "tests_data": "tests/data"
@@ -47,7 +47,7 @@ class DataAssetAuditor:
             "health_score": 0.0
         }
 
-        # 扫描销冠能力复制数据库
+        # 扫描销售知识库
         sales_db_path = self.base_path / DATA_ASSETS["sales_knowledge_db"]
         if sales_db_path.exists():
             for file_path in sales_db_path.rglob("*"):
@@ -93,7 +93,7 @@ class DataAssetAuditor:
         catalog_items = [
             {
                 "asset_name": "产品权益数据",
-                "path": "销冠能力复制数据库/产品权益",
+                "path": "data/sales_knowledge/产品权益",
                 "format": "XLSX",
                 "use_cases": ["RAG检索", "产品知识库", "FAQ生成"],
                 "agents": ["CoachAgent", "ComplianceAgent"],
@@ -102,7 +102,7 @@ class DataAssetAuditor:
             },
             {
                 "asset_name": "销售话术SOP",
-                "path": "销冠能力复制数据库/销售成交营销SOP和话术",
+                "path": "data/sales_knowledge/销售成交营销SOP和话术",
                 "format": "PDF/DOCX/PPT",
                 "use_cases": ["话术训练", "NPC对话生成", "策略分析"],
                 "agents": ["NPCGenerator", "StrategyAnalyzer", "CoachAgent"],
@@ -111,7 +111,7 @@ class DataAssetAuditor:
             },
             {
                 "asset_name": "销售录音",
-                "path": "销冠能力复制数据库/销售录音",
+                "path": "data/sales_knowledge/销售录音",
                 "format": "MP3/WAV",
                 "use_cases": ["语音识别训练", "对话模式分析", "情感分析"],
                 "agents": ["NPCGenerator", "FeedbackAgent"],
@@ -120,7 +120,7 @@ class DataAssetAuditor:
             },
             {
                 "asset_name": "销售冠军经验",
-                "path": "销冠能力复制数据库/销售冠军成交经验分享",
+                "path": "data/sales_knowledge/销售成交经验分享",
                 "format": "DOCX",
                 "use_cases": ["最佳实践提取", "策略推荐", "案例库"],
                 "agents": ["StrategyAnalyzer", "ReportGenerator"],

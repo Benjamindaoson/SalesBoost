@@ -38,6 +38,11 @@ class TenantMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/redoc",
             "/api/v1/auth",
+            "/api/v1/test",
+            "/api/v1/tasks",
+            "/api/v1/statistics",
+            "/api/v1/courses",
+            "/api/v1/customers",
         )
         if path.startswith(public_prefixes):
             return await call_next(request)

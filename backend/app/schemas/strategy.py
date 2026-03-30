@@ -1,11 +1,72 @@
 """
 策略分类体系 Schema
-销冠决策策略模型
+销售决策策略模型
 """
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+
+
+# ─────────────────────────────────────────────────
+# Core building blocks (referenced by blackboard.py)
+# ─────────────────────────────────────────────────
+
+class EvidenceType(str, Enum):
+    """证据来源类型"""
+    INTENT = "intent"
+    HISTORY = "history"
+    RAG = "rag"
+    POLICY_DOC = "policy_doc"
+    MANUAL = "manual"
+
+
+class Evidence(BaseModel):
+    """证据条目 — 支撑策略决策的信号或观察."""
+    id: str = Field(..., alias="evidence_id", description="唯一证据 ID")
+    source_type: EvidenceType = Field(default=EvidenceType.INTENT, alias="source", description="证据来源类型")
+    content_snippet: str = Field(..., alias="content", description="证据内容摘要")
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class StrategyCategory(str, Enum):
+    """策略类别"""
+    VALUE_PROPOSITION = "value_proposition"
+    NEEDS_DISCOVERY = "needs_discovery"
+    OBJECTION_HANDLING = "objection_handling"
+    CLOSING_TECHNIQUE = "closing_technique"
+    RELATIONSHIP_BUILDING = "relationship_building"
+
+
+class StrategyObject(BaseModel):
+    """策略候选对象 — 策略决策引擎的核心数据结构."""
+    strategy_id: str = Field(..., description="策略唯一 ID")
+    strategy_name: Optional[str] = Field(None, description="策略名称")
+    category: StrategyCategory = Field(default=StrategyCategory.VALUE_PROPOSITION, description="策略类别")
+    hypothesis: str = Field(default="", description="策略假设/原因")
+    description: Optional[str] = Field(None, description="策略描述")
+    expected_effect: Dict[str, float] = Field(default_factory=dict, description="期望效果")
+    script_candidates: List[str] = Field(default_factory=list, description="话术候选")
+    evidence: List[Evidence] = Field(default_factory=list, description="相关证据")
+    risks: List[str] = Field(default_factory=list, description="潜在风险")
+    
+    # Legacy fields
+    situation_type: Optional[str] = None
+    priority: int = 1
+    confidence: float = 1.0
+    is_golden: bool = False
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class StrategyResponse(BaseModel):
+    """策略建议响应"""
+    candidates: List[StrategyObject]
+    primary_recommendation_id: str
+    reasoning: str
 
 
 class SituationType(str, Enum):
@@ -39,7 +100,7 @@ class SituationType(str, Enum):
     TRIAL_CLOSE = "trial_close"
 
 
-# 策略库：每种情境下的可用策略及销冠最优策略
+# 策略库：每种情境下的可用策略及最优策略
 STRATEGY_TAXONOMY: Dict[SituationType, Dict] = {
     SituationType.PRICE_OBJECTION: {
         "available": [
@@ -103,7 +164,7 @@ class StrategyAnalysis(BaseModel):
     action_units: List[str] = Field(default_factory=list, description="策略动作单元分解")
     available_strategies: List[str] = Field(default_factory=list, description="可用策略列表")
     is_optimal: bool = Field(..., description="是否为最优策略")
-    golden_strategy: str = Field(..., description="销冠最优策略")
+    golden_strategy: str = Field(..., description="该情境下的最优策略")
     optimality_reason: str = Field(..., description="最优/非最优原因分析")
     confidence: float = Field(default=0.8, ge=0.0, le=1.0)
 
@@ -112,8 +173,8 @@ class StrategyGuidance(BaseModel):
     """策略级指导 - Coach 输出升级"""
     current_strategy: str = Field(..., description="你当前使用的策略")
     current_strategy_analysis: str = Field(..., description="当前策略分析")
-    golden_strategy: str = Field(..., description="销冠在此情境的最优策略")
-    why_golden_better: str = Field(..., description="为什么销冠策略更优")
+    golden_strategy: str = Field(..., description="该情境下的最优策略")
+    why_golden_better: str = Field(..., description="为什么最优策略更有效")
     transition_suggestion: str = Field(..., description="如何从当前策略过渡到最优策略")
     example_utterance: str = Field(..., description="最优策略的示例话术")
 

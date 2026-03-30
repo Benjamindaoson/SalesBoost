@@ -1,0 +1,53 @@
+# 面向面试降维打击的核心架构定位：实时销售辅助引擎 (Real-time Sales Copilot Engine)
+
+你正在开发的是一个面向高价值销售场景的**极速、智能、自演进**的 AI Copilot 系统。它不是一个普通的对话机器人，而是一个能在真实销售博弈中，1.5秒内完成意图识别、策略推理、知识检索并实时推流话术的**决策外脑**。
+
+在生成或修改任何代码时，必须绝对遵循以下 V3 高阶架构原则：
+
+## 1. 强制 Sales Reasoning Chain（先思考，后开口）
+- **原则**：任何 Agent 在生成最终回复前，必须有一个显式的内部推理（Reasoning Step）步骤。这是区别于传统“意图匹配”机器人的核心壁垒。
+- **代码规范**：
+  - 代码层面必须预先推演 `ReasoningState`（包含 `user_hidden_intent` 隐性意图, `objection_analysis` 顾虑分析, `strategy_selection` 预期策略）。
+  - 推理过程对最终终端用户不可见，将其作为 Prompt 的 Context 传入后续的 Response Generator Agent。
+  - 绝对严禁直接将用户话语透传给大模型直接拼接回答，必须经过中间的思考链处理。
+
+## 2. 宏观 FSM + 微观 LangGraph 双层编排
+- **原则**：流程的合法性和阶段的跃迁控制交给 100% 确定的 FSM 状态机（如 ICEBREAK -> NEEDS_DISCOVERY -> CLOSING），单步的具体执行细节和多 Agent 协同交给 LangGraph。
+- **代码规范**：
+  - 坚决杜绝用 LLM 直接作为总控路由来决定销售阶段的推进，状态机必须基于 Python 强类型规则控制。
+  - LangGraph 仅负责当前节点内的 DAG 局部执行规划（如 Router -> Knowledge Retrieval -> Reasoning -> Generator -> Guard）。
+
+## 3. 面向 RHLF/DPO 的数据飞轮与 APO (Adaptive Prompt Optimization)
+- **原则**：AI 的进化必须基于业务真实转化结果。必须为 DPO（直接偏好优化）、数据合成和 Reward Model 预留系统级钩子（Hooks）。
+- **代码规范**：
+  - 所有的对话轮次（Turn）和 阶段转化（Stage Transition）务必实现数据埋点，重点落库业务偏好数据 `Chosen` / `Rejected` 对，以备强化学习微调。
+  - **杜绝硬编码 Prompt（Hardcode）**：所有的核心话术策略和 Prompt 模板必须通过配置库（Prompt Registry）加载。
+  - 代码框架需支持基于打分 Feedback 的 APO 回调迭代设计。
+
+## 4. 极限低延迟：流式投机护栏 (Streaming Guard & Speculative Execution)
+- **原则**：不可因为安全和合规损失业务速度，端到端延迟必须极速化。传统“先生成、后检查”是不可接受的。
+- **代码规范**：
+  - 主回复模型必须使用 FastAPI Streaming 或 WebSocket 流式输出。
+  - 安全审查（Guard）必须使用并行旁路检查（或者小模型在 Sentence-level 作投机执行拦截）。一旦发现违规内容，应只在句级别做 `truncate` 并重写，保证不阻塞主链路。
+
+## 5. 多粒度在线评估驱动 (Evaluation-Driven Development)
+- **原则**：写任何新业务逻辑的前提是“它可以被评估”。评估不是后知后觉的分析，而是系统运行的闭环。
+- **代码规范**：
+  - 开发任何 Agent，都要考虑其配合的在线 Evaluator 逻辑：Token级别（幻觉）、Turn级别（回复质量 / LLM-as-Judge）、Session级别（漏斗流失）。
+  - 保留接口与 OTel (OpenTelemetry) / Langfuse 追踪对接。
+
+## 6. 带半衰期的时间衰减记忆层 (Adaptive Memory with Importance Decay)
+- **原则**：线索和对话记忆有生命周期。不加筛选地猛塞 RAG Context 是菜鸟做法。
+- **代码规范**：
+  - 用户 Profile 和长期记忆存储中，每个信息槽位（Slot）必须带有 `timestamp` 和初始化 `importance_score`。
+  - 每次上下文召回必须经过半衰期衰减计算，舍弃过时无效的特征维度以瘦身 Context 并提高推理精度。
+
+## 7. Model Gateway 与 影子模式 (Shadow Mode)
+- **原则**：任何直接调用单一供应商裸 SDK 的行为都被视为架构缺陷。
+- **代码规范**：
+  - 所有 LLM 调用请求必须收敛到底层 `ModelGateway`（需支持 Redis 分布式并发信号量限流、Token 层面的多租户消耗统计）。
+  - 实现新策略和引入新 LLM（如 Qwen, DeepSeek）时，必须原生支持分发少量真实流量作 `Shadow Mode` 的盲测旁路对比，而不影响生产主流程。
+
+---
+**🌟 核心开发自检原则（Code Review Check）🌟**
+在你（Cursor）每一次生成代码之前，请停下来思考：当前的实现逻辑是否足够具有工程深度？能否在**“并发管理、延迟压榨、自我演进、业务推理架构”**等维度支撑起 Benjamin 在美团/阿里/腾讯 AI 架构师面试中的降维打击？一切妥协于“简单跑通”的平庸做法，都将被拒绝。

@@ -20,6 +20,11 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# DeepSeek API key (OpenAI-compatible)
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-dd153643728f4284a16b7eb40651615a")
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+DEEPSEEK_MODEL = "deepseek-chat"
+
 try:
     from ragas import evaluate
     from ragas.metrics import (
@@ -28,11 +33,40 @@ try:
         context_precision,
         context_recall,
     )
+    from ragas.llms import LangchainLLMWrapper
+    from ragas.embeddings import LangchainEmbeddingsWrapper
+    from langchain_openai import ChatOpenAI
     from datasets import Dataset
 except ImportError:
     print("❌ Missing dependencies. Please install:")
-    print("   pip install ragas langchain openai datasets pandas")
+    print("   pip install ragas langchain langchain-openai openai datasets pandas")
     sys.exit(1)
+
+
+def get_deepseek_llm():
+    """Return a RAGAS-compatible LLM using DeepSeek's OpenAI-compatible API."""
+    lc_llm = ChatOpenAI(
+        model=DEEPSEEK_MODEL,
+        api_key=DEEPSEEK_API_KEY,
+        base_url=DEEPSEEK_BASE_URL,
+        temperature=0.0,
+    )
+    return LangchainLLMWrapper(lc_llm)
+
+
+def get_deepseek_embeddings():
+    """Return RAGAS-compatible embeddings using local sentence-transformers (BGE-M3).
+
+    DeepSeek does not expose an embedding endpoint, so we use the BGE-M3 model
+    that is already a dependency of this project (sentence-transformers).
+    """
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    lc_emb = HuggingFaceEmbeddings(
+        model_name=os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3"),
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={"normalize_embeddings": True},
+    )
+    return LangchainEmbeddingsWrapper(lc_emb)
 
 
 def load_test_dataset(dataset_path="tests/evaluation/rag_test_dataset.json"):
@@ -44,22 +78,72 @@ def load_test_dataset(dataset_path="tests/evaluation/rag_test_dataset.json"):
 
 def run_rag_pipeline(question: str):
     """
-    Run the RAG pipeline on a question
+    Run the real RAG pipeline on a question via EnhancedGraphRAGService.
 
-    TODO: Replace this with actual RAG pipeline call
-    For now, returns mock data
+    Requires:
+      - QDRANT_URL / QDRANT_API_KEY (or local Qdrant at localhost:6333)
+      - OPENAI_API_KEY  (used by RAGAS evaluator)
+    Falls back to keyword search if GraphRAG is unavailable.
     """
-    # Mock implementation - replace with actual RAG call
-    # from app.retrieval.hyde_retriever import HyDERetriever
-    # from app.retrieval.self_rag import SelfRAGEngine
+    import asyncio
+    import os
 
-    return {
-        "answer": f"这是对'{question}'的回答（模拟数据）",
-        "contexts": [
-            "相关上下文1",
-            "相关上下文2"
-        ]
-    }
+    async def _run():
+        try:
+            from app.infra.search.graph_rag_enhanced import get_graph_rag_service
+            org_id = os.getenv("DEFAULT_ORG_ID", "default")
+            svc = await get_graph_rag_service(org_id)
+            results = await svc.search(
+                query=question,
+                top_k=5,
+                enable_multi_hop=True,
+            )
+            if not results:
+                raise ValueError("Empty results from GraphRAG")
+
+            top = results[0]
+            answer = top.get("content") or top.get("text") or str(top)
+            contexts = [
+                r.get("content") or r.get("text") or str(r)
+                for r in results
+            ]
+            return {"answer": answer, "contexts": contexts}
+
+        except Exception as e:
+            print(f"  [GraphRAG fallback] {e}")
+            try:
+                from qdrant_client import QdrantClient
+                from sentence_transformers import SentenceTransformer
+
+                qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
+                collection = os.getenv("QDRANT_COLLECTION", "sales_knowledge")
+                model_name = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
+
+                encoder = SentenceTransformer(model_name)
+                vector = encoder.encode(question).tolist()
+
+                client = QdrantClient(url=qdrant_url,
+                                      api_key=os.getenv("QDRANT_API_KEY"))
+                hits = client.search(
+                    collection_name=collection,
+                    query_vector=vector,
+                    limit=5,
+                )
+                if not hits:
+                    raise ValueError("Qdrant returned no results")
+
+                answer = hits[0].payload.get("content", str(hits[0].payload))
+                contexts = [h.payload.get("content", str(h.payload)) for h in hits]
+                return {"answer": answer, "contexts": contexts}
+
+            except Exception as e2:
+                print(f"  [Qdrant fallback] {e2}")
+                return {
+                    "answer": f"RAG pipeline unavailable. Question was: {question}",
+                    "contexts": ["No context retrieved — check QDRANT_URL and service config."],
+                }
+
+    return asyncio.run(_run())
 
 
 def prepare_ragas_dataset(test_cases):
@@ -94,25 +178,35 @@ def prepare_ragas_dataset(test_cases):
 
 
 def evaluate_rag(dataset):
-    """Evaluate RAG using RAGAS metrics"""
-    print("\n📊 Evaluating with RAGAS metrics...")
+    """Evaluate RAG using RAGAS metrics backed by DeepSeek."""
+    print("\n📊 Evaluating with RAGAS metrics (DeepSeek backend)...")
     print("   This may take a few minutes...")
+
+    llm = get_deepseek_llm()
+    embeddings = get_deepseek_embeddings()
+
+    metrics = [
+        faithfulness,
+        answer_relevancy,
+        context_precision,
+        context_recall,
+    ]
+    for m in metrics:
+        m.llm = llm
+        if hasattr(m, "embeddings"):
+            m.embeddings = embeddings
 
     try:
         result = evaluate(
             dataset,
-            metrics=[
-                faithfulness,
-                answer_relevancy,
-                context_precision,
-                context_recall,
-            ],
+            metrics=metrics,
+            llm=llm,
+            embeddings=embeddings,
         )
         return result
     except Exception as e:
         print(f"❌ Evaluation failed: {e}")
-        print("\n💡 Note: RAGAS requires OpenAI API key or compatible LLM")
-        print("   Set OPENAI_API_KEY environment variable")
+        print("\n💡 Check DEEPSEEK_API_KEY and network access to api.deepseek.com")
         return None
 
 

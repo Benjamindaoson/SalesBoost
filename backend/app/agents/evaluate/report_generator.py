@@ -12,6 +12,7 @@ from ...schemas.reports import (
     TrainingReport,
     StrategyComparison
 )
+from ...core.redis import get_redis, InMemoryCache
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ class ReportService:
             duration_minutes=int((datetime.utcnow() - session.started_at).total_seconds() / 60),
             total_turns=len(messages) // 2,
             final_stage=session.final_stage or "Completed",
-            completion_rate=100.0 if session.final_stage == "Closed" else 80.0,
+            completion_rate=self._compute_completion_rate(session, messages),
         )
 
         # 4. Self-Consistency Verification (Audit Requirement)
@@ -105,7 +106,7 @@ class ReportService:
             for comp in strategy_analysis.get("strategy_comparisons", [])
         ]
 
-        return TrainingReport(
+        report = TrainingReport(
             summary=summary,
             overall_score=eval_data.get("overall_score", 0.0),
             radar_chart=radar,
@@ -120,6 +121,41 @@ class ReportService:
             overall_optimal_rate=strategy_analysis.get("overall_optimal_rate"),
             generated_at=datetime.utcnow(),
         )
+
+        # ---------------------------------------------------------------------------
+        # DATA FLYWHEEL: Write training weaknesses to S2 for Live Assist personalization
+        # Key: ctx:s2:weakness:{user_id}  (separate from client_profile to avoid collision)
+        # Read by: LiveAssistEngine._load_weakness_profile()
+        # ---------------------------------------------------------------------------
+        user_id = getattr(session, "user_id", None)
+        if user_id and eval_data.get("top_improvements"):
+            await self._write_weakness_to_s2(
+                user_id=str(user_id),
+                top_improvements=eval_data.get("top_improvements", []),
+                recommended_focus=eval_data.get("recommended_focus", ""),
+            )
+
+        return report
+
+    async def _write_weakness_to_s2(self, user_id: str, top_improvements: List[str], recommended_focus: str) -> None:
+        """
+        Write the rep's training weaknesses to Redis S2 for Live Assist personalization.
+        This closes the 'Training → Live Assist' data flywheel loop.
+        Key: ctx:s2:weakness:{user_id}
+        """
+        key = f"ctx:s2:weakness:{user_id}"
+        payload = {
+            "top_improvements": top_improvements[:5],
+            "recommended_focus": recommended_focus,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        try:
+            client = await get_redis()
+            await client.set(key, json.dumps(payload, ensure_ascii=False), ex=60 * 60 * 24 * 30)  # 30-day TTL
+            logger.info("[ReportService] Wrote training weaknesses to S2 for user %s", user_id)
+        except Exception as exc:
+            logger.warning("[ReportService] Failed to write weakness S2 for user %s: %s", user_id, exc)
+
 
     async def _verify_self_consistency(self, eval_data: dict) -> None:
         """
@@ -137,6 +173,38 @@ class ReportService:
                 logger.warning(f"Self-consistency warning: High score ({score}) for {dim} but feedback is negative: {fb_text}")
                 # Optional: Force AI to re-evaluate or cap the score
                 eval_data["dimension_scores"][dim] = 7.5
+
+    def _compute_completion_rate(self, session, messages: List[Any]) -> float:
+        """
+        Compute completion_rate as the fraction of FSM stages reached.
+
+        Stage order: opening(1) → discovery(2) → pitch(3) → objection(4)
+                     → closing(5) → completed/closed(6)
+
+        A session that ends at 'closing' scores 5/6 ≈ 83.3%.
+        Completed/Closed = 100%.
+        """
+        STAGE_ORDER = {
+            "opening":   1,
+            "discovery": 2,
+            "pitch":     3,
+            "objection": 4,
+            "closing":   5,
+            "completed": 6,
+            "closed":    6,
+            "failed":    3,   # stalled mid-way
+        }
+        TOTAL_STAGES = 6
+
+        final = str(getattr(session, "final_stage", "") or "").lower().strip()
+        stage_num = STAGE_ORDER.get(final)
+
+        if stage_num is None:
+            # Fallback: infer from message count (each stage ≈ 2 turns)
+            turns = max(len(messages) // 2, 1)
+            stage_num = min(turns // 2, TOTAL_STAGES)
+
+        return round((stage_num / TOTAL_STAGES) * 100.0, 1)
 
     def _get_fallback_eval(self) -> dict:
         return {

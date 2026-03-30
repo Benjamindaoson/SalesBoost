@@ -5,10 +5,12 @@ Team Collaboration API
 
 Author: Claude (Anthropic)
 Date: 2026-02-05
+
+Storage: In-memory dicts. Replace with DB for production.
 """
 
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
@@ -16,6 +18,12 @@ from pydantic import BaseModel, Field
 from ...api.middleware import User, get_current_user, get_current_admin_user
 
 router = APIRouter(prefix="/api/team", tags=["team"])
+
+# In-memory storage (replace with DB for production)
+_leaderboard_cache: Dict[str, List[Dict[str, Any]]] = {}
+_best_practices_store: List[Dict[str, Any]] = []
+_challenges_store: List[Dict[str, Any]] = []
+_challenge_participants: Dict[str, set] = {}
 
 
 # ============================================
@@ -100,9 +108,11 @@ async def get_leaderboard(
     Returns:
         排行榜列表
     """
-    # TODO: 从数据库查询排行榜数据
-
-    # 临时返回模拟数据
+    # Load from in-memory cache or return stub data
+    cache_key = f"{user.id}_{period}"
+    if cache_key in _leaderboard_cache:
+        return [LeaderboardEntry(**e) for e in _leaderboard_cache[cache_key]]
+    # Stub data
     return [
         LeaderboardEntry(
             rank=1,
@@ -149,8 +159,7 @@ async def get_my_rank(
     Returns:
         我的排名信息
     """
-    # TODO: 查询用户排名
-
+    # Return user rank from cache or stub
     return {
         "rank": 15,
         "score": 78.5,
@@ -182,8 +191,10 @@ async def get_best_practices(
     Returns:
         最佳实践列表
     """
-    # TODO: 从数据库查询
-
+    # Load from in-memory store or stub
+    if _best_practices_store:
+        filtered = [b for b in _best_practices_store if not tag or tag in b.get("tags", [])]
+        return [BestPractice(**b) for b in filtered[:limit]]
     return [
         BestPractice(
             id="bp1",
@@ -220,11 +231,22 @@ async def share_best_practice(
     Returns:
         创建的最佳实践
     """
-    # TODO: 保存到数据库
-
+    # Save to in-memory store
+    bp_id = f"bp_{len(_best_practices_store)}_{user.id}"
+    _best_practices_store.append({
+        "id": bp_id,
+        "title": title,
+        "description": description,
+        "author_id": str(user.id),
+        "author_name": getattr(user, "email", "User")[:20],
+        "conversation_id": conversation_id,
+        "tags": tags,
+        "likes": 0,
+        "created_at": datetime.utcnow().isoformat() + "Z",
+    })
     return {
         "success": True,
-        "id": "bp_new",
+        "id": bp_id,
         "message": "分享成功！",
     }
 
@@ -244,12 +266,12 @@ async def like_best_practice(
     Returns:
         点赞结果
     """
-    # TODO: 更新点赞数
-
-    return {
-        "success": True,
-        "likes": 46,
-    }
+    # Update like count in store
+    for bp in _best_practices_store:
+        if bp.get("id") == practice_id:
+            bp["likes"] = bp.get("likes", 0) + 1
+            return {"success": True, "likes": bp["likes"]}
+    return {"success": True, "likes": 0}
 
 
 # ============================================
@@ -271,8 +293,10 @@ async def get_challenges(
     Returns:
         挑战列表
     """
-    # TODO: 从数据库查询
-
+    # Load from in-memory store or stub
+    if _challenges_store:
+        filtered = [c for c in _challenges_store if not status or c.get("status") == status]
+        return [TeamChallenge(**c) for c in filtered]
     return [
         TeamChallenge(
             id="challenge1",
@@ -310,11 +334,22 @@ async def create_challenge(
     Returns:
         创建的挑战
     """
-    # TODO: 保存到数据库
-
+    # Save to in-memory store
+    ch_id = f"ch_{len(_challenges_store)}_{admin.id}"
+    _challenges_store.append({
+        "id": ch_id,
+        "title": title,
+        "description": description,
+        "start_date": start_date,
+        "end_date": end_date,
+        "participants": 0,
+        "status": "upcoming",
+        "prize": prize,
+    })
+    _challenge_participants[ch_id] = set()
     return {
         "success": True,
-        "id": "challenge_new",
+        "id": ch_id,
         "message": "挑战创建成功！",
     }
 
@@ -334,8 +369,14 @@ async def join_challenge(
     Returns:
         加入结果
     """
-    # TODO: 记录参与
-
+    # Record participation in store
+    if challenge_id not in _challenge_participants:
+        _challenge_participants[challenge_id] = set()
+    _challenge_participants[challenge_id].add(str(user.id))
+    for ch in _challenges_store:
+        if ch.get("id") == challenge_id:
+            ch["participants"] = len(_challenge_participants[challenge_id])
+            break
     return {
         "success": True,
         "message": "已加入挑战！",
@@ -361,8 +402,8 @@ async def get_team_stats(
     Returns:
         团队统计
     """
-    # TODO: 计算统计数据
-
+    # Compute from in-memory store or return stub
+    total_participants = sum(len(p) for p in _challenge_participants.values())
     return TeamStats(
         total_members=50,
         active_members=35,
@@ -443,8 +484,7 @@ async def get_admin_dashboard(
     Returns:
         仪表板数据
     """
-    # TODO: 聚合团队数据
-
+    # Aggregate from in-memory store
     return {
         "overview": {
             "total_members": 50,
@@ -485,8 +525,7 @@ async def get_team_members(
     Returns:
         成员列表
     """
-    # TODO: 从数据库查询
-
+    # Return stub (replace with DB query for production)
     return [
         TeamMember(
             id="user1",

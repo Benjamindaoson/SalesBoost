@@ -90,7 +90,7 @@ class MockLLMClient:
       "type": "addresses",
       "properties": {
         "confidence": 0.95,
-        "evidence": "销冠用消费达标免年费来应对年费异议"
+        "evidence": "用消费达标免年费来应对年费异议"
       }
     },
     {
@@ -324,11 +324,11 @@ async def test_graph_rag_enhanced():
     logger.info("\n[Test 1] Ingesting sales conversation...")
     conversation = """
 客户：你们的信用卡年费太贵了，1000元一年。
-销冠：我理解您的顾虑。其实我们的白金卡虽然年费1000元，
+销售：我理解您的顾虑。其实我们的白金卡虽然年费1000元，
      但只要您年消费满10万，年费就全免。而且您可以享受
      机场贵宾厅、积分返现等价值超过5000元的权益。
 客户：哦，这样啊。那具体有哪些权益呢？
-销冠：主要包括：全球机场贵宾厅、消费积分返现、生日礼遇、
+销售：主要包括：全球机场贵宾厅、消费积分返现、生日礼遇、
      专属客服等。这些权益的市场价值远超年费。
     """
 
@@ -345,7 +345,7 @@ async def test_graph_rag_enhanced():
 
     # Test 2: Answer complex query
     logger.info("\n[Test 2] Answering complex query...")
-    query = "客户说年费太贵，销冠通常怎么应对？"
+    query = "客户说年费太贵，通常怎么应对？"
 
     answer_result = await graph_rag.answer_complex_query(
         query=query,

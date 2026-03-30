@@ -236,7 +236,7 @@ class MultiHopReasoner:
     Multi-hop reasoning engine for complex sales queries.
 
     This enables the system to answer questions like:
-    "客户说年费太贵，销冠通常怎么应对？"
+    "客户说年费太贵，通常怎么应对？"
 
     The reasoner will find paths like:
     [异议: 年费贵] --addresses--> [应对: 权益话术] --part_of--> [技巧: 价值转化]
@@ -539,7 +539,7 @@ class EnhancedGraphRAGService:
         Answer complex sales query using multi-hop reasoning.
 
         Example queries:
-        - "客户说年费太贵，销冠通常怎么应对？"
+        - "客户说年费太贵，通常怎么应对？"
         - "如何处理客户的价格异议？"
         - "什么话术适合价格敏感型客户？"
 
@@ -642,7 +642,7 @@ class EnhancedGraphRAGService:
         # Extract final entity (usually the answer)
         if top_path.entities:
             final_entity = top_path.entities[-1]
-            answer_parts = [f"根据销冠经验，{final_entity.name}"]
+            answer_parts = [f"根据策略库经验，{final_entity.name}"]
 
             # Add reasoning
             if top_path.reasoning:

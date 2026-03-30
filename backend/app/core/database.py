@@ -72,6 +72,10 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
+# Alias for compatibility with endpoints expecting get_db
+get_db = get_db_session
+
+
 async def get_db_session_context() -> AsyncGenerator[AsyncSession, None]:
     """获取数据库会话上下文（与get_db_session功能相同）"""
     async with async_session_factory() as session:

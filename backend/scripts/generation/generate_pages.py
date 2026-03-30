@@ -6,7 +6,7 @@ student_tasks_html = '''<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>任务管理 - 销冠AI系统</title>
+<title>任务管理 - SalesBoost</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f7fa;color:#333}
@@ -37,7 +37,7 @@ th{background:#fafafa;color:#666;font-weight:500}
 <div class="sidebar">
 <div class="logo">
 <div class="logo-icon">AI</div>
-<div><h2 style="font-size:16px">销冠AI系统</h2><div style="font-size:12px;color:#999">学员端</div></div>
+<div><h2 style="font-size:16px">SalesBoost</h2><div style="font-size:12px;color:#999">学员端</div></div>
 </div>
 <div class="menu-item active">📋 任务管理</div>
 <div class="menu-item" onclick="location.href='persona.html'">👤 客户预演</div>

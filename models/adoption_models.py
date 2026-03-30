@@ -67,7 +67,7 @@ class AdoptionRecord(Base, TimestampMixin):
 class StrategyDecision(Base, TimestampMixin):
     """
     策略决策记录
-    记录用户在每个情境下选择的策略 vs 销冠最优策略
+    记录用户在每个情境下选择的策略 vs 最优策略
     """
     __tablename__ = "strategy_decisions"
     
@@ -114,7 +114,7 @@ class UserStrategyProfile(Base, TimestampMixin):
     optimal_rate_by_stage: Mapped[dict] = mapped_column(JSON, default=dict)
     optimal_rate_by_situation: Mapped[dict] = mapped_column(JSON, default=dict)
     
-    # 与销冠差距
+    # 与最优策略差距
     deviation_patterns: Mapped[dict] = mapped_column(JSON, default=list)
     top_weakness_situations: Mapped[dict] = mapped_column(JSON, default=list)
     

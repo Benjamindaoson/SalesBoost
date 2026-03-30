@@ -1,4 +1,4 @@
-from core.exceptions import SalesBoostException, create_error_response
+from app.core.exceptions import SalesBoostException, create_error_response
 
 
 def test_error_response_from_salesboost_exception():

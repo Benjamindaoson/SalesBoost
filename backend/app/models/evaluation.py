@@ -55,7 +55,7 @@ class Evaluation(BaseModel):
 
     # Metadata
     evaluator = Column(String(50))  # ai_coach, human_teacher
-    metadata = Column(Text)  # JSON
+    evaluation_metadata = Column(Text)  # JSON (renamed to avoid SQLAlchemy reserved word)
 
     # Relationships
     session = relationship("Session", back_populates="evaluations")

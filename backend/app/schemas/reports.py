@@ -56,11 +56,11 @@ class SessionSummary(BaseModel):
 
 
 class StrategyComparison(BaseModel):
-    """策略对比 - 你的策略 vs 销冠策略"""
+    """策略对比 - 你的策略 vs 最优策略"""
     situation_type: str = Field(..., description="情境类型")
     situation_name_cn: str = Field(..., description="情境中文名")
     your_strategy: str = Field(..., description="你使用的策略")
-    champion_strategy: str = Field(..., description="销冠策略")
+    champion_strategy: str = Field(..., description="最优策略")
     is_optimal: bool = Field(..., description="是否最优")
     occurrence_count: int = Field(..., description="出现次数")
     optimal_rate: float = Field(..., description="最优率")
@@ -109,9 +109,9 @@ class TrainingReport(BaseModel):
     top_improvements: List[str]
     recommended_focus: str
     
-    # ========== 新增：销冠能力复制系统 ==========
-    
-    # 策略对比：你的策略 vs 销冠策略
+    # ========== 策略分析 ==========
+
+    # 策略对比：你的策略 vs 最优策略
     strategy_comparisons: Optional[List[StrategyComparison]] = Field(
         default=None,
         description="策略对比分析"

@@ -3,11 +3,11 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
-from api.auth_schemas import UserSchema
-from api.deps import audit_access, require_user
-from core.config import EnvironmentState, settings
+from app.api.auth_schemas import UserSchema
+from app.api.deps import audit_access, require_user
+from app.core.config import EnvironmentState, settings
 from main import app
-from schemas.memory_service import AuditTraceResponse, MemoryQueryResponse
+from app.schemas.memory_service import AuditTraceResponse, MemoryQueryResponse
 
 
 def _override_user():
@@ -49,7 +49,7 @@ def test_memory_query_response_schema(client):
     )
     assert resp.status_code == 200
     data = resp.json()
-    parsed = MemoryQueryResponse.parse_obj(data)
+    parsed = MemoryQueryResponse.model_validate(data)
     assert parsed.request_id == request_id
     assert parsed.data.route_decision in {"knowledge", "strategy", "fallback", "compliance"}
 
@@ -81,5 +81,5 @@ def test_memory_trace_response_schema(client):
         headers={"x-request-id": request_id, "x-tenant-id": "t1"},
     )
     assert trace_resp.status_code == 200
-    trace_data = AuditTraceResponse.parse_obj(trace_resp.json())
+    trace_data = AuditTraceResponse.model_validate(trace_resp.json())
     assert trace_data.request_id == request_id

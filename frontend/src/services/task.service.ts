@@ -110,13 +110,15 @@ export const taskService = {
 
   /**
    * Get all tasks for the current user (Mapped for Dashboard)
+   * Handles both: tasks_simple (array) and tasks (paginated { items })
    */
   getTasks: async (): Promise<DashboardTask[]> => {
     try {
-      const response = await api.get<{ items: any[]; total: number }>(TASKS_ENDPOINT);
+      const response = await api.get<any>(TASKS_ENDPOINT);
+      const items = Array.isArray(response) ? response : (response?.items ?? []);
 
       // Transform backend response to frontend Task format
-      return response.items.map((item: any) => ({
+      return items.map((item: any) => ({
         id: item.id.toString(),
         courseName: item.title,
         courseSubtitle: item.description || '',

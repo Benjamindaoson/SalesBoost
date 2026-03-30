@@ -1,6 +1,6 @@
 # SalesBoost 满分版控制系统架构设计 (Advanced Control System Architecture Design)
 
-基于“闭环控制系统 + 策略显式化 + 证据链”的销冠能力复制方案。
+基于“闭环控制系统 + 策略显式化 + 证据链”的销售策略分析方案。
 
 ## 0. 设计理念：从“聊天”到“决策控制”
 系统不再仅仅是多智能体对话，而是一个**闭环决策系统**。核心任务是：
@@ -38,7 +38,7 @@
 Mentor 不再直接输出建议文本，而是输出结构化的 **Strategy Object**，供 Director 仲裁。
 
 ### Strategy Object 核心字段
-- `strategy_id`: 销冠打法 ID (如：SPIN 提问法、价值锚定法)。
+- `strategy_id`: 策略 ID (如：SPIN 提问法、价值锚定法)。
 - `hypothesis`: 策略适用理由（基于当前客户状态的假设）。
 - `expected_effect`: 预期改变的变量（如：信任度 +0.2, 价格阻力 -0.5）。
 - `script_candidates`: 2-3 个候选话术。

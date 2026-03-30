@@ -3,6 +3,7 @@ import logging
 import json
 import random
 import asyncio
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
 from ...infra.gateway.schemas import ModelCall, RoutingContext, ModelConfig
 from ...infra.llm.router import router
@@ -12,26 +13,52 @@ from ...infra.llm.fast_intent import fast_intent_classifier
 from ...infra.llm.shadow import record_shadow_result
 from ...infra.streaming.utf8_buffer import StreamingErrorRecovery
 from ...infra.guardrails.streaming_guard import streaming_guard
+from ...core.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+def _make_limiter(max_calls: int):
+    """Create concurrency limiter: Redis when enabled, else asyncio.Semaphore."""
+    try:
+        settings = get_settings()
+        if getattr(settings, "LLM_USE_REDIS_SEMAPHORE", False):
+            from .redis_semaphore import ConcurrencyLimiter
+            return ConcurrencyLimiter(limit=max_calls, use_redis=True)
+    except Exception as e:
+        logger.debug("Redis limiter disabled: %s", e)
+    return _LocalLimiter(max_calls)
+
+
+class _LocalLimiter:
+    """Fallback: asyncio.Semaphore for single-process."""
+
+    def __init__(self, limit: int):
+        self._sem = asyncio.Semaphore(limit)
+
+    @asynccontextmanager
+    async def acquire(self):
+        async with self._sem:
+            yield
+
 
 class ModelGateway:
     """
     Unified Gateway for LLM Calls.
     Handles routing, retries, and cost tracking using SmartRouter and Adapters.
+    Uses Redis distributed semaphore when LLM_USE_REDIS_SEMAPHORE=true for horizontal scaling.
     """
     
     def __init__(self, budget_manager=None, max_concurrent_calls: int = 10):
         self.budget_manager = budget_manager
-        self.semaphore = asyncio.Semaphore(max_concurrent_calls)
+        self._limiter = _make_limiter(max_concurrent_calls)
         self.shadow_semaphore = asyncio.Semaphore(max(1, max_concurrent_calls // 2))
-        # We don't need to load keys here anymore; AdapterFactory handles them.
 
     async def call(self, call: ModelCall, context: RoutingContext) -> str:
         """
         Execute an LLM call with routing and safety.
         """
-        async with self.semaphore:
+        async with self._limiter.acquire():
             # 1. Use Router to select the best model
             selected_config = call.config
             if not selected_config:
@@ -84,14 +111,18 @@ class ModelGateway:
                     intent_category=intent_category,
                 )
                 
-                # Track Cost (Approximate based on model metadata if available, or adapter usage)
+                # Track Cost (tiktoken when available, else len/4 fallback)
                 if self.budget_manager:
-                    # Estimate: 1 token ~ 4 chars
-                    est_tokens = len(content) / 4 + len(call.prompt) / 4
+                    est_tokens = self._count_tokens(
+                        prompt=call.prompt or "",
+                        content=content,
+                        model=selected_config.model_name,
+                        system_prompt=system_prompt,
+                    )
                     meta = model_registry.get_model(selected_config.provider, selected_config.model_name)
                     cost = 0.0
                     if meta:
-                        cost = (est_tokens / 1000.0) * meta.output_cost_per_1k # Simplified
+                        cost = (est_tokens / 1000.0) * getattr(meta, "output_cost_per_1k", 0.0)
                     await self.budget_manager.track_cost(context.session_id, cost)
 
                 return content
@@ -147,7 +178,7 @@ class ModelGateway:
         """
         Execute a streaming LLM call with concurrency control.
         """
-        async with self.semaphore:
+        async with self._limiter.acquire():
             error_recovery = StreamingErrorRecovery(max_retries=3, base_delay=1.0)
             
             # Route
@@ -226,6 +257,27 @@ class ModelGateway:
         for i in range(0, len(response), chunk_size):
             yield response[i:i+chunk_size]
             await asyncio.sleep(0.05)
+
+    def _count_tokens(
+        self,
+        prompt: str,
+        content: str,
+        model: str,
+        system_prompt: Optional[str] = None,
+    ) -> int:
+        """Count tokens using tiktoken when available, else len/4 fallback."""
+        try:
+            import tiktoken
+            full_text = (system_prompt or "") + "\n" + (prompt or "") + (content or "")
+            try:
+                encoding = tiktoken.encoding_for_model(
+                    "gpt-4" if "gpt" in (model or "").lower() else "gpt-3.5-turbo"
+                )
+            except KeyError:
+                encoding = tiktoken.get_encoding("cl100k_base")
+            return len(encoding.encode(full_text))
+        except Exception:
+            return int(len((prompt or "") + (content or "")) / 4)
 
     def _inject_tools_prompt(self, system_prompt: Optional[str], tools_schema: list) -> str:
         tools_json = json.dumps(tools_schema, ensure_ascii=True)

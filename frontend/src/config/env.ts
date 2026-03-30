@@ -25,6 +25,7 @@ const envSchema = z.object({
   VITE_ENABLE_AI_FEATURES: z.enum(['true', 'false']).optional().default('false'),
   VITE_ENABLE_ANALYTICS: z.enum(['true', 'false']).optional().default('true'),
   VITE_ENABLE_ERROR_REPORTING: z.enum(['true', 'false']).optional().default('true'),
+  VITE_USE_MOCK_DATA: z.enum(['true', 'false']).optional().default('false'),
 
   // Environment Mode
   MODE: z.enum(['development', 'production', 'test']),
@@ -51,6 +52,7 @@ function parseEnv() {
       VITE_ENABLE_AI_FEATURES: import.meta.env.VITE_ENABLE_AI_FEATURES,
       VITE_ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS,
       VITE_ENABLE_ERROR_REPORTING: import.meta.env.VITE_ENABLE_ERROR_REPORTING,
+      VITE_USE_MOCK_DATA: import.meta.env.VITE_USE_MOCK_DATA,
       MODE: import.meta.env.MODE,
       DEV: import.meta.env.DEV,
       PROD: import.meta.env.PROD,
@@ -87,6 +89,7 @@ export const features = {
   aiEnabled: env.VITE_ENABLE_AI_FEATURES === 'true',
   analyticsEnabled: env.VITE_ENABLE_ANALYTICS === 'true',
   errorReportingEnabled: env.VITE_ENABLE_ERROR_REPORTING === 'true',
+  useMockData: env.VITE_USE_MOCK_DATA === 'true',
 } as const;
 
 /**

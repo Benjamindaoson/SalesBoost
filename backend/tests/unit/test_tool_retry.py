@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, Mock, patch
 from app.tools.executor import ToolExecutor, ToolRetryPolicy
 from app.tools.registry import ToolRegistry
 from app.tools.errors import ToolInputError, ToolPermissionError, ToolNotFoundError
-from cognitive.errors import TimeoutError
+from app.cognitive.errors import TimeoutError
 
 
 class TestToolRetryPolicy:

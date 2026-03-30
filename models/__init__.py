@@ -40,7 +40,7 @@ __all__ = [
     "SessionState",
     "EvaluationLog",
     "UserSkillProfile",
-    # 销冠能力复制系统
+    # 策略分析系统
     "AdoptionRecord",
     "AdoptionStyle",
     "StrategyDecision",

@@ -202,7 +202,7 @@ function handleMessage(data) {
             if (data.strategy_analysis) {
                 const sa = data.strategy_analysis;
                 const optimalIcon = sa.is_optimal ? '✅' : '⚠️';
-                log('STRATEGY', `${optimalIcon} 情境: ${sa.situation_type} | 你的策略: ${sa.strategy_chosen} | 销冠策略: ${sa.golden_strategy}`, '#9b59b6');
+                log('STRATEGY', `${optimalIcon} 情境: ${sa.situation_type} | 你的策略: ${sa.strategy_chosen} | 最优策略: ${sa.golden_strategy}`, '#9b59b6');
                 if (!sa.is_optimal) {
                     log('STRATEGY', `📈 ${sa.optimality_reason}`, '#9b59b6');
                 }
@@ -211,7 +211,7 @@ function handleMessage(data) {
             // 【能力闭环】策略级指导
             if (data.strategy_guidance) {
                 const sg = data.strategy_guidance;
-                log('GUIDANCE', `🎯 销冠策略: ${sg.golden_strategy}`, '#e74c3c');
+                log('GUIDANCE', `🎯 最优策略: ${sg.golden_strategy}`, '#e74c3c');
                 log('GUIDANCE', `💡 过渡建议: ${sg.transition_suggestion}`, '#e74c3c');
                 log('GUIDANCE', `📝 示例: "${sg.example_utterance}"`, '#e74c3c');
             }

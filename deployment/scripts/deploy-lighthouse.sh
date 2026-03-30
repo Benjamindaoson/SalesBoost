@@ -4,7 +4,7 @@
 set -e
 
 echo "==================================="
-echo "SalesBoost 销冠AI系统 - 完整部署"
+echo "SalesBoost - AI 销售作战平台 - 完整部署"
 echo "==================================="
 
 PROJECT_DIR="/root/salesboost-prod"

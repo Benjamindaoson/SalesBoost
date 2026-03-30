@@ -199,9 +199,9 @@ export default function AdminTasks() {
                         <span className="text-sm text-gray-600">
                             {task.progress.completed}/{task.progress.total}
                         </span>
-                        {task.progress.bestScore > 0 && (
+                        {(task.progress.bestScore ?? 0) > 0 && (
                             <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
-                                {task.progress.bestScore}分
+                                {task.progress.bestScore ?? 0}分
                             </Badge>
                         )}
                     </div>

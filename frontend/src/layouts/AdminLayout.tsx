@@ -21,8 +21,8 @@ export default function AdminLayout() {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: '销冠AI系统 - 管理端',
-        text: 'AI智能销售培训管理平台',
+        title: 'SalesBoost - 管理端',
+        text: 'AI 销售作战平台 · 训练 · 管道 · 实战',
         url: window.location.href,
       });
     } else {
@@ -50,7 +50,7 @@ export default function AdminLayout() {
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 z-10">
           <div className="flex items-center">
-            <h2 className="text-lg font-semibold text-gray-800">AI Sales Training Agent</h2>
+            <h2 className="text-lg font-semibold text-gray-800">SalesBoost 总裁驾驶舱</h2>
             <ChevronDown className="w-4 h-4 ml-2 text-gray-400 cursor-pointer" />
           </div>
           

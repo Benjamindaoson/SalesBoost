@@ -75,7 +75,7 @@ export default function CourseList() {
         </p>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => (
+        {courses.map((course: import('@/services/course.service').Course) => (
           <Card key={course.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle>{course.title}</CardTitle>

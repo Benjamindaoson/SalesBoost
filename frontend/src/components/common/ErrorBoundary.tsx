@@ -1,9 +1,11 @@
 /**
  * Error Boundary - React错误边界组件
  * 捕获和处理组件树中的错误，提供友好的错误界面
+ * Reports to Sentry when available
  */
 import React, { Component, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { captureException } from '@/lib/monitoring/sentry';
 
 interface Props {
   children: ReactNode;
@@ -55,7 +57,13 @@ class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
-    // 发送错误到监控服务
+    // Report to Sentry
+    captureException(error, {
+      componentStack: errorInfo.componentStack,
+      errorId: this.state.errorId,
+    });
+
+    // 发送错误到监控服务（备用 API）
     this.reportError(error, errorInfo);
   }
 
