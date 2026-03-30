@@ -19,7 +19,7 @@ Successfully completed data integration for cleaned product rights tables and sa
 **Status:** COMPLETE
 
 **Input:**
-- Source: `销冠能力复制数据库/cleaned_data_20260201_001/product_rights/`
+- Source: `data/sales_knowledge/cleaned_data_20260201_001/product_rights/`
 - Files: 4 CSV files (FAQ, 卡产品&权益&年费, 百夫长权益详解, 高尔夫权益详解)
 - Total rows: 353
 
@@ -63,7 +63,7 @@ Successfully completed data integration for cleaned product rights tables and sa
 **Status:** METADATA COMPLETE, TRANSCRIPTION PENDING
 
 **Input:**
-- Source: `销冠能力复制数据库/cleaned_data_20260201_001/sales_recordings/`
+- Source: `data/sales_knowledge/cleaned_data_20260201_001/sales_recordings/`
 - Files: 4 MP3 files
 - Total size: 2.89 MB
 - Format: MP3 @ 192kbps, 44.1kHz
@@ -85,7 +85,7 @@ Successfully completed data integration for cleaned product rights tables and sa
 {
   "id": "recording_信用卡销售话术_录制时间_2025年12月6日",
   "file": "信用卡销售话术_录制时间_2025年12月6日.mp3",
-  "path": "销冠能力复制数据库/cleaned_data_20260201_001/sales_recordings/...",
+  "path": "data/sales_knowledge/cleaned_data_20260201_001/sales_recordings/...",
   "size_mb": 0.50,
   "status": "ready_for_transcription",
   "metadata": {
@@ -304,7 +304,7 @@ OPENAI_API_KEY=sk-your-key-here
 
 # Test transcription
 python scripts/test_whisper.py \
-  --audio "销冠能力复制数据库/cleaned_data_20260201_001/sales_recordings/信用卡销售话术_录制时间_2025年12月6日.mp3"
+  --audio "data/sales_knowledge/cleaned_data_20260201_001/sales_recordings/信用卡销售话术_录制时间_2025年12月6日.mp3"
 ```
 
 **Option B: Alibaba Cloud ASR**
@@ -315,7 +315,7 @@ ALIBABA_CLOUD_APP_KEY=your-app-key
 
 # Test transcription
 python scripts/test_alibaba_asr.py \
-  --audio "销冠能力复制数据库/cleaned_data_20260201_001/sales_recordings/信用卡销售话术_录制时间_2025年12月6日.mp3"
+  --audio "data/sales_knowledge/cleaned_data_20260201_001/sales_recordings/信用卡销售话术_录制时间_2025年12月6日.mp3"
 ```
 
 #### 4. Run Full Integration with Transcription

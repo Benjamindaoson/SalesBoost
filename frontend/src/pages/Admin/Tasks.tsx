@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Plus, 
   Search, 
@@ -25,84 +25,77 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
-// Mock Data based on Image 3
-const TASKS = [
-  {
-    id: 1,
-    name: "第一季度新人培训计划",
-    deadline: "2024-11-28",
-    students: [
-      { name: "赵冬生", color: "bg-purple-100 text-purple-700" },
-      { name: "刘金雪", color: "bg-purple-100 text-purple-700" }
-    ],
-    status: "进行中",
-    statusColor: "bg-blue-50 text-blue-600 border-blue-200",
-    tags: [
-      { name: "新人培训", color: "bg-purple-100 text-purple-700" },
-      { name: "小组", color: "bg-purple-50 text-purple-600" }
-    ],
-    creator: "培训主管",
-    start_date: "2024-12-01",
-    end_date: "2024-12-31"
-  },
-  {
-    id: 2,
-    name: "广大卡售后专项训练",
-    deadline: "2024-12-05",
-    students: [
-      { name: "宋良程", color: "bg-gray-100 text-gray-700" },
-      { name: "李四", color: "bg-gray-100 text-gray-700" }
-    ],
-    status: "待审核",
-    statusColor: "bg-purple-50 text-purple-600 border-purple-200",
-    tags: [
-      { name: "团队培训", color: "bg-purple-100 text-purple-700" },
-      { name: "监督", color: "bg-purple-50 text-purple-600" },
-      { name: "指导", color: "bg-purple-50 text-purple-600" }
-    ],
-    creator: "广大经理",
-    start_date: "2024-12-10",
-    end_date: "2024-12-25"
-  },
-  {
-    id: 3,
-    name: "六级课友任务训练",
-    deadline: "2024-12-13",
-    students: [
-      { name: "陈风", color: "bg-gray-100 text-gray-700" },
-      { name: "张伟", color: "bg-gray-100 text-gray-700" }
-    ],
-    status: "待分配",
-    statusColor: "bg-gray-100 text-gray-600 border-gray-200",
-    tags: [
-      { name: "团队", color: "bg-purple-100 text-purple-700" },
-      { name: "教练", color: "bg-purple-50 text-purple-600" }
-    ],
-    creator: "金川L尧",
-    start_date: "2024-12-20",
-    end_date: "2025-01-10"
-  },
-  {
-    id: 4,
-    name: "乔汉类服务客户提升",
-    created_at: "2024-11-10",
-    students: [
-      { name: "张飞", color: "bg-purple-100 text-purple-700" }
-    ],
-    status: "已结束",
-    statusColor: "bg-green-50 text-green-600 border-green-200",
-    tags: [
-      { name: "私域提升", color: "bg-green-100 text-green-700" }
-    ],
-    creator: "培训主管",
-    start_date: "2024-11-15",
-    end_date: "2024-11-30"
-  }
-];
+import { taskService, TaskCreate } from '@/services/task.service';
+import { Task } from '@/types/dashboard';
+import TaskDialog from '@/components/admin/TaskDialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminTasks() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const { toast } = useToast();
+
+  const fetchTasks = async () => {
+    try {
+      const data = await taskService.getTasks();
+      setTasks(data);
+    } catch (error) {
+      console.error("Failed to fetch tasks", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const handleCreateTask = async (data: TaskCreate) => {
+    setCreating(true);
+    try {
+      await taskService.createTask(data);
+      toast({
+        title: "创建成功",
+        description: "新任务已成功创建",
+      });
+      setCreateDialogOpen(false);
+      fetchTasks();
+    } catch (error) {
+      toast({
+        title: "创建失败",
+        description: "无法创建任务，请稍后重试",
+        variant: "destructive",
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'in_progress':
+        return "bg-blue-50 text-blue-600 border-blue-200";
+      case 'completed':
+        return "bg-green-50 text-green-600 border-green-200";
+      case 'locked':
+        return "bg-gray-100 text-gray-600 border-gray-200";
+      default:
+        return "bg-purple-50 text-purple-600 border-purple-200";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'in_progress': return '进行中';
+      case 'completed': return '已完成';
+      case 'locked': return '未解锁';
+      case 'unlocked': return '待开始';
+      default: return status;
+    }
+  };
 
   return (
     <div className="flex flex-col h-full space-y-6">
@@ -148,7 +141,10 @@ export default function AdminTasks() {
             </SelectContent>
           </Select>
 
-          <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md rounded-lg">
+          <Button 
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md rounded-lg"
+            onClick={() => setCreateDialogOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             创建任务
           </Button>
@@ -161,79 +157,77 @@ export default function AdminTasks() {
           <TableHeader className="bg-gray-50/50">
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-[280px] text-gray-500 font-medium">任务名称</TableHead>
-              <TableHead className="text-gray-500 font-medium">学员</TableHead>
+              <TableHead className="text-gray-500 font-medium">任务类型</TableHead>
               <TableHead className="text-gray-500 font-medium">任务状态</TableHead>
-              <TableHead className="text-gray-500 font-medium">任务标签</TableHead>
-              <TableHead className="text-gray-500 font-medium">创建人</TableHead>
+              <TableHead className="text-gray-500 font-medium">进度/得分</TableHead>
               <TableHead className="text-gray-500 font-medium">时间范围</TableHead>
               <TableHead className="text-right text-gray-500 font-medium">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {TASKS.map((task) => (
+            {loading ? (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">加载中...</TableCell>
+                </TableRow>
+            ) : tasks.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">暂无任务</TableCell>
+                </TableRow>
+            ) : (
+                tasks.map((task) => (
               <TableRow key={task.id} className="hover:bg-gray-50/50 border-gray-100">
                 <TableCell className="py-4">
                   <div className="flex flex-col">
-                    <span className="text-gray-900 font-medium text-sm">{task.name}</span>
+                    <span className="text-gray-900 font-medium text-sm">{task.courseName}</span>
                     <span className="text-xs text-gray-400 mt-1">
-                      {task.deadline ? `预计 ${task.deadline}` : `创建于 ${task.created_at}`}
+                      {task.courseSubtitle}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell className="py-4">
-                  <div className="flex flex-wrap gap-1">
-                    {task.students.map((student, i) => (
-                      <Badge 
-                        key={i} 
-                        className={`rounded-full px-2 py-0.5 text-xs font-normal border-0 hover:opacity-90 ${student.color}`}
-                      >
-                        {student.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell className="py-4">
-                  <Badge variant="outline" className={`font-normal rounded-md border px-2.5 py-0.5 ${task.statusColor}`}>
-                    {task.status}
+                  <Badge variant="secondary" className="font-normal">
+                    {task.taskTag}
                   </Badge>
                 </TableCell>
                 <TableCell className="py-4">
-                  <div className="flex flex-wrap gap-1">
-                    {task.tags.map((tag, i) => (
-                      <Badge 
-                        key={i} 
-                        className={`rounded-md px-2 py-0.5 text-xs font-normal border-0 ${tag.color}`}
-                      >
-                        {tag.name}
-                      </Badge>
-                    ))}
-                  </div>
+                  <Badge variant="outline" className={`font-normal rounded-md border px-2.5 py-0.5 ${getStatusColor(task.status)}`}>
+                    {getStatusLabel(task.status)}
+                  </Badge>
                 </TableCell>
-                <TableCell className="text-gray-600 text-sm py-4">{task.creator}</TableCell>
                 <TableCell className="py-4">
-                  <div className="flex flex-col text-xs text-gray-500 space-y-0.5">
-                    <span>开始: {task.start_date}</span>
-                    <span>结束: {task.end_date}</span>
-                  </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">
+                            {task.progress.completed}/{task.progress.total}
+                        </span>
+                        {(task.progress.bestScore ?? 0) > 0 && (
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
+                                {task.progress.bestScore ?? 0}分
+                            </Badge>
+                        )}
+                    </div>
                 </TableCell>
-                <TableCell className="text-right py-4">
-                  <div className="flex justify-end items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full">
-                      <LinkIcon className="h-4 w-4" />
+                <TableCell className="py-4 text-sm text-gray-500">
+                    {task.timeRange.start ? new Date(task.timeRange.start).toLocaleDateString() : '-'} 
+                    <span className="mx-1">~</span>
+                    {task.timeRange.end ? new Date(task.timeRange.end).toLocaleDateString() : '-'}
+                </TableCell>
+                <TableCell className="py-4 text-right">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600">
+                      <MoreHorizontal className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full">
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </TableCell>
               </TableRow>
-            ))}
+            )))}
           </TableBody>
         </Table>
       </div>
+
+      <TaskDialog 
+        open={createDialogOpen} 
+        onOpenChange={setCreateDialogOpen}
+        onSave={handleCreateTask}
+        loading={creating}
+      />
     </div>
   );
 }

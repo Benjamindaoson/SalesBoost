@@ -1,0 +1,18 @@
+{
+  "intent_regression": [
+    {"message": "你好", "expected_intent": "social", "stage": "discovery"},
+    {"message": "年费多少", "expected_intent": "informational", "stage": "discovery"},
+    {"message": "太贵了", "expected_intent": "objection", "stage": "proposal"},
+    {"message": "我要办理", "expected_intent": "buying_signal", "stage": "closing"},
+    {"message": "额度是多少", "expected_intent": "informational", "stage": "discovery"},
+    {"message": "谢谢", "expected_intent": "social", "stage": "discovery"},
+    {"message": "考虑一下再说", "expected_intent": "objection", "stage": "proposal"},
+    {"message": "权益有哪些", "expected_intent": "informational", "stage": "discovery"},
+    {"message": "好的我要了", "expected_intent": "buying_signal", "stage": "closing"},
+    {"message": "不需要", "expected_intent": "objection", "stage": "discovery"}
+  ],
+  "prompt_hashes": {
+    "intent_classifier_prompt": null,
+    "coach_prompt": null
+  }
+}

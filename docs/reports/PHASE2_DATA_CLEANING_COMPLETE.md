@@ -25,7 +25,7 @@ Successfully completed data cleaning pipeline for SalesBoost knowledge base expa
 - Error handling and validation
 
 ### 2. Processed Data
-**Output Directory:** `销冠能力复制数据库/cleaned_data_20260201_001/`
+**Output Directory:** `data/sales_knowledge/cleaned_data_20260201_001/`
 
 **Product Rights Tables:**
 - Location: `product_rights/`
@@ -207,7 +207,7 @@ DASHSCOPE_API_KEY=sk-your-actual-key-here
 - `.env.example` - Added DASHSCOPE_API_KEY configuration
 
 ### Output Generated
-- `销冠能力复制数据库/cleaned_data_20260201_001/` - All cleaned data
+- `data/sales_knowledge/cleaned_data_20260201_001/` - All cleaned data
 - `data_cleaning_report.json` - Machine-readable report
 - `data_cleaning_report.txt` - Human-readable report
 

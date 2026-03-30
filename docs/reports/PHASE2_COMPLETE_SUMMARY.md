@@ -316,7 +316,7 @@ Run `python scripts/ingest_to_qdrant.py` to add 353 chunks to your knowledge bas
 
 ## 🙏 Acknowledgments
 
-- **Data Source:** 销冠能力复制数据库
+- **Data Source:** data/sales_knowledge
 - **Tools Used:** pandas, tqdm, json, pathlib
 - **Models:** BGE-M3 (embeddings), Qwen-VL-OCR (planned)
 - **Infrastructure:** Qdrant (vector database)

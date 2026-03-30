@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  backend:
+    image: python:3.11-slim
+    container_name: salesboost-backend
+    restart: always
+    working_dir: /app
+    command: bash -c "pip install -q fastapi uvicorn[standard] pydantic websockets redis && python -m uvicorn main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV_STATE=production
+      - DATABASE_URL=sqlite:///./data/salesboost.db
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-salesboost123}@redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-sk-dummy}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-dummy}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-dummy}
+    volumes:
+      - ./backend:/app:ro
+      - backend-data:/app/data
+      - backend-logs:/app/logs
+    depends_on:
+      - redis
+    networks:
+      - salesboost-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    container_name: salesboost-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-salesboost123}
+    volumes:
+      - redis-data:/data
+    networks:
+      - salesboost-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-salesboost123}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  backend-data:
+  backend-logs:
+  redis-data:
+
+networks:
+  salesboost-network:
+    driver: bridge

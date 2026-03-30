@@ -1,3 +1,7 @@
+/**
+ * Admin Mock Data - 仅用于测试或 VITE_USE_MOCK_DATA=true
+ * 生产环境 Admin 页面已全部接入真实 API，本文件保留供单元测试使用。
+ */
 import { AdminCourse, AdminTask, TeamAnalysis, AnalysisKPI, KnowledgeItem, KnowledgeStats } from '@/types/admin';
 
 export const mockAdminCourses: AdminCourse[] = [

@@ -1,0 +1,217 @@
+import logging
+import json
+from datetime import datetime
+from typing import Any, List
+
+from ...infra.gateway.model_gateway import ModelGateway
+from ...infra.gateway.schemas import ModelCall, RoutingContext
+from ...agents.evaluate.strategy_analyzer import StrategyAnalyzer
+from ...schemas.reports import (
+    RadarChartData,
+    SessionSummary,
+    TrainingReport,
+    StrategyComparison
+)
+from ...core.redis import get_redis, InMemoryCache
+
+logger = logging.getLogger(__name__)
+
+class ReportService:
+    def __init__(self, model_gateway: ModelGateway = None):
+        self.model_gateway = model_gateway or ModelGateway()
+        self.strategy_analyzer = StrategyAnalyzer(self.model_gateway)
+
+    async def generate_report(self, session, messages: List[Any], include_turn_details: bool = True) -> TrainingReport:
+        """
+        Generate a comprehensive training report using AI analysis.
+        """
+        logger.info(f"Generating real AI report for session: {session.id}")
+        
+        # 1. Strategy Analysis (New)
+        strategy_analysis = await self.strategy_analyzer.analyze_strategy_deviation(session.id, messages)
+        
+        # 2. Prepare conversation history for AI analysis
+        history_text = "\n".join([
+            f"{'Sales' if m.role == 'sales' else 'Customer'}: {m.content}"
+            for m in messages
+        ])
+
+        # 2. Construct Evaluation Prompt
+        system_prompt = """
+        You are an expert sales performance evaluator. 
+        Analyze the provided sales conversation and output a JSON report.
+        Dimensions: 
+        - Integrity (0-10): Did the salesperson follow the full process?
+        - Relevance (0-10): Were the responses tailored to customer needs?
+        - Correctness (0-10): Was the product info accurate?
+        - Logic (0-10): Was the persuasion flow logical?
+        - Compliance (0-10): Did they avoid forbidden words or false promises?
+        
+        Output Format:
+        {
+            "overall_score": float,
+            "dimension_scores": {"integrity": float, "relevance": float, ...},
+            "dimension_feedback": {"integrity": "...", ...},
+            "top_strengths": ["..."],
+            "top_improvements": ["..."],
+            "recommended_focus": "..."
+        }
+        """
+        
+        call = ModelCall(
+            prompt=f"Conversation History:\n{history_text}",
+            system_prompt=system_prompt
+        )
+        context = RoutingContext(session_id=session.id, agent_type="evaluator")
+        
+        try:
+            raw_response = await self.model_gateway.call(call, context)
+            # Try to parse JSON from response
+            # Note: In production, use more robust JSON extractor
+            eval_data = json.loads(raw_response.strip("```json").strip("```"))
+        except Exception as e:
+            logger.error(f"AI Evaluation failed: {e}. Using fallback values.")
+            eval_data = self._get_fallback_eval()
+
+        # 3. Build Report Objects
+        summary = SessionSummary(
+            session_id=session.id,
+            user_id=session.user_id,
+            scenario_name=getattr(session, "scenario_name", "General Sales"),
+            persona_name=getattr(session, "persona_name", "Customer"),
+            started_at=session.started_at,
+            completed_at=datetime.utcnow(),
+            duration_minutes=int((datetime.utcnow() - session.started_at).total_seconds() / 60),
+            total_turns=len(messages) // 2,
+            final_stage=session.final_stage or "Completed",
+            completion_rate=self._compute_completion_rate(session, messages),
+        )
+
+        # 4. Self-Consistency Verification (Audit Requirement)
+        await self._verify_self_consistency(eval_data)
+
+        radar = RadarChartData(
+            values=[
+                eval_data["dimension_scores"].get("integrity", 0),
+                eval_data["dimension_scores"].get("relevance", 0),
+                eval_data["dimension_scores"].get("correctness", 0),
+                eval_data["dimension_scores"].get("logic", 0),
+                eval_data["dimension_scores"].get("compliance", 0),
+            ]
+        )
+
+        # Convert strategy comparisons to Schema objects
+        comparisons = [
+            StrategyComparison(**comp) 
+            for comp in strategy_analysis.get("strategy_comparisons", [])
+        ]
+
+        report = TrainingReport(
+            summary=summary,
+            overall_score=eval_data.get("overall_score", 0.0),
+            radar_chart=radar,
+            dimension_scores=eval_data["dimension_scores"],
+            dimension_feedback=eval_data["dimension_feedback"],
+            stage_performances=[], 
+            turn_details=None,
+            top_strengths=eval_data.get("top_strengths", []),
+            top_improvements=eval_data.get("top_improvements", []),
+            recommended_focus=eval_data.get("recommended_focus", ""),
+            strategy_comparisons=comparisons,
+            overall_optimal_rate=strategy_analysis.get("overall_optimal_rate"),
+            generated_at=datetime.utcnow(),
+        )
+
+        # ---------------------------------------------------------------------------
+        # DATA FLYWHEEL: Write training weaknesses to S2 for Live Assist personalization
+        # Key: ctx:s2:weakness:{user_id}  (separate from client_profile to avoid collision)
+        # Read by: LiveAssistEngine._load_weakness_profile()
+        # ---------------------------------------------------------------------------
+        user_id = getattr(session, "user_id", None)
+        if user_id and eval_data.get("top_improvements"):
+            await self._write_weakness_to_s2(
+                user_id=str(user_id),
+                top_improvements=eval_data.get("top_improvements", []),
+                recommended_focus=eval_data.get("recommended_focus", ""),
+            )
+
+        return report
+
+    async def _write_weakness_to_s2(self, user_id: str, top_improvements: List[str], recommended_focus: str) -> None:
+        """
+        Write the rep's training weaknesses to Redis S2 for Live Assist personalization.
+        This closes the 'Training → Live Assist' data flywheel loop.
+        Key: ctx:s2:weakness:{user_id}
+        """
+        key = f"ctx:s2:weakness:{user_id}"
+        payload = {
+            "top_improvements": top_improvements[:5],
+            "recommended_focus": recommended_focus,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        try:
+            client = await get_redis()
+            await client.set(key, json.dumps(payload, ensure_ascii=False), ex=60 * 60 * 24 * 30)  # 30-day TTL
+            logger.info("[ReportService] Wrote training weaknesses to S2 for user %s", user_id)
+        except Exception as exc:
+            logger.warning("[ReportService] Failed to write weakness S2 for user %s: %s", user_id, exc)
+
+
+    async def _verify_self_consistency(self, eval_data: dict) -> None:
+        """
+        Verify if the generated scores align with the sentiment of the feedback.
+        If scores are high but feedback is negative, log a warning or adjust.
+        """
+        scores = eval_data.get("dimension_scores", {})
+        feedback = eval_data.get("dimension_feedback", {})
+        
+        for dim, score in scores.items():
+            fb_text = feedback.get(dim, "").lower()
+            # Simple heuristic: if score is high (>8) but feedback contains negative keywords
+            negative_keywords = ["bad", "poor", "fail", "error", "weak", "incorrect", "不佳", "错误", "差"]
+            if score > 8 and any(kw in fb_text for kw in negative_keywords):
+                logger.warning(f"Self-consistency warning: High score ({score}) for {dim} but feedback is negative: {fb_text}")
+                # Optional: Force AI to re-evaluate or cap the score
+                eval_data["dimension_scores"][dim] = 7.5
+
+    def _compute_completion_rate(self, session, messages: List[Any]) -> float:
+        """
+        Compute completion_rate as the fraction of FSM stages reached.
+
+        Stage order: opening(1) → discovery(2) → pitch(3) → objection(4)
+                     → closing(5) → completed/closed(6)
+
+        A session that ends at 'closing' scores 5/6 ≈ 83.3%.
+        Completed/Closed = 100%.
+        """
+        STAGE_ORDER = {
+            "opening":   1,
+            "discovery": 2,
+            "pitch":     3,
+            "objection": 4,
+            "closing":   5,
+            "completed": 6,
+            "closed":    6,
+            "failed":    3,   # stalled mid-way
+        }
+        TOTAL_STAGES = 6
+
+        final = str(getattr(session, "final_stage", "") or "").lower().strip()
+        stage_num = STAGE_ORDER.get(final)
+
+        if stage_num is None:
+            # Fallback: infer from message count (each stage ≈ 2 turns)
+            turns = max(len(messages) // 2, 1)
+            stage_num = min(turns // 2, TOTAL_STAGES)
+
+        return round((stage_num / TOTAL_STAGES) * 100.0, 1)
+
+    def _get_fallback_eval(self) -> dict:
+        return {
+            "overall_score": 5.0,
+            "dimension_scores": {"integrity": 5, "relevance": 5, "correctness": 5, "logic": 5, "compliance": 5},
+            "dimension_feedback": {"integrity": "Analysis failed", "relevance": "Analysis failed", "correctness": "Analysis failed", "logic": "Analysis failed", "compliance": "Analysis failed"},
+            "top_strengths": ["Basic participation"],
+            "top_improvements": ["System analysis error"],
+            "recommended_focus": "Re-run training"
+        }

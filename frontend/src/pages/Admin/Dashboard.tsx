@@ -18,35 +18,10 @@ import {
   PolarRadiusAxis,
 } from "recharts";
 import { AlertCircle, DollarSign, Gauge, Users } from "lucide-react";
-import api from "@/lib/api";
-
-type CostTrendPoint = {
-  date: string;
-  cost_usd: number;
-  input_tokens: number;
-  output_tokens: number;
-};
-
-type SkillAverages = {
-  opening: number;
-  discovery: number;
-  closing: number;
-};
-
-type AnalyticsOverview = {
-  total_cost_usd: number;
-  total_input_tokens: number;
-  total_output_tokens: number;
-  active_users_7d: number;
-  total_practice_seconds_7d: number;
-  competency_index: number;
-  skill_averages: SkillAverages;
-  cost_trend: CostTrendPoint[];
-};
+import { analyticsService, AnalyticsOverview } from '@/services/analytics.service';
 
 async function fetchAnalytics(): Promise<AnalyticsOverview> {
-  const response = await api.get<AnalyticsOverview>("/admin/analytics");
-  return response.data;
+  return await analyticsService.getOverview();
 }
 
 function formatCurrency(value: number) {

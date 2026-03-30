@@ -33,6 +33,7 @@ export default function CustomerDialog({ open, onOpenChange, customer, onSave, l
     traits: [],
     description: '',
     avatar_color: 'from-blue-200 to-blue-400',
+    scenario_id: 'default',
   });
 
   const [newTrait, setNewTrait] = useState('');
@@ -46,6 +47,7 @@ export default function CustomerDialog({ open, onOpenChange, customer, onSave, l
         traits: customer.traits,
         description: customer.description,
         avatar_color: customer.avatarColor,
+        scenario_id: 'default',
       });
     } else {
       setFormData({
@@ -55,6 +57,7 @@ export default function CustomerDialog({ open, onOpenChange, customer, onSave, l
         traits: [],
         description: '',
         avatar_color: 'from-blue-200 to-blue-400',
+        scenario_id: 'default',
       });
     }
   }, [customer, open]);
@@ -64,7 +67,7 @@ export default function CustomerDialog({ open, onOpenChange, customer, onSave, l
     if (!formData.name.trim() || !formData.job.trim()) return;
 
     const description = `${formData.age}岁 · ${formData.job} · ${formData.traits.join(' · ')}`;
-    await onSave({ ...formData, description });
+    await onSave({ ...formData, description, scenario_id: formData.scenario_id || 'default' });
   };
 
   const addTrait = () => {

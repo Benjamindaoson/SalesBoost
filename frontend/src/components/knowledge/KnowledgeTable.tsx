@@ -11,7 +11,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Trash2, Eye, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import knowledgeService, { type KnowledgeEntry, type KnowledgeListParams } from '@/services/knowledge.service';
+import { knowledgeService, type KnowledgeEntry, type KnowledgeListParams } from '@/services/knowledge.service';
 
 interface KnowledgeTableProps {
   refreshTrigger?: number;

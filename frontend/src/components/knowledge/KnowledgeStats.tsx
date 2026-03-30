@@ -12,7 +12,7 @@
 import { useState, useEffect } from 'react';
 import { Database, FileText, HardDrive, TrendingUp } from 'lucide-react';
 import { PieChart, Pie, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import knowledgeService, { type KnowledgeStats } from '@/services/knowledge.service';
+import { knowledgeService, type KnowledgeStats } from '@/services/knowledge.service';
 
 interface KnowledgeStatsProps {
   refreshTrigger?: number;
@@ -196,7 +196,7 @@ export default function KnowledgeStatsComponent({ refreshTrigger }: KnowledgeSta
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Upload Activity</h3>
         {stats.recent_uploads && stats.recent_uploads.length > 0 ? (
           <div className="space-y-3">
-            {stats.recent_uploads.slice(0, 7).map((upload, index) => (
+            {stats.recent_uploads.slice(0, 7).map((upload: { date: string; count: number }, index: number) => (
               <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                 <span className="text-sm text-gray-600">
                   {new Date(upload.date).toLocaleDateString('en-US', {
@@ -210,7 +210,7 @@ export default function KnowledgeStatsComponent({ refreshTrigger }: KnowledgeSta
                     <div
                       className="bg-indigo-600 h-2 rounded-full"
                       style={{
-                        width: `${Math.min((upload.count / Math.max(...stats.recent_uploads.map(u => u.count))) * 100, 100)}%`,
+                        width: `${Math.min((upload.count / (stats.recent_uploads.length ? Math.max(...stats.recent_uploads.map((u: { count: number }) => u.count)) : 1)) * 100, 100)}%`,
                       }}
                     />
                   </div>
@@ -241,7 +241,7 @@ export default function KnowledgeStatsComponent({ refreshTrigger }: KnowledgeSta
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {sourceData.map((source, index) => (
+              {sourceData.map((source: { name: string; value: number }, index: number) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-900">{source.name}</td>
                   <td className="px-4 py-3 text-sm text-gray-900 text-right">{source.value}</td>

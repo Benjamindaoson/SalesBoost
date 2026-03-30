@@ -6,7 +6,12 @@ import {
   Clock, 
   Share2,
   Smartphone,
-  Settings
+  Settings,
+  Swords,
+  Target,
+  Zap,
+  FileText,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -46,8 +51,8 @@ export default function StudentLayout() {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: '销冠AI系统',
-        text: 'AI智能销售培训平台',
+        title: 'SalesBoost',
+        text: 'AI 销售作战平台 · 从训练到成单',
         url: window.location.href,
       });
     } else {
@@ -59,9 +64,11 @@ export default function StudentLayout() {
   };
 
   const navItems = [
-    { to: '/student/dashboard', icon: LayoutDashboard, label: '任务管理' },
-    { to: '/student/customers', icon: Users, label: '客户预演' },
-    { to: '/student/history', icon: Clock, label: '历史记录' },
+    { to: '/student/battle-center', icon: Swords, label: '作战中心' },
+    { to: '/student/pipeline', icon: TrendingUp, label: '我的漏斗' },
+    { to: '/student/live-assist', icon: Zap, label: '实战辅助' },
+    { to: '/student/review', icon: FileText, label: '战后复盘' },
+    { to: '/student/training', icon: Target, label: '模拟演练' },
   ];
 
   return (
@@ -73,8 +80,8 @@ export default function StudentLayout() {
             AI
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-gray-900 text-lg leading-tight">销冠AI系统</span>
-            <span className="text-xs text-gray-500 font-medium">学员端</span>
+            <span className="font-bold text-gray-900 text-lg leading-tight">SalesBoost</span>
+            <span className="text-xs text-gray-500 font-medium">AI 销售作战系统</span>
           </div>
         </div>
         
@@ -118,7 +125,7 @@ export default function StudentLayout() {
         {/* Top Navigation Bar */}
         <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-8 shadow-sm">
           <div className="text-lg font-medium text-gray-900">
-            AI Sales Training Agent
+            AI Sales Battle System
           </div>
           
           <div className="flex items-center gap-3">

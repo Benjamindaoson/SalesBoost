@@ -2,46 +2,111 @@ name: SalesBoost CI
 
 on:
   push:
-    branches: [ main ]
+    branches: ["main", "develop"]
   pull_request:
-    branches: [ main ]
+    branches: ["main", "develop"]
 
 jobs:
-  test:
+  # ─────────────────────────────────────────────────────
+  backend-test:
+    name: Backend Tests (Python 3.11)
     runs-on: ubuntu-latest
-    
+    defaults:
+      run:
+        working-directory: backend
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        
-    - name: Pre-download Models
-      run: python scripts/download_models.py
-      
-    - name: Run Tests
-      run: |
-        # Health Check (Unit)
-        pytest tests/test_health.py
-        
-        # Core Logic
-        pytest tests/test_learning_convergence.py
-        pytest tests/test_anti_cheat.py
-        
-        # Integration (Flaky on CI? Mark with xfail if needed in code)
-        pytest tests/test_concurrent_sessions.py
-        
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests + coverage
+        run: |
+          python -m pytest tests/unit/ \
+            --tb=short \
+            -q \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
+
+  # ─────────────────────────────────────────────────────
+  backend-lint:
+    name: Backend Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install lint tools
+        run: pip install ruff
+
+      - name: Ruff lint (E, F, W)
+        run: ruff check app/ --select E,F,W --ignore E501
+        continue-on-error: true
+
+  # ─────────────────────────────────────────────────────
+  frontend-ci:
+    name: Frontend (Node 20)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+      - name: Build (production bundle)
+        run: npm run build
+
+  # ─────────────────────────────────────────────────────
   docker-build:
-    needs: test
+    name: Docker Build
+    needs: [backend-test, frontend-ci]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build Docker Image
         run: docker build . -t salesboost:latest

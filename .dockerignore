@@ -52,7 +52,7 @@ pytest.ini
 .pytest_cache/
 
 # Large data files
-销冠能力复制数据库/
+data/sales_knowledge/
 *.pdf
 *.mp3
 *.mp4

@@ -138,9 +138,9 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 
 ```bash
 # 1. Add files to data directory
-# - Excel files → 销冠能力复制数据库/产品权益/
-# - PDF files → 销冠能力复制数据库/销售成交营销SOP和话术/
-# - Word files → 销冠能力复制数据库/销售冠军成交经验分享/
+# - Excel files → data/sales_knowledge/产品权益/
+# - PDF files → data/sales_knowledge/销售成交营销SOP和话术/
+# - Word files → data/sales_knowledge/销售冠军成交经验分享/
 
 # 2. Reprocess data
 python scripts/process_sales_data.py
@@ -358,7 +358,7 @@ SalesBoost/
 │   └── generated_data/             # Generated scenarios
 ├── data/
 │   └── seeds/                      # Champion cases
-└── 销冠能力复制数据库/              # Source data
+└── data/sales_knowledge/            # Source data
     ├── 产品权益/                   # Product data
     ├── 销售成交营销SOP和话术/       # Sales SOPs
     └── 销售冠军成交经验分享/        # Champion cases

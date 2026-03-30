@@ -1,5 +1,5 @@
 {
-  "name": "trae-project",
+  "name": "salesboost-frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,9 @@
     "build:prod": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "check": "tsc -b --noEmit"
+    "check": "tsc -b --noEmit",
+    "figma:export": "node scripts/export-from-figma.js",
+    "figma:quick": "node scripts/figma-quick-export.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

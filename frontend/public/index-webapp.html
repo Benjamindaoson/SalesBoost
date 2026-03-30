@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalesBoost - 智能销售管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        h1 { color: #667eea; margin-bottom: 20px; text-align: center; }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        input, select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        button:hover { background: #5568d3; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        tr:hover { background: #f8f9fa; }
+        .btn-edit {
+            background: #28a745;
+            padding: 6px 15px;
+            margin-right: 5px;
+        }
+        .btn-edit:hover { background: #218838; }
+        .btn-delete {
+            background: #dc3545;
+            padding: 6px 15px;
+        }
+        .btn-delete:hover { background: #c82333; }
+        .status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status.lead { background: #fff3cd; color: #856404; }
+        .status.customer { background: #d4edda; color: #155724; }
+        .status.deal { background: #cce5ff; color: #004085; }
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 SalesBoost 客户管理系统</h1>
+    <div class="card">
+        <div class="form">
+            <input type="text" id="name" placeholder="客户姓名 *" required>
+            <input type="text" id="company" placeholder="公司名称">
+            <input type="tel" id="phone" placeholder="联系电话">
+            <input type="email" id="email" placeholder="电子邮箱">
+            <select id="status">
+                <option value="lead">潜在客户</option>
+                <option value="customer">正式客户</option>
+                <option value="deal">已成交</option>
+            </select>
+            <button id="submitBtn" onclick="createCustomer()">➕ 新建客户</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>姓名</th>
+                    <th>公司</th>
+                    <th>电话</th>
+                    <th>邮箱</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="customerList">
+                <tr><td colspan="6" class="empty">加载中...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API = '/api/v1';
+        let customers = [];
+        let editingId = null;
+
+        async function loadCustomers() {
+            try {
+                const response = await fetch(`${API}/customers`);
+                customers = await response.json();
+                renderCustomers();
+            } catch (error) {
+                console.error('加载失败:', error);
+                document.getElementById('customerList').innerHTML = 
+                    '<tr><td colspan="6" class="empty">加载失败,请刷新页面重试</td></tr>';
+            }
+        }
+
+        function getStatusClass(status) {
+            return `status ${status}`;
+        }
+
+        function getStatusText(status) {
+            const map = {
+                'lead': '潜在客户',
+                'customer': '正式客户',
+                'deal': '已成交'
+            };
+            return map[status] || status;
+        }
+
+        function renderCustomers() {
+            const tbody = document.getElementById('customerList');
+            if (customers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty">暂无客户数据,请添加新客户</td></tr>';
+                return;
+            }
+            tbody.innerHTML = customers.map(customer => `
+                <tr>
+                    <td>${escapeHtml(customer.name)}</td>
+                    <td>${escapeHtml(customer.company || '-')}</td>
+                    <td>${escapeHtml(customer.phone || '-')}</td>
+                    <td>${escapeHtml(customer.email || '-')}</td>
+                    <td><span class="${getStatusClass(customer.status)}">${getStatusText(customer.status)}</span></td>
+                    <td>
+                        <button class="btn-edit" onclick="editCustomer(${customer.id})">编辑</button>
+                        <button class="btn-delete" onclick="deleteCustomer(${customer.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function createCustomer() {
+            const data = {
+                name: document.getElementById('name').value.trim(),
+                company: document.getElementById('company').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                status: document.getElementById('status').value
+            };
+
+            if (!data.name) {
+                alert('请输入客户姓名');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API}/customers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('✅ 客户创建成功!');
+                    clearForm();
+                    loadCustomers();
+                } else {
+                    alert('❌ 创建失败,请重试');
+                }
+            } catch (error) {
+                alert('❌ 网络错误: ' + error.message);
+            }
+        }
+
+        async function updateCustomer() {
+            if (!editingId) return;
+
+            const data = {
+                name: document.getElementById('name').value.trim(),
+                company: document.getElementById('company').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                status: document.getElementById('status').value
+            };
+
+            try {
+                const response = await fetch(`${API}/customers/${editingId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('✅ 客户信息已更新!');
+                    clearForm();
+                    loadCustomers();
+                    editingId = null;
+                    document.getElementById('submitBtn').textContent = '➕ 新建客户';
+                } else {
+                    alert('❌ 更新失败,请重试');
+                }
+            } catch (error) {
+                alert('❌ 网络错误: ' + error.message);
+            }
+        }
+
+        function editCustomer(id) {
+            const customer = customers.find(c => c.id === id);
+            if (!customer) return;
+
+            document.getElementById('name').value = customer.name;
+            document.getElementById('company').value = customer.company || '';
+            document.getElementById('phone').value = customer.phone || '';
+            document.getElementById('email').value = customer.email || '';
+            document.getElementById('status').value = customer.status || 'lead';
+            
+            editingId = id;
+            document.getElementById('submitBtn').textContent = '💾 保存修改';
+        }
+
+        async function deleteCustomer(id) {
+            if (!confirm('确定要删除这个客户吗?此操作不可恢复。')) return;
+
+            try {
+                const response = await fetch(`${API}/customers/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('✅ 客户已删除');
+                    loadCustomers();
+                } else {
+                    alert('❌ 删除失败,请重试');
+                }
+            } catch (error) {
+                alert('❌ 网络错误: ' + error.message);
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('company').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('status').value = 'lead';
+        }
+
+        // 修改按钮点击行为
+        document.getElementById('submitBtn').onclick = function() {
+            editingId ? updateCustomer() : createCustomer();
+        };
+
+        // 页面加载时获取数据
+        loadCustomers();
+    </script>
+</body>
+</html>

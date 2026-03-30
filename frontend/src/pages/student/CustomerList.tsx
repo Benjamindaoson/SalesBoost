@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { features } from '@/config/env';
 import { CustomerPersona, customerService, getCustomersMock, CustomerCreate } from '@/services/customer.service';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -38,14 +39,9 @@ export default function StudentCustomers() {
   const handleCreateCustomer = async (data: CustomerCreate) => {
     setSaving(true);
     try {
-      // Try API first, fall back to mock
-      let newCustomer;
-      try {
-        newCustomer = await customerService.createCustomer(data);
-      } catch (error) {
-        // Fallback to mock data
+      if (features.useMockData) {
         const mockId = String(Date.now());
-        newCustomer = {
+        const newCustomer: CustomerPersona = {
           ...data,
           id: mockId,
           creator: '当前用户',
@@ -54,14 +50,12 @@ export default function StudentCustomers() {
           avatarColor: data.avatar_color || 'from-blue-200 to-blue-400',
         };
         setCustomers((prev) => [...prev, newCustomer]);
-      }
-
-      if (newCustomer) {
+        toast({ title: '创建成功', description: `客户 ${data.name} 已创建` });
+        setCreateDialogOpen(false);
+      } else {
+        const newCustomer = await customerService.createCustomer(data);
         setCustomers((prev) => [...prev, newCustomer]);
-        toast({
-          title: '创建成功',
-          description: `客户 ${data.name} 已创建`,
-        });
+        toast({ title: '创建成功', description: `客户 ${data.name} 已创建` });
         setCreateDialogOpen(false);
       }
     } catch (error) {
@@ -128,13 +122,21 @@ export default function StudentCustomers() {
     const fetchCustomers = async () => {
       setLoading(true);
       try {
-        // Try API first, fall back to mock
-        try {
-          const data = await customerService.getCustomers();
-          setCustomers(data);
-        } catch {
-          const data = await getCustomersMock();
-          setCustomers(data);
+        if (features.useMockData) {
+          setCustomers(await getCustomersMock());
+        } else {
+          setCustomers(await customerService.getCustomers());
+        }
+      } catch (error) {
+        if (!features.useMockData) {
+          setCustomers([]);
+          toast({
+            title: '加载失败',
+            description: '无法加载客户列表，请检查网络连接',
+            variant: 'destructive',
+          });
+        } else {
+          setCustomers(await getCustomersMock());
         }
       } finally {
         setLoading(false);

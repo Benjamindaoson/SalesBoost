@@ -186,7 +186,7 @@ response = requests.post(API_URL, headers=headers, json={"inputs": text})
 #### Root Cause Analysis
 - No .dockerignore file existed
 - Build context included:
-  - `销冠能力复制数据库/` (large data directory)
+  - `data/sales_knowledge/` (large data directory)
   - `.venv/` (Python virtual environment)
   - `node_modules/` (Node dependencies)
   - `storage/` (processed data)
@@ -196,7 +196,7 @@ response = requests.post(API_URL, headers=headers, json={"inputs": text})
 ✅ Created `.dockerignore` file excluding:
 - Virtual environments (.venv/, venv/)
 - Node modules (node_modules/)
-- Data directories (storage/, data/, 销冠能力复制数据库/)
+- Data directories (storage/, data/, data/sales_knowledge/)
 - Large media files (*.pdf, *.mp3, *.mp4)
 - Documentation (*.md, docs/)
 - Test files (tests/, test_*.py)
