@@ -3,7 +3,7 @@
 ## ✅ 配置已完成
 
 您的 Figma token 已配置到项目中:
-- **Token**: `your_figma_token_here`
+- **Token**: `FIGMA_TOKEN_REDACTED`
 - **配置文件**: `frontend/.env`
 
 ## 🚀 3 步开始使用

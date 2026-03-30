@@ -34,7 +34,7 @@ npm install node-fetch
 
 ```env
 # Figma 配置
-VITE_FIGMA_TOKEN=your_figma_token_here
+VITE_FIGMA_TOKEN=FIGMA_TOKEN_REDACTED
 VITE_FIGMA_FILE_KEY=your-file-key-here
 ```
 

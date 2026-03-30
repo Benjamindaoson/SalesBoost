@@ -3,7 +3,7 @@
 ## 📋 已完成的工作
 
 ### 1. ✅ Figma Token 配置
-- **Token**: `your_figma_token_here`
+- **Token**: `FIGMA_TOKEN_REDACTED`
 - **位置**: `frontend/.env`
 
 ### 2. ✅ 导出脚本创建
@@ -126,7 +126,7 @@ function App() {
 ### .env 配置
 ```env
 # Figma 配置
-VITE_FIGMA_TOKEN=your_figma_token_here
+VITE_FIGMA_TOKEN=FIGMA_TOKEN_REDACTED
 VITE_FIGMA_FILE_KEY=your-file-key-here
 VITE_FIGMA_EXPORT_FORMAT=png
 VITE_FIGMA_EXPORT_SCALE=2

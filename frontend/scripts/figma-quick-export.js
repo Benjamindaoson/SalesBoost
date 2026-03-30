@@ -10,7 +10,7 @@ import fs from 'fs';
 import path from 'path';
 
 // 从环境变量读取配置
-const FIGMA_TOKEN = 'your_figma_token_here';
+const FIGMA_TOKEN = 'FIGMA_TOKEN_REDACTED';
 const FIGMA_FILE_KEY = process.env.VITE_FIGMA_FILE_KEY;
 
 /**
