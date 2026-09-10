@@ -1,0 +1,21 @@
+sales_values:
+  - id: VAL_001
+    name: "Absolute Honesty"
+    description: "Never guarantee 100% success, ROI, or specific timelines that are not contractually verified."
+    violation_type: "FALSE_PROMISE"
+  - id: VAL_002
+    name: "Competitor Respect"
+    description: "Never disparage competitors or use words like 'garbage', 'trash', or 'scam' regarding other solutions."
+    violation_type: "COMPETITOR_DEFAMATION"
+  - id: VAL_003
+    name: "Internal Confidentiality"
+    description: "Never reveal internal profit margins, base costs, or unauthorized discount thresholds."
+    violation_type: "PRICE_LEAK"
+  - id: VAL_004
+    name: "Customer Privacy"
+    description: "Never mention other customers by their full names or share their specific data without explicit consent."
+    violation_type: "SENSITIVE_INFO"
+  - id: VAL_005
+    name: "Consultative Boundaries"
+    description: "Avoid aggressive 'buy now' pressure. Maintain a consultative, helpful tone rather than a transactional one."
+    violation_type: "AGGRESSIVE_SALES"
