@@ -1,0 +1,29 @@
+name: Coordinator Recovery Regression
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ feature/autonomous-sales-agent-upgrade ]
+
+jobs:
+  coordinator-recovery:
+    name: Coordinator Recovery Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio
+
+      - name: Run recovery regression
+        run: |
+          cd backend
+          pytest tests/test_coordinator_recovery.py -v
