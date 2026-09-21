@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NPC simulator for customer practice
 - Strategy analyzer for performance evaluation
 - Comprehensive documentation and deployment guides
-- World-class open source project structure
+- Maintained open-source project structure
 
 ### Changed
 - Reorganized project structure for clarity
@@ -39,4 +39,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-For detailed changes, see the [commit history](https://github.com/yourusername/salesboost/commits/main).
+For detailed changes, see the [commit history](https://github.com/Benjamindaoson/SalesBoost/commits/main).
