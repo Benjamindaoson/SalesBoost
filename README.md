@@ -1,3 +1,6 @@
+> **Portfolio status / 作品集状态：CASE STUDY · Agent Systems**
+> Independent enterprise sales-Agent case study; not the canonical portfolio flagship.
+
 # SalesBoost - AI Sales Enablement Platform
 
 > **Canonical name**: `sales-boost` (lowercase, kebab-case)
